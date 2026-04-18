@@ -1,0 +1,55 @@
+server:
+  port: 8087
+spring:
+  application:
+    name: storefront-bff
+  threads:
+    virtual:
+      enabled: true
+  profiles:
+    active: dev
+  security:
+    oauth2:
+      client:
+        provider:
+          keycloak:
+            issuer-uri: http://identity/realms/Yas
+        registration:
+          keycloak:
+            provider: keycloak
+            client-id: storefront-bff
+            client-secret: ZrU9I0q2uXBglBnmvyJdkl1lf0ncr8tn #gitleaks:allow
+            scope: openid, profile, email, roles
+  data:
+    redis:
+      host: redis
+      port: 6379
+  session:
+    store-type: redis
+management:
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http:
+          server:
+            requests: true
+    tags:
+      application: ${spring.application.name}
+#  endpoint:
+#    gateway:
+#      enabled: true
+#  endpoints:
+#    web:
+#      exposure:
+#        include: gateway,health,info
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+#  level:
+#    org.springframework.cloud.gateway: TRACE
+#    reactor.netty.http.client: TRACE
+yas:
+  services:
+    customer: http://api.yas.local/customer
+    cart: http://api.yas.local/cart
+    token-identity: http://identity/realms/Yas/protocol/openid-connect/token
