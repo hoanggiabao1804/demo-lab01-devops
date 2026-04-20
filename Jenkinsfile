@@ -125,11 +125,15 @@ pipeline {
             when {
                 expression { env.FROM_ORIGINAL_REPOSITORY == 'true' }
             }
+            environment {
+                NVD_API_KEY = credentials('nvd-api-key')
+            }
             steps {
                 sh '''
                 mvn org.owasp:dependency-check-maven:check \
+                -Dnvd.api.key=$NVD_API_KEY \
                 -Dformat=HTML \
-                -Dout=target/dependency-check-report
+                -DoutputDirectory=target/dependency-check-report
                 '''
             }
         }
