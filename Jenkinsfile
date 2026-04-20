@@ -65,6 +65,20 @@ pipeline {
             }
         }
 
+        stage('SonarQube Analysis') {
+            when {
+                expression { env.FROM_ORIGINAL_REPOSITORY == 'true' }
+            }
+            steps {
+                withSonarQubeEnv('My SonarQube Server') {
+                    sh 'mvn sonar:sonar -f backoffice-bff'
+                }
+                timeout(time: 1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
         stage('Build & Test') {
             steps {
                 sh 'echo "Build & Test phase"'
