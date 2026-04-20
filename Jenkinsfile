@@ -36,7 +36,7 @@ pipeline {
                     echo "env.CHANGE_TARGET: '${env.CHANGE_TARGET}'"
 
                     def base = "dev"
-                    sh "git fetch origin ${base}"
+                    sh "git fetch origin ${base}:refs/remotes/origin/${base}"
 
                     def changedFiles = sh(
                         script: "git diff origin/${base}...HEAD --name-only",
