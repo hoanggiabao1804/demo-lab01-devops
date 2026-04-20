@@ -26,10 +26,20 @@ pipeline {
                     git config --global --add safe.directory '*'
                     '''
 
-                    sh "git fetch origin main:refs/remotes/origin/main"
+                    // sh "git fetch origin main:refs/remotes/origin/main"
+
+                    // def changedFiles = sh(
+                    //     script: "git diff refs/remotes/origin/main...HEAD --name-only",
+                    //     returnStdout: true
+                    // ).trim()
+
+                    echo "env.CHANGE_TARGET: '${env.CHANGE_TARGET}'"
+
+                    def base = env.CHANGE_TARGET ?: "main"
+                    sh "git fetch origin ${base}"
 
                     def changedFiles = sh(
-                        script: "git diff refs/remotes/origin/main...HEAD --name-only",
+                        script: "git diff origin/${base}...HEAD --name-only",
                         returnStdout: true
                     ).trim()
 
