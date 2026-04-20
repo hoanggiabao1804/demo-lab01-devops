@@ -1,7 +1,11 @@
 @Library('my-shared-lib') _
 
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'maven:3.9.9-eclipse-temurin-17'
+        }
+    }
 
     environment {
         FROM_ORIGINAL_REPOSITORY = "${env.CHANGE_FORK == null || env.BRANCH_NAME == 'main'}"
@@ -15,24 +19,22 @@ pipeline {
         }
 
         stage('Run Custom Action') {
-            // steps {
-            //     setupJDK()
-            //     setupSonarCache()
-            // }
             steps {
                 sh '''
-                echo "Custom Action"
+                echo "Setup Java and Sonar Cache"
                 '''
+                setupJDK()
+                setupSonarCache()
             }
         }
 
-        stage('Debug') {
-            steps {
-                sh '''
-                which mvn || echo "Maven not found"
-                '''
-            }
-        }
+        // stage('Debug') {
+        //     steps {
+        //         sh '''
+        //         which mvn || echo "Maven not found"
+        //         '''
+        //     }
+        // }
 
         stage('Run Maven Checkstyle') {
             when {
