@@ -70,7 +70,11 @@ pipeline {
             }
             steps {
                 withSonarQubeEnv('My SonarQube Server') {
-                    sh 'mvn clean verify sonar:sonar -f backoffice-bff'
+                    sh '''
+                    mvn clean verify sonar:sonar \
+                    -Dsonar.host.url=http://sonarqube:9000 \
+                    -f backoffice-bff
+                    '''
                 }
                 timeout(time: 1, unit: 'HOURS') {
                     waitForQualityGate abortPipeline: true
