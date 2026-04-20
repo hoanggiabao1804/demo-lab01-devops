@@ -22,13 +22,16 @@ pipeline {
         stage('Detect Changes') {
             steps {
                 script {
+                    def base = env.CHANGE_TARGET ?: "dev"
+
+                    sh "git fetch origin ${base}"
+
                     def changedFiles = sh(
-                        script: "git diff --name-only HEAD~1 HEAD",
+                        script: "git diff origin/${base}...HEAD --name-only",
                         returnStdout: true
                     ).trim()
 
-                    echo "Changed files:"
-                    echo "${changedFiles}"
+                    echo "Changed files:\n${changedFiles}"
 
                     def paths = [
                         "backoffice-bff/",
