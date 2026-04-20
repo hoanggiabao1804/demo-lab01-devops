@@ -45,7 +45,7 @@ pipeline {
             }
         }
 
-        stages('Build & Test') {
+        stage('Build & Test') {
             steps {
                 sh 'echo "Build & Test phase"'
             }
