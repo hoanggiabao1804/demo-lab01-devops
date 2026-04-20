@@ -22,9 +22,8 @@ pipeline {
         stage('Debug') {
             steps {
                 sh '''
-                echo "Home is: $HOME"
-                whoami
-                pwd
+                echo "Checking SonarQube URL..."
+                curl -v http://localhost:9000 || echo "Cannot connect to SonarQube"
                 '''
             }
         }
