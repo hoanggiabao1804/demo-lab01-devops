@@ -24,7 +24,7 @@ pipeline {
                 sh '''
                 echo "Test localhost:"
                 curl -v http://localhost:9000 || true
-                ip a
+                curl ifconfig.me
                 '''
             }
         }
