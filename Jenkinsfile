@@ -22,7 +22,7 @@ pipeline {
         stage('Fix Git Safe Directory') {
             steps {
                 sh '''
-                git config --global --add safe.directory /var/lib/jenkins/workspace/*
+                git config --global --add safe.directory '*'
                 '''
             }
         }
