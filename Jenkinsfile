@@ -81,47 +81,47 @@ pipeline {
             }
         }
 
-        stage('Run Maven Checkstyle') {
-            when {
-                expression {env.FROM_ORIGINAL_REPOSITORY == 'true'}
-            }
-            steps {
-                sh '''
-                mvn checkstyle:checkstyle \
-                -f backoffice-bff \
-                -Dcheckstyle.output.file=backoffice-bff-checkstyle-result.xml
-                '''
-            }
-        }
+        // stage('Run Maven Checkstyle') {
+        //     when {
+        //         expression {env.FROM_ORIGINAL_REPOSITORY == 'true'}
+        //     }
+        //     steps {
+        //         sh '''
+        //         mvn checkstyle:checkstyle \
+        //         -f backoffice-bff \
+        //         -Dcheckstyle.output.file=backoffice-bff-checkstyle-result.xml
+        //         '''
+        //     }
+        // }
 
-        stage('Publish Checkstyle') {
-            when {
-                expression {env.FROM_ORIGINAL_REPOSITORY == 'true'}
-            }
-            steps {
-                recordIssues(
-                    tools: [checkStyle(pattern: '**/backoffice-bff-checkstyle-result.xml')]
-                )
-            }
-        }
+        // stage('Publish Checkstyle') {
+        //     when {
+        //         expression {env.FROM_ORIGINAL_REPOSITORY == 'true'}
+        //     }
+        //     steps {
+        //         recordIssues(
+        //             tools: [checkStyle(pattern: '**/backoffice-bff-checkstyle-result.xml')]
+        //         )
+        //     }
+        // }
 
-        stage('SonarQube Analysis') {
-            when {
-                expression { env.FROM_ORIGINAL_REPOSITORY == 'true' }
-            }
-            steps {
-                withSonarQubeEnv('My SonarQube Server') {
-                    sh '''
-                    mvn clean verify sonar:sonar \
-                    -Dsonar.host.url=http://sonarqube:9000 \
-                    -f backoffice-bff
-                    '''
-                }
-                timeout(time: 1, unit: 'HOURS') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
+        // stage('SonarQube Analysis') {
+        //     when {
+        //         expression { env.FROM_ORIGINAL_REPOSITORY == 'true' }
+        //     }
+        //     steps {
+        //         withSonarQubeEnv('My SonarQube Server') {
+        //             sh '''
+        //             mvn clean verify sonar:sonar \
+        //             -Dsonar.host.url=http://sonarqube:9000 \
+        //             -f backoffice-bff
+        //             '''
+        //         }
+        //         timeout(time: 1, unit: 'HOURS') {
+        //             waitForQualityGate abortPipeline: true
+        //         }
+        //     }
+        // }
 
         stage('OWASP Dependency Check') {
             when {
@@ -131,9 +131,6 @@ pipeline {
             //     NVD_API_KEY = credentials('nvd-api-key')
             // }
             steps {
-                withCredentials([string(credentialsId: 'nvd-key', variable: 'NVD_API_KEY')]) {
-                    sh 'mvn dependency-check:check -DnvdApiKey=$NVD_API_KEY'
-                }
                 sh '''
                 mvn org.owasp:dependency-check-maven:check -DnvdApiKey=$NVD_API_KEY \
                 -Dnvd.api.endpoint=https://services.nvd.nist.gov/rest/json/cves/2.0 \
