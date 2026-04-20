@@ -66,7 +66,7 @@ pipeline {
                 sh '''
                 java -version
                 mvn -version
-                echo -n "$NVD_API_KEY" | hexdump -C
+                echo -n "$NVD_API_KEY" | wc -c
                 '''
             }
         }
