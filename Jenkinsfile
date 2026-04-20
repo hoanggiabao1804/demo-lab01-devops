@@ -28,13 +28,15 @@ pipeline {
             }
         }
 
-        // stage('Debug') {
-        //     steps {
-        //         sh '''
-        //         which mvn || echo "Maven not found"
-        //         '''
-        //     }
-        // }
+        stage('Debug') {
+            steps {
+                sh '''
+                echo "Home is: $HOME"
+                whoami
+                pwd
+                '''
+            }
+        }
 
         stage('Run Maven Checkstyle') {
             when {
