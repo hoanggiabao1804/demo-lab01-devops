@@ -13,27 +13,21 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
-        stage('Fix Git Safe Directory') {
-            steps {
-                sh '''
-                git config --global --add safe.directory '*'
-                '''
-            }
-        }
+        // stage('Checkout') {
+        //     steps {
+        //         checkout scm
+        //     }
+        // }
 
         stage('Detect Changes') {
             steps {
                 script {
-                    // 1. fetch đúng ref (KHÔNG dùng fetch origin main đơn thuần)
+                    sh '''
+                    git config --global --add safe.directory '*'
+                    '''
+
                     sh "git fetch origin main:refs/remotes/origin/main"
 
-                    // 2. diff an toàn
                     def changedFiles = sh(
                         script: "git diff refs/remotes/origin/main...HEAD --name-only",
                         returnStdout: true
