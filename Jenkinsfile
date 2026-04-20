@@ -35,7 +35,7 @@ pipeline {
 
                     echo "env.CHANGE_TARGET: '${env.CHANGE_TARGET}'"
 
-                    def base = env.CHANGE_TARGET ?: "main"
+                    def base = "dev"
                     sh "git fetch origin ${base}"
 
                     def changedFiles = sh(
