@@ -121,6 +121,19 @@ pipeline {
             }
         }
 
+        stage('OWASP Dependency Check') {
+            when {
+                expression { env.FROM_ORIGINAL_REPOSITORY == 'true' }
+            }
+            steps {
+                sh '''
+                mvn org.owasp:dependency-check-maven:check \
+                -Dformat=HTML \
+                -Dout=target/dependency-check-report
+                '''
+            }
+        }
+
         stage('Build & Test') {
             steps {
                 sh 'echo "Build & Test phase"'
