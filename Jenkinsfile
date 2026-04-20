@@ -18,6 +18,16 @@ pipeline {
             }
         }
 
+        stage('Debug') {
+            steps {
+                sh '''
+                echo "Home is: $HOME"
+                whoami
+                pwd
+                '''
+            }
+        }
+
         stage('Run Custom Action') {
             steps {
                 sh '''
@@ -28,15 +38,7 @@ pipeline {
             }
         }
 
-        stage('Debug') {
-            steps {
-                sh '''
-                echo "Home is: $HOME"
-                whoami
-                pwd
-                '''
-            }
-        }
+
 
         stage('Run Maven Checkstyle') {
             when {
