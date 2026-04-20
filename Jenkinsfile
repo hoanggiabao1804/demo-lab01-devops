@@ -19,6 +19,39 @@ pipeline {
             }
         }
 
+        stage('Detect Changes') {
+            steps {
+                script {
+                    def changedFiles = sh(
+                        script: "git diff --name-only HEAD~1 HEAD",
+                        returnStdout: true
+                    ).trim()
+
+                    echo "Changed files:"
+                    echo "${changedFiles}"
+
+                    def paths = [
+                        "backoffice-bff/",
+                        "pom.xml",
+                        ".github/workflows/actions/action.yaml",
+                        ".github/workflows/backoffice-bff-ci.yaml",
+                        "Jenkinsfile"
+                    ]
+
+                    def shouldRun = changedFiles.split("\n").any { file ->
+                        paths.any { p ->
+                            file.startsWith(p) || file == p
+                        }
+                    }
+
+                    if (!shouldRun) {
+                        currentBuild.result = 'NOT_BUILT'
+                        error("No relevant changes -> skip pipeline")
+                    }
+                }
+            }
+        }
+
         stage('Debug') {
             steps {
                 sh '''
@@ -37,8 +70,6 @@ pipeline {
                 setupSonarCache()
             }
         }
-
-
 
         stage('Run Maven Checkstyle') {
             when {
