@@ -26,7 +26,7 @@ pipeline {
 
         stage('Debug') {
             sh '''
-            sh 'which mvn || echo "Maven not found"'
+            which mvn || echo "Maven not found"
             '''
         }
 
