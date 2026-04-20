@@ -131,19 +131,15 @@ pipeline {
             //     NVD_API_KEY = credentials('nvd-api-key')
             // }
             steps {
-                // Debug
                 sh '''
-                curl -v -H "apiKey: $NVD_API_KEY" \
-                "https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=1"
+                mvn org.owasp:dependency-check-maven:check \
+                -Dnvd.api.key=$NVD_API_KEY \
+                -Dnvd.api.endpoint=https://services.nvd.nist.gov/rest/json/cves/2.0 \
+                -Dcisa.enabled=false \
+                -Dorg.slf4j.simpleLogger.log.org.owasp=debug
+                -Dformat=HTML \
+                -DoutputDirectory=target/dependency-check-report
                 '''
-
-                // sh '''
-                // mvn org.owasp:dependency-check-maven:check \
-                // -Dnvd.api.key=$NVD_API_KEY \
-                // -Dnvd.api.endpoint=https://services.nvd.nist.gov/rest/json/cves/2.0 \
-                // -Dformat=HTML \
-                // -DoutputDirectory=target/dependency-check-report
-                // '''
             }
         }
 
