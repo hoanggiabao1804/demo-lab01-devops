@@ -3,7 +3,7 @@
 pipeline {
     agent {
         docker {
-            image 'eclipse-temurin:25-jdk'
+            image 'maven:3.9.14-eclipse-temurin-25'
             args '--network sonar-network -u root -v $HOME/.sonar:/root/.sonar'
         }
     }
