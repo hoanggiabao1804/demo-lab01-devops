@@ -15,10 +15,19 @@ pipeline {
         }
 
         stage('Run Custom Action') {
-            steps {
-                setupJDK()
-                setupSonarCache()
-            }
+            // steps {
+            //     setupJDK()
+            //     setupSonarCache()
+            // }
+            sh '''
+            echo "Custom Action"
+            '''
+        }
+
+        stage('Debug') {
+            sh '''
+            sh 'which mvn || echo "Maven not found"'
+            '''
         }
 
         stage('Run Maven Checkstyle') {
