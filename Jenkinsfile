@@ -30,12 +30,12 @@ pipeline {
         stage('Detect Changes') {
             steps {
                 script {
-                    def base = env.CHANGE_TARGET ?: "dev"
+                    // 1. fetch đúng ref (KHÔNG dùng fetch origin main đơn thuần)
+                    sh "git fetch origin main:refs/remotes/origin/main"
 
-                    sh "git fetch origin ${base}"
-
+                    // 2. diff an toàn
                     def changedFiles = sh(
-                        script: "git diff origin/${base}...HEAD --name-only",
+                        script: "git diff refs/remotes/origin/main...HEAD --name-only",
                         returnStdout: true
                     ).trim()
 
