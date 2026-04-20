@@ -22,8 +22,11 @@ pipeline {
         stage('Debug') {
             steps {
                 sh '''
-                echo "Checking SonarQube URL..."
-                curl -v http://localhost:9000 || echo "Cannot connect to SonarQube"
+                echo "Test localhost:"
+                curl -v http://localhost:9000 || true
+
+                echo "Test host IP:"
+                curl -v http://192.168.1.10:9000 || true
                 '''
             }
         }
