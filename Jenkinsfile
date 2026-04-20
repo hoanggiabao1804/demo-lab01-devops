@@ -4,7 +4,7 @@ pipeline {
     agent {
         docker {
             image 'maven:3.9.9-eclipse-temurin-17'
-            args '-u root -v $HOME/.sonar:/root/.sonar --add-host=host.docker.internal:host-gateway'
+            args '--network sonar-network -u root -v $HOME/.sonar:/root/.sonar'
         }
     }
 
@@ -23,7 +23,7 @@ pipeline {
             steps {
                 sh '''
                 echo "Test localhost:"
-                curl -v http://host.docker.internal:9000 || true
+                curl -v http://sonarqube:9000 || true
                 curl ifconfig.me
                 '''
             }
