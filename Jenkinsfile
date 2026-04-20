@@ -22,9 +22,8 @@ pipeline {
         stage('Debug') {
             steps {
                 sh '''
-                echo "Test localhost:"
-                curl -v http://sonarqube:9000 || true
-                curl ifconfig.me
+                java -version
+                mvn -version
                 '''
             }
         }
