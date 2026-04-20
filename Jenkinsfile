@@ -24,9 +24,7 @@ pipeline {
                 sh '''
                 echo "Test localhost:"
                 curl -v http://localhost:9000 || true
-
-                echo "Test host IP:"
-                curl -v http://10.0.139.66:9000 || true
+                ip a
                 '''
             }
         }
