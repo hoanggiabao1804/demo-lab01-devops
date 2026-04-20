@@ -1,3 +1,5 @@
+@Library('my-shared-lib') _
+
 pipeline {
     agent any
 
@@ -14,13 +16,12 @@ pipeline {
 
         stage('Run Custom Action') {
             steps {
-                sh '''
-                echo "Run custom action"
-                '''
+                setupJDK()
+                setupSonarCache()
             }
         }
 
-        stage('Checkstyle') {
+        stage('Run Maven Checkstyle') {
             when {
                 expression {env.FROM_ORIGINAL_REPOSITORY == 'true'}
             }
