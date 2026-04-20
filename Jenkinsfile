@@ -134,10 +134,11 @@ pipeline {
                 curl -v -H "apiKey: $NVD_API_KEY" \
                 "https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=1"
                 '''
-                
+
                 sh '''
                 mvn org.owasp:dependency-check-maven:check \
                 -Dnvd.api.key=$NVD_API_KEY \
+                -Dnvd.api.endpoint=https://services.nvd.nist.gov/rest/json/cves/2.0 \
                 -Dformat=HTML \
                 -DoutputDirectory=target/dependency-check-report
                 '''
