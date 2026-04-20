@@ -26,7 +26,7 @@ pipeline {
                 curl -v http://localhost:9000 || true
 
                 echo "Test host IP:"
-                curl -v http://192.168.1.10:9000 || true
+                curl -v http://10.0.139.66:9000 || true
                 '''
             }
         }
