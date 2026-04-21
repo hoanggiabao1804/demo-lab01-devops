@@ -160,11 +160,16 @@ pipeline {
                 expression { env.FROM_ORIGINAL_REPOSITORY == 'true' }
             }
             steps {
+                sh '''
+                echo "=== DEBUG FILES ==="
+                find . -name "*dependency-check*"
+                '''
                 archiveArtifacts artifacts: 'target/dependency-check-report/**/*', fingerprint: true
             }
         }
 
-        stage('Build & Test') {
+        stage('Build & Test') {echo "=== DEBUG FILES ==="
+find . -name "*dependency-check*"
             steps {
                 sh 'echo "Build & Test phase"'
             }
