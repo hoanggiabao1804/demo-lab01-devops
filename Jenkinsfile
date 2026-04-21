@@ -110,7 +110,7 @@ pipeline {
             steps {
                 sh '''
                 echo "Download Gitleaks..."
-                wget -q https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks-linux-amd64 -O gitleaks
+                curl -sSL https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks-linux-amd64 -o gitleaks
 
                 echo "Make executable..."
                 chmod +x gitleaks
