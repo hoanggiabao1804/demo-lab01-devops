@@ -155,6 +155,15 @@ pipeline {
             }
         }
 
+        stage('Publish OWASP Report') {
+            when {
+                expression { env.FROM_ORIGINAL_REPOSITORY == 'true' }
+            }
+            steps {
+                archiveArtifacts artifacts: 'target/dependency-check-report/**/*', fingerprint: true
+            }
+        }
+
         stage('Build & Test') {
             steps {
                 sh 'echo "Build & Test phase"'
