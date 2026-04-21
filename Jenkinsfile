@@ -127,6 +127,9 @@ pipeline {
                 --report-format json \
                 --exit-code 0
 
+                echo "=== DEBUG FILE ==="
+                find . -name "gitleaks-report.json"
+
                 if [ -s gitleaks-report.json ]; then
                     echo "Leaks detected!"
                     exit 1
@@ -135,10 +138,10 @@ pipeline {
             }
             post {
                 success {
-                    archiveArtifacts artifacts: './gitleaks-report.json', fingerprint: true
+                    archiveArtifacts artifacts: '**/gitleaks-report.json', fingerprint: true
                 }
                 failure {
-                    archiveArtifacts artifacts: './gitleaks-report.json', fingerprint: true
+                    archiveArtifacts artifacts: '**/gitleaks-report.json', fingerprint: true
                 }
             }
         }
