@@ -109,14 +109,16 @@ pipeline {
             }
             steps {
                 sh '''
+                apt-get update -qq && apt-get install -y -qq curl tar
+
                 echo "Download Gitleaks..."
-                curl -sSL https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks-linux-amd64 -o gitleaks
+                curl -fL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz -o gitleaks.tar.gz
+
+                echo "Extract..."
+                tar -xzf gitleaks.tar.gz
 
                 echo "Make executable..."
                 chmod +x gitleaks
-
-                echo "Debug gitleaks"
-                ls -al .
 
                 echo "Run Gitleaks scan..."
                 ./gitleaks detect \
