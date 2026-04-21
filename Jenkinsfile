@@ -4,7 +4,13 @@ pipeline {
     agent {
         docker {
             image 'maven:3.9.14-eclipse-temurin-25'
-            args '--network sonar-network -u root -v $HOME/.sonar:/root/.sonar -v $HOME/.owasp:/owasp'
+            args '''
+            --network sonar-network 
+            -u root 
+            -v $HOME/.sonar:/root/.sonar 
+            -v $HOME/.owasp:/owasp
+            -v /var/run/docker.sock:/var/run/docker.sock
+            '''
         }
     }
 
