@@ -129,9 +129,34 @@ pipeline {
                     --exit-code 0
                     '''
 
-                    sh 'ls -lah'
+                    sh '''
+                    echo "Debug..."
 
-                    archiveArtifacts artifacts: 'gitleaks-report.json', fingerprint: true
+                    ls -lah
+                    '''
+
+                    sh '''
+                    echo "Publish to html..."
+
+                    cat <<EOF > gitleaks-report.html
+                    <html>
+                    <body>
+                    <pre>
+                    $(cat gitleaks-report.json | sed 's/</\&lt;/g; s/>/\&gt;/g')
+                    </pre>
+                    </body>
+                    </html>
+                    EOF
+                    '''
+
+                    publishHTML([
+                        reportDir: '.',
+                        reportFiles: 'gitleaks-report.html',
+                        reportName: 'Gitleak Report',
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true
+                    ])
 
                     def hasLeak = sh(
                         script: '[ -s gitleaks-report.json ]',
