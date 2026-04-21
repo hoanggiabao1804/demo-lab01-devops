@@ -9,7 +9,6 @@ pipeline {
             -u root 
             -v $HOME/.sonar:/root/.sonar 
             -v $HOME/.owasp:/owasp
-            -v /var/run/docker.sock:/var/run/docker.sock
             '''
         }
     }
@@ -66,7 +65,6 @@ pipeline {
                 sh '''
                 java -version
                 mvn -version
-                docker --version
                 '''
             }
         }
@@ -102,6 +100,28 @@ pipeline {
                 recordIssues(
                     tools: [checkStyle(pattern: '**/backoffice-bff-checkstyle-result.xml')]
                 )
+            }
+        }
+
+        stage('Gitleak Scan') {
+            when {
+                expression {env.FROM_ORIGINAL_REPOSITORY == 'true'}
+            }
+            steps {
+                sh '''
+                echo "Download Gitleaks..."
+                wget -q https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks-linux-amd64 -O gitleaks
+
+                echo "Make executable..."
+                chmod +x gitleaks
+
+                echo "Run Gitleaks scan..."
+                ./gitleaks detect \
+                --source . \
+                --report-path gitleaks-report.json \
+                --report-format json \
+                --exit-code 1
+                '''
             }
         }
 
