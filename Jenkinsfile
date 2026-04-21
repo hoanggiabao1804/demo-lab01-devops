@@ -116,7 +116,7 @@ pipeline {
                 chmod +x gitleaks
 
                 echo "Debug gitleaks"
-                head -n 5 gitleaks
+                ls -al .
 
                 echo "Run Gitleaks scan..."
                 ./gitleaks detect \
