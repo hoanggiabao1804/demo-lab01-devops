@@ -108,37 +108,39 @@ pipeline {
                 expression {env.FROM_ORIGINAL_REPOSITORY == 'true'}
             }
             steps {
-                sh '''
-                apt-get update -qq && apt-get install -y -qq curl tar
+                script {
+                    sh '''
+                    apt-get update -qq && apt-get install -y -qq curl tar
 
-                echo "Download Gitleaks..."
-                curl -fL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz -o gitleaks.tar.gz
+                    echo "Download Gitleaks..."
+                    curl -fL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz -o gitleaks.tar.gz
 
-                echo "Extract..."
-                tar -xzf gitleaks.tar.gz
+                    echo "Extract..."
+                    tar -xzf gitleaks.tar.gz
 
-                echo "Make executable..."
-                chmod +x gitleaks
+                    echo "Make executable..."
+                    chmod +x gitleaks
 
-                echo "Run Gitleaks scan..."
-                ./gitleaks detect \
-                --source . \
-                --report-path gitleaks-report.json \
-                --report-format json \
-                --exit-code 0
-                '''
+                    echo "Run Gitleaks scan..."
+                    ./gitleaks detect \
+                    --source . \
+                    --report-path gitleaks-report.json \
+                    --report-format json \
+                    --exit-code 0
+                    '''
 
-                sh 'ls -lah'
+                    sh 'ls -lah'
 
-                archiveArtifacts artifacts: 'gitleaks-report.json', fingerprint: true
+                    archiveArtifacts artifacts: 'gitleaks-report.json', fingerprint: true
 
-                def hasLeak = sh(
-                    script: '[ -s gitleaks-report.json ]',
-                    returnStatus: true
-                )
+                    def hasLeak = sh(
+                        script: '[ -s gitleaks-report.json ]',
+                        returnStatus: true
+                    )
 
-                if (hasLeak == 0) {
-                    error("Secrets detected!")
+                    if (hasLeak == 0) {
+                        error("Secrets detected!")
+                    }
                 }
             }
         }
