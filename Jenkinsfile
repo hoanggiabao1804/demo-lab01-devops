@@ -126,22 +126,19 @@ pipeline {
                 --report-path gitleaks-report.json \
                 --report-format json \
                 --exit-code 0
-
-                echo "=== DEBUG FILE ==="
-                find . -name "gitleaks-report.json"
-
-                if [ -s gitleaks-report.json ]; then
-                    echo "Leaks detected!"
-                    exit 1
-                fi
                 '''
-            }
-            post {
-                success {
-                    archiveArtifacts artifacts: './gitleaks-report.json', fingerprint: true
-                }
-                failure {
-                    archiveArtifacts artifacts: './gitleaks-report.json', fingerprint: true
+
+                sh 'ls -lah'
+
+                archiveArtifacts artifacts: 'gitleaks-report.json', fingerprint: true
+
+                def hasLeak = sh(
+                    script: '[ -s gitleaks-report.json ]',
+                    returnStatus: true
+                )
+
+                if (hasLeak == 0) {
+                    error("Secrets detected!")
                 }
             }
         }
