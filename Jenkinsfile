@@ -164,7 +164,7 @@ pipeline {
                 echo "=== DEBUG FILES ==="
                 find . -name "*dependency-check*"
                 '''
-                archiveArtifacts artifacts: 'target/dependency-check-report/**/*', fingerprint: true
+                archiveArtifacts artifacts: '**/target/dependency-check-report.html', fingerprint: true
             }
         }
 
