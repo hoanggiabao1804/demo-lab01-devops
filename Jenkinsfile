@@ -164,7 +164,15 @@ pipeline {
                 echo "=== DEBUG FILES ==="
                 find . -name "*dependency-check*"
                 '''
-                archiveArtifacts artifacts: '**/target/dependency-check-report.html', fingerprint: true
+                // archiveArtifacts artifacts: '**/target/dependency-check-report.html', fingerprint: true
+                publishHTML([
+                    reportDir: '.',
+                    reportFiles: '**/target/dependency-check-report.html',
+                    reportName: 'OWASP Dependency Check Report',
+                    allowMissing: true,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true
+                ])
             }
         }
 
