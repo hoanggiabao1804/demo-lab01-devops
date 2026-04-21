@@ -168,8 +168,7 @@ pipeline {
             }
         }
 
-        stage('Build & Test') {echo "=== DEBUG FILES ==="
-find . -name "*dependency-check*"
+        stage('Build & Test') {
             steps {
                 sh 'echo "Build & Test phase"'
             }
