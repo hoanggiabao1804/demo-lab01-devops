@@ -125,8 +125,21 @@ pipeline {
                 --source . \
                 --report-path gitleaks-report.json \
                 --report-format json \
-                --exit-code 1
+                --exit-code 0
+
+                if [ -s gitleaks-report.json ]; then
+                    echo "Leaks detected!"
+                    exit 1
+                fi
                 '''
+            }
+            post {
+                success {
+                    archiveArtifacts artifacts: 'gitleaks-report.json', fingerprint: true
+                }
+                failure {
+                    archiveArtifacts artifacts: 'gitleaks-report.json', fingerprint: true
+                }
             }
         }
 
