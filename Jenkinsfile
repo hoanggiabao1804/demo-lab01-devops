@@ -142,7 +142,7 @@ pipeline {
                     <html>
                     <body>
                     <pre>
-                    $(cat gitleaks-report.json | sed 's/</\&lt;/g; s/>/\&gt;/g')
+                    $(cat gitleaks-report.json | sed 's/</\\\\&lt;/g; s/>/\\\\&gt;/g')
                     </pre>
                     </body>
                     </html>
