@@ -138,10 +138,10 @@ pipeline {
             }
             post {
                 success {
-                    archiveArtifacts artifacts: '**/gitleaks-report.json', fingerprint: true
+                    archiveArtifacts artifacts: './gitleaks-report.json', fingerprint: true
                 }
                 failure {
-                    archiveArtifacts artifacts: '**/gitleaks-report.json', fingerprint: true
+                    archiveArtifacts artifacts: './gitleaks-report.json', fingerprint: true
                 }
             }
         }
