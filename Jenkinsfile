@@ -14,12 +14,6 @@ pipeline {
     }
 
     stages {
-        // stage('Checkout') {
-        //     steps {
-        //         checkout scm
-        //     }
-        // }
-
         stage('Detect Changes') {
             steps {
                 script {
@@ -81,47 +75,47 @@ pipeline {
             }
         }
 
-        // stage('Run Maven Checkstyle') {
-        //     when {
-        //         expression {env.FROM_ORIGINAL_REPOSITORY == 'true'}
-        //     }
-        //     steps {
-        //         sh '''
-        //         mvn checkstyle:checkstyle \
-        //         -f backoffice-bff \
-        //         -Dcheckstyle.output.file=backoffice-bff-checkstyle-result.xml
-        //         '''
-        //     }
-        // }
+        stage('Run Maven Checkstyle') {
+            when {
+                expression {env.FROM_ORIGINAL_REPOSITORY == 'true'}
+            }
+            steps {
+                sh '''
+                mvn checkstyle:checkstyle \
+                -f backoffice-bff \
+                -Dcheckstyle.output.file=backoffice-bff-checkstyle-result.xml
+                '''
+            }
+        }
 
-        // stage('Publish Checkstyle') {
-        //     when {
-        //         expression {env.FROM_ORIGINAL_REPOSITORY == 'true'}
-        //     }
-        //     steps {
-        //         recordIssues(
-        //             tools: [checkStyle(pattern: '**/backoffice-bff-checkstyle-result.xml')]
-        //         )
-        //     }
-        // }
+        stage('Publish Checkstyle') {
+            when {
+                expression {env.FROM_ORIGINAL_REPOSITORY == 'true'}
+            }
+            steps {
+                recordIssues(
+                    tools: [checkStyle(pattern: '**/backoffice-bff-checkstyle-result.xml')]
+                )
+            }
+        }
 
-        // stage('SonarQube Analysis') {
-        //     when {
-        //         expression { env.FROM_ORIGINAL_REPOSITORY == 'true' }
-        //     }
-        //     steps {
-        //         withSonarQubeEnv('My SonarQube Server') {
-        //             sh '''
-        //             mvn clean verify sonar:sonar \
-        //             -Dsonar.host.url=http://sonarqube:9000 \
-        //             -f backoffice-bff
-        //             '''
-        //         }
-        //         timeout(time: 1, unit: 'HOURS') {
-        //             waitForQualityGate abortPipeline: true
-        //         }
-        //     }
-        // }
+        stage('SonarQube Analysis') {
+            when {
+                expression { env.FROM_ORIGINAL_REPOSITORY == 'true' }
+            }
+            steps {
+                withSonarQubeEnv('My SonarQube Server') {
+                    sh '''
+                    mvn clean verify sonar:sonar \
+                    -Dsonar.host.url=http://sonarqube:9000 \
+                    -f backoffice-bff
+                    '''
+                }
+                timeout(time: 1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
 
         stage('OWASP Dependency Pre-build') {
             when {
@@ -160,11 +154,6 @@ pipeline {
                 expression { env.FROM_ORIGINAL_REPOSITORY == 'true' }
             }
             steps {
-                sh '''
-                echo "=== DEBUG FILES ==="
-                find . -name "*dependency-check*"
-                '''
-                // archiveArtifacts artifacts: '**/target/dependency-check-report.html', fingerprint: true
                 publishHTML([
                     reportDir: '.',
                     reportFiles: '**/target/dependency-check-report.html',
