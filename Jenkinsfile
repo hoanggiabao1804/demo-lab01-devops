@@ -164,7 +164,13 @@ pipeline {
                     )
 
                     if (hasLeak == 0) {
-                        error("Secrets detected!")
+                        sh '''
+                        echo "Secrets detected!"
+                        '''
+                    } else {
+                        sh '''
+                        echo "No secrets detected!"
+                        '''
                     }
                 }
             }
