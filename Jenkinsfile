@@ -16,6 +16,7 @@ pipeline {
     environment {
         FROM_ORIGINAL_REPOSITORY = "${env.CHANGE_FORK == null || env.BRANCH_NAME == 'main'}"
         NVD_API_KEY = credentials('nvd-api-key')
+        SNYK_TOKEN = credentials('snyk-api-token')
     }
 
     stages {
@@ -239,6 +240,51 @@ pipeline {
                     alwaysLinkToLastBuild: true,
                     keepAll: true
                 ])
+            }
+        }
+
+        stage('Snyk Scan') {
+            steps {
+                script {
+                    sh '''
+                    npm install -g snyk
+                    snyk auth $SNYK_TOKEN
+
+                    snyk test --file=pom.xml --package-manager=maven --json > snyk-report.json || true
+                    '''
+
+                    sh '''
+                    echo "Publish to html..."
+
+                    cat <<EOF > snyk-report.html
+                    <html>
+                    <body>
+                    <pre>
+                    $(cat snyk-report.json | sed 's/</\\\\&lt;/g; s/>/\\\\&gt;/g')
+                    </pre>
+                    </body>
+                    </html>
+                    EOF
+                    '''
+
+                    publishHTML([
+                        reportDir: '.',
+                        reportFiles: 'snyk-report.html',
+                        reportName: 'Snyk Report',
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true
+                    ])
+
+                    def hasVuln = sh(
+                        script: 'grep -q "vulnerabilities" snyk-report.json',
+                        returnStatus: true
+                    )
+
+                    if (hasVuln == 0) {
+                        error("Snyk vulnerabilities found!")
+                    }
+                }
             }
         }
 
