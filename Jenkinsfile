@@ -247,10 +247,11 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    npm install -g snyk
-                    snyk auth $SNYK_TOKEN
+                    curl -Lo snyk https://static.snyk.io/cli/latest/snyk-linux
+                    chmod +x snyk
+                    ./snyk auth $SNYK_TOKEN
 
-                    snyk test --file=pom.xml --package-manager=maven --json > snyk-report.json || true
+                    ./snyk test --file=pom.xml --package-manager=maven --json > snyk-report.json || true
                     '''
 
                     sh '''
