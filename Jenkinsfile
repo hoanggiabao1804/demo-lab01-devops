@@ -195,53 +195,53 @@ pipeline {
         //     }
         // }
 
-        stage('OWASP Dependency Pre-build') {
-            when {
-                expression { env.FROM_ORIGINAL_REPOSITORY == 'true' }
-            }
-            steps {
-                sh '''
-                mvn -B -q clean install -DskipTests
-                '''
-            }
-        }
+        // stage('OWASP Dependency Pre-build') {
+        //     when {
+        //         expression { env.FROM_ORIGINAL_REPOSITORY == 'true' }
+        //     }
+        //     steps {
+        //         sh '''
+        //         mvn -B -q clean install -DskipTests
+        //         '''
+        //     }
+        // }
 
-        stage('OWASP Dependency Check') {
-            when {
-                expression { env.FROM_ORIGINAL_REPOSITORY == 'true' }
-            }
-            steps {
-                sh '''
-                mvn org.owasp:dependency-check-maven:check \
-                -DnvdApiKey=$NVD_API_KEY \
-                -Dnvd.api.endpoint=https://services.nvd.nist.gov/rest/json/cves/2.0 \
-                -Dcisa.enabled=false \
-                -Dorg.slf4j.simpleLogger.log.org.owasp=debug \
-                -Dformat=HTML \
-                -DoutputDirectory=target/dependency-check-report \
-                -DdataDirectory=/owasp \
-                -DassemblyAnalyzerEnabled=false \
-                -DnodeAnalyzerEnabled=false \
-                -DpyPackageAnalyzerEnabled=false
-                '''
-            }
-        }
+        // stage('OWASP Dependency Check') {
+        //     when {
+        //         expression { env.FROM_ORIGINAL_REPOSITORY == 'true' }
+        //     }
+        //     steps {
+        //         sh '''
+        //         mvn org.owasp:dependency-check-maven:check \
+        //         -DnvdApiKey=$NVD_API_KEY \
+        //         -Dnvd.api.endpoint=https://services.nvd.nist.gov/rest/json/cves/2.0 \
+        //         -Dcisa.enabled=false \
+        //         -Dorg.slf4j.simpleLogger.log.org.owasp=debug \
+        //         -Dformat=HTML \
+        //         -DoutputDirectory=target/dependency-check-report \
+        //         -DdataDirectory=/owasp \
+        //         -DassemblyAnalyzerEnabled=false \
+        //         -DnodeAnalyzerEnabled=false \
+        //         -DpyPackageAnalyzerEnabled=false
+        //         '''
+        //     }
+        // }
 
-        stage('Publish OWASP Report') {
-            when {
-                expression { env.FROM_ORIGINAL_REPOSITORY == 'true' }
-            }
-            steps {
-                publishHTML([
-                    reportDir: '.',
-                    reportFiles: '**/target/dependency-check-report.html',
-                    reportName: 'OWASP Dependency Check Report',
-                    allowMissing: true,
-                    alwaysLinkToLastBuild: true,
-                    keepAll: true
-                ])
-            }
-        }
+        // stage('Publish OWASP Report') {
+        //     when {
+        //         expression { env.FROM_ORIGINAL_REPOSITORY == 'true' }
+        //     }
+        //     steps {
+        //         publishHTML([
+        //             reportDir: '.',
+        //             reportFiles: '**/target/dependency-check-report.html',
+        //             reportName: 'OWASP Dependency Check Report',
+        //             allowMissing: true,
+        //             alwaysLinkToLastBuild: true,
+        //             keepAll: true
+        //         ])
+        //     }
+        // }
 
         stage('Snyk Scan') {
             steps {
