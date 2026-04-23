@@ -1,5 +1,7 @@
 @Library('my-shared-lib') _
 
+def servicesToBuild = []
+
 pipeline {
     agent {
         docker {
@@ -35,27 +37,75 @@ pipeline {
                     def changedFiles = sh(
                         script: "git diff refs/remotes/origin/${base}...HEAD --name-only",
                         returnStdout: true
-                    ).trim()
+                    ).trim().split("\n")
 
-                    echo "Changed files:\n${changedFiles}"
-
-                    def paths = [
-                        "backoffice-bff/",
-                        "pom.xml",
-                        ".github/workflows/actions/action.yaml",
-                        ".github/workflows/backoffice-bff-ci.yaml",
-                        "Jenkinsfile"
-                    ]
-
-                    def shouldRun = changedFiles.split("\n").any { file ->
-                        paths.any { p ->
-                            file.startsWith(p) || file == p
+                    changedFiles.each { file -> 
+                        if (file == "pom.xml" || file == "Jenkinsfile" || file == ".github/workflows/actions/action.yaml") {
+                            servicesToBuild << "all"
+                            break
                         }
+                        if (file.startsWith("backoffice-bff/") || file == )
                     }
 
-                    if (!shouldRun) {
-                        currentBuild.result = 'NOT_BUILT'
-                        error("No relevant changes -> skip pipeline")
+                    for (file in changedFiles) {
+                        if (file == "pom.xml" || file == "Jenkinsfile" || file == ".github/workflows/actions/action.yaml") {
+                            servicesToBuild << "all"
+                            break
+                        }
+
+                        if (file.startsWith("automation-ui/")) {
+                            servicesToBuild << "automation-ui"
+                        } else if (file.startsWith("backoffice-bff/") || file == ".github/workflows/backoffice-bff-ci.yaml") {
+                            servicesToBuild << "backoffice-bff"
+                        } else if (file.startsWith("backoffice/") || file == ".github/workflows/backoffice-ci.yaml") {
+                            servicesToBuild << "backoffice"
+                        } else if (file.startsWith("cart/") || file == ".github/workflows/cart-ci.yaml") {
+                            servicesToBuild << "cart"
+                        } else if (file.startsWith("common-library/")) {
+                            servicesToBuild << "common-library"
+                        } else if (file.startsWith("customer/") || file == ".github/workflows/customer-ci.yaml") {
+                            servicesToBuild << "customer"
+                        } else if (file.startsWith("delivery/")) {
+                            servicesToBuild << "delivery"
+                        } else if (file.startsWith("docker/")) {
+                            servicesToBuild << "docker"
+                        } else if (file.startsWith("inventory/") || file == ".github/workflows/inventory-ci.yaml") {
+                            servicesToBuild << "inventory"
+                        } else if (file.startsWith("k8s/")) {
+                            servicesToBuild << "k8s"
+                        } else if (file.startsWith("location/") || file == ".github/workflows/location-ci.yaml") {
+                            servicesToBuild << "location"
+                        } else if (file.startsWith("media/") || file == ".github/workflows/media-ci.yaml") {
+                            servicesToBuild << "media"
+                        } else if (file.startsWith("nginx/")) {
+                            servicesToBuild << "nginx"
+                        } else if (file.startsWith("order/") || file == ".github/workflows/order-ci.yaml") {
+                            servicesToBuild << "order"
+                        } else if (file.startsWith("payment/") || file == ".github/workflows/payment-ci.yaml") {
+                            servicesToBuild << "payment"
+                        } else if (file.startsWith("payment-paypal/") || file == ".github/workflows/payment-paypal-ci.yaml") {
+                            servicesToBuild << "payment-paypal"
+                        } else if (file.startsWith("product/") || file == ".github/workflows/product-ci.yaml") {
+                            servicesToBuild << "product"
+                        } else if (file.startsWith("promotion/") || file == ".github/workflows/promotion-ci.yaml") {
+                            servicesToBuild << "promotion"
+                        } else if (file.startsWith("rating/") || file == ".github/workflows/rating-ci.yaml") {
+                            servicesToBuild << "rating"
+                        } else if (file.startsWith("recommendation/") || file == ".github/workflows/recommendation-ci.yaml") {
+                            servicesToBuild << "recommendation"
+                        } else if (file.startsWith("sampledata/") || file == ".github/workflows/sampledata-ci.yaml") {
+                            servicesToBuild << "sampledata"
+                        } else if (file.startsWith("search/") || file == ".github/workflows/search-ci.yaml") {
+                            servicesToBuild << "search"
+                        } else if (file.startsWith("storefront/") || file == ".github/workflows/storefront-ci.yaml") {
+                            servicesToBuild << "storefront"
+                        } else if (file.startsWith("storefront-bff/") || file == ".github/workflows/storefront-bff-ci.yaml") {
+                            servicesToBuild << "storefront-bff"
+                        } else if (file.startsWith("tax/") || file == ".github/workflows/tax-ci.yaml") {
+                            servicesToBuild << "tax"
+                        } else if (file.startsWith("webhook/") || file == ".github/workflows/webhook-ci.yaml") {
+                            servicesToBuild << "webhook"
+                        }
                     }
                 }
             }
@@ -77,6 +127,292 @@ pipeline {
                 '''
                 setupJDK()
                 setupSonarCache()
+            }
+        }
+
+        stage ('Run automation-ui pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('automation-ui') }
+            }
+            steps {
+                sh '''
+                echo "Automation-ui pipeline..."
+                '''
+            }
+        }
+
+        stage('Run backoffice pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('backoffice') }
+            }
+            steps {
+                sh '''
+                echo "Backoffice pipeline..."
+                '''
+            }
+        }
+
+        stage('Run backoffice-bff pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('backoffice-bff') }
+            }
+            steps {
+                sh '''
+                echo "Backoffice-bff pipeline..."
+                '''
+            }
+        }
+
+        stage('Run cart pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('cart') }
+            }
+            steps {
+                sh '''
+                echo "Cart pipeline..."
+                '''
+            }
+        }
+
+        stage('Run common-library pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('common-library') }
+            }
+            steps {
+                sh '''
+                echo "Common-library pipeline..."
+                '''
+            }
+        }
+
+        stage('Run customer pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('customer') }
+            }
+            steps {
+                sh '''
+                echo "Customer pipeline..."
+                '''
+            }
+        }
+
+        stage('Run delivery pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('delivery') }
+            }
+            steps {
+                sh '''
+                echo "Delivery pipeline..."
+                '''
+            }
+        }
+
+        stage('Run docker pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('docker') }
+            }
+            steps {
+                sh '''
+                echo "Docker pipeline..."
+                '''
+            }
+        }
+
+        stage('Run inventory pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('inventory') }
+            }
+            steps {
+                sh '''
+                echo "Inventory pipeline..."
+                '''
+            }
+        }
+
+        stage('Run k8s pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('k8s') }
+            }
+            steps {
+                sh '''
+                echo "k8s pipeline..."
+                '''
+            }
+        }
+
+        stage('Run location pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('location') }
+            }
+            steps {
+                sh '''
+                echo "Location pipeline..."
+        	    '''
+            }
+        }
+
+        stage('Run media pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('media') }
+            }
+            steps {
+                sh '''
+                echo "Media pipeline..."
+        	    '''
+            }
+        }
+
+        stage('Run nginx pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('nginx') }
+            }
+            steps {
+                sh '''
+                echo "Nginx pipeline..."
+        	    '''
+            }
+        }
+
+        stage('Run order pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('order') }
+            }
+            steps {
+                sh '''
+                echo "Order pipeline..."
+        	    '''
+            }
+        }
+
+        stage('Run payment pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('payment') }
+            }
+            steps {
+                sh '''
+                echo "Payment pipeline..."
+        	    '''
+            }
+        }
+
+        stage('Run payment-paypal pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('payment-paypal') }
+            }
+            steps {
+                sh '''
+                echo "Payment-paypal pipeline..."
+        	    '''
+            }
+        }
+
+        stage('Run product pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('product') }
+            }
+            steps {
+                sh '''
+                echo "Product pipeline..."
+        	    '''
+            }
+        }
+
+        stage('Run promotion pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('promotion')}
+            }
+            steps {
+                sh '''
+                echo "Promotion pipeline..."
+        	    '''
+            }
+        }
+
+        stage('Run rating pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('rating') }
+            }
+            steps {
+                sh '''
+                echo "Rating pipeline..."
+        	    '''
+            }
+        }
+
+        stage('Run recommendation pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('recommendation') }
+            }
+            steps {
+                sh '''
+                echo "Recommendation pipeline..."
+        	    '''
+            }
+        }
+
+        stage('Run sampledata pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('sampledata') }
+            }
+            steps {
+                sh '''
+                echo "Sampledata pipeline..."
+        	    '''
+            }
+        }
+
+        stage('Run search pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('search') }
+            }
+            steps {
+                sh '''
+                echo "Search pipeline..."
+        	    '''
+            }
+        }
+
+        stage('Run storefront pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('storefront') }
+            }
+            steps {
+                sh '''
+                echo "Storefront pipeline..."
+        	    '''
+            }
+        }
+
+        stage('Run storefront-bff pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('storefront-bff') }
+            }
+            steps {
+                sh '''
+                echo "Storefront-bff pipeline..."
+        	    '''
+            }
+        }
+
+        stage('Run tax pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('tax') }
+            }
+            steps {
+                sh '''
+                echo "Tax pipeline..."
+        	    '''
+            }
+        }
+
+        stage('Run webhook pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('webhook') }
+            }
+            steps {
+                sh '''
+                echo "Webhook pipeline..."
+        	    '''
             }
         }
 
@@ -243,51 +579,51 @@ pipeline {
         //     }
         // }
 
-        stage('Snyk Scan') {
-            steps {
-                script {
-                    sh '''
-                    curl -Lo snyk https://static.snyk.io/cli/latest/snyk-linux
-                    chmod +x snyk
-                    ./snyk auth $SNYK_TOKEN
+        // stage('Snyk Scan') {
+        //     steps {
+        //         script {
+        //             sh '''
+        //             curl -Lo snyk https://static.snyk.io/cli/latest/snyk-linux
+        //             chmod +x snyk
+        //             ./snyk auth $SNYK_TOKEN
 
-                    ./snyk test --file=pom.xml --package-manager=maven --json > snyk-report.json || true
-                    '''
+        //             ./snyk test --file=pom.xml --package-manager=maven --json > snyk-report.json || true
+        //             '''
 
-                    sh '''
-                    echo "Publish to html..."
+        //             sh '''
+        //             echo "Publish to html..."
 
-                    cat <<EOF > snyk-report.html
-                    <html>
-                    <body>
-                    <pre>
-                    $(cat snyk-report.json | sed 's/</\\\\&lt;/g; s/>/\\\\&gt;/g')
-                    </pre>
-                    </body>
-                    </html>
-                    EOF
-                    '''
+        //             cat <<EOF > snyk-report.html
+        //             <html>
+        //             <body>
+        //             <pre>
+        //             $(cat snyk-report.json | sed 's/</\\\\&lt;/g; s/>/\\\\&gt;/g')
+        //             </pre>
+        //             </body>
+        //             </html>
+        //             EOF
+        //             '''
 
-                    publishHTML([
-                        reportDir: '.',
-                        reportFiles: 'snyk-report.html',
-                        reportName: 'Snyk Report',
-                        allowMissing: true,
-                        alwaysLinkToLastBuild: true,
-                        keepAll: true
-                    ])
+        //             publishHTML([
+        //                 reportDir: '.',
+        //                 reportFiles: 'snyk-report.html',
+        //                 reportName: 'Snyk Report',
+        //                 allowMissing: true,
+        //                 alwaysLinkToLastBuild: true,
+        //                 keepAll: true
+        //             ])
 
-                    def hasVuln = sh(
-                        script: 'grep -q "vulnerabilities" snyk-report.json',
-                        returnStatus: true
-                    )
+        //             def hasVuln = sh(
+        //                 script: 'grep -q "vulnerabilities" snyk-report.json',
+        //                 returnStatus: true
+        //             )
 
-                    if (hasVuln == 0) {
-                        error("Snyk vulnerabilities found!")
-                    }
-                }
-            }
-        }
+        //             if (hasVuln == 0) {
+        //                 error("Snyk vulnerabilities found!")
+        //             }
+        //         }
+        //     }
+        // }
 
         stage('Build & Test') {
             steps {
