@@ -39,14 +39,6 @@ pipeline {
                         returnStdout: true
                     ).trim().split("\n")
 
-                    changedFiles.each { file -> 
-                        if (file == "pom.xml" || file == "Jenkinsfile" || file == ".github/workflows/actions/action.yaml") {
-                            servicesToBuild << "all"
-                            break
-                        }
-                        if (file.startsWith("backoffice-bff/") || file == )
-                    }
-
                     for (file in changedFiles) {
                         if (file == "pom.xml" || file == "Jenkinsfile" || file == ".github/workflows/actions/action.yaml") {
                             servicesToBuild << "all"
