@@ -47,7 +47,11 @@ pipeline {
 
                         if (file.startsWith("automation-ui/")) {
                             servicesToBuild << "automation-ui"
-                        } else if (file.startsWith("backoffice-bff/") || file == ".github/workflows/backoffice-bff-ci.yaml") {
+                        } else if (
+							file.startsWith("backoffice-bff/") 
+							|| file == ".github/workflows/backoffice-bff-ci.yaml"
+							|| file == ".pipelines/backoffice-bff-ci.groovy"
+						) {
                             servicesToBuild << "backoffice-bff"
                         } else if (file.startsWith("backoffice/") || file == ".github/workflows/backoffice-ci.yaml") {
                             servicesToBuild << "backoffice"
@@ -149,9 +153,17 @@ pipeline {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('backoffice-bff') }
             }
             steps {
-                sh '''
-                echo "Backoffice-bff pipeline..."
-                '''
+                script {
+					sh '''
+					echo "Backoffice-bff pipeline..."
+					'''
+
+					def backoffice_bff = load '.pipelines/backoffice-bff-ci.groovy'
+
+					backoffice_bff.call([
+						isFromOriginalRepository: true
+					])
+				}
             }
         }
 
