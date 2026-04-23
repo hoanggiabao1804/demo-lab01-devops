@@ -156,6 +156,8 @@ pipeline {
                 script {
 					sh '''
 					echo "Backoffice-bff pipeline..."
+
+					ls -al ./.pipelines
 					'''
 
 					def backoffice_bff = load '.pipelines/backoffice-bff-ci.groovy'
