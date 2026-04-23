@@ -16,7 +16,7 @@ pipeline {
     }
 
     environment {
-        FROM_ORIGINAL_REPOSITORY = "${env.CHANGE_FORK == null || env.BRANCH_NAME == 'main'}"
+        FROM_ORIGINAL_REPOSITORY = ${env.CHANGE_FORK == null || env.BRANCH_NAME == 'main'}
         NVD_API_KEY = credentials('nvd-api-key')
         SNYK_TOKEN = credentials('snyk-api-token')
     }
@@ -163,7 +163,7 @@ pipeline {
 					def backoffice_bff = load '.pipelines/backoffice-bff-ci.groovy'
 
 					backoffice_bff.call([
-						isFromOriginalRepository: true
+						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY
 					])
 				}
             }
