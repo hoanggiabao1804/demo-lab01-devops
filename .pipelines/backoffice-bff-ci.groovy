@@ -70,7 +70,7 @@ def call(Map params) {
         ])
 
         def hasLeak = sh(
-            script: '[ grep -q \'\"RuleID\"\' gitleaks-report.json ]',
+            script: '[ grep -q "RuleID" gitleaks-report.json ]',
             returnStatus: true
         )
 
