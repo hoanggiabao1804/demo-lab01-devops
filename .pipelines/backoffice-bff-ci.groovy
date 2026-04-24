@@ -70,7 +70,7 @@ def call(Map params) {
         ])
 
         def hasLeak = sh(
-            script: '[ -s gitleaks-report.json ]',
+            script: '[ grep -q \'\"RuleID\"\' gitleaks-report.json ]',
             returnStatus: true
         )
 
@@ -128,6 +128,48 @@ def call(Map params) {
             alwaysLinkToLastBuild: true,
             keepAll: true
         ])
+    }
+
+    stage('Snyk Scan') {
+		sh '''	
+		curl -Lo snyk https://static.snyk.io/cli/latest/snyk-linux
+		chmod +x snyk
+		./snyk auth $SNYK_TOKEN
+
+		./snyk test --file=pom.xml --package-manager=maven --json > snyk-report.json || true
+		'''
+
+		sh '''
+		echo "Publish to html..."
+
+		cat <<EOF > snyk-report.html
+		<html>
+		<body>
+		<pre>
+		$(cat snyk-report.json | sed 's/</\\\\&lt;/g; s/>/\\\\&gt;/g')
+		</pre>
+		</body>
+		</html>
+		EOF
+		'''
+
+		publishHTML([
+			reportDir: '.',
+			reportFiles: 'snyk-report.html',
+			reportName: 'Snyk Report',
+			allowMissing: true,
+			alwaysLinkToLastBuild: true,
+			keepAll: true
+		])
+
+		def hasVuln = sh(
+			script: 'grep -q "vulnerabilities" snyk-report.json',
+			returnStatus: true
+		)
+
+		if (hasVuln == 0) {
+			error("Snyk vulnerabilities found!")
+		}
     }
 }
 
