@@ -34,6 +34,7 @@ def call(Map params) {
         echo "Run Gitleaks scan..."
         ./gitleaks detect \
         --source ./backoffice-bff \
+        --no-git \
         --report-path gitleaks-report.json \
         --report-format json \
         --exit-code 0
