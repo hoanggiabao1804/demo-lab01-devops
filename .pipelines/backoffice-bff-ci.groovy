@@ -173,8 +173,8 @@ def call(Map params) {
     stage('Snyk Scan') {
 		sh '''
 		snyk auth $SNYK_TOKEN
-        
-        snyk test --package-manager=maven --file=pom.xml --project-name=backoffice-bff --sub-project=backoffice-bff --json > snyk-backoffice-bff-report.json
+
+        snyk test --all-projects --package-manager=maven --json > snyk-report.json
 		'''
 
         sh '''
@@ -246,12 +246,12 @@ def call(Map params) {
         </html>
         "
         end
-        ' snyk-backoffice-bff-report.json > snyk-backoffice-bff-report.html
+        ' snyk-report.json > snyk-report.html
 		'''
 
 		publishHTML([
 			reportDir: '.',
-			reportFiles: 'snyk-backoffice-bff-report.html',
+			reportFiles: 'snyk-report.html',
 			reportName: 'Snyk Report',
 			allowMissing: true,
 			alwaysLinkToLastBuild: true,
