@@ -172,6 +172,8 @@ def call(Map params) {
 
     stage('Snyk Scan') {
 		sh '''
+        find . -name "mvnw" -exec chmod +x {} \\;
+        
         mvn -B -q clean install -DskipTests
 
 		snyk auth $SNYK_TOKEN
