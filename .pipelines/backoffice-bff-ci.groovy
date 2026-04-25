@@ -20,19 +20,8 @@ def call(Map params) {
 
     stage('Gitleak Scan') {
         sh '''
-        apt-get update -qq && apt-get install -y -qq curl tar && apt-get install -y -qq jq
-
-        echo "Download Gitleaks..."
-        curl -fL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz -o gitleaks.tar.gz
-
-        echo "Extract..."
-        tar -xzf gitleaks.tar.gz
-
-        echo "Make executable..."
-        chmod +x gitleaks
-
         echo "Run Gitleaks scan..."
-        ./gitleaks detect \
+        gitleaks detect \
         --source ./backoffice-bff \
         --no-git \
         --report-path gitleaks-report.json \
@@ -41,20 +30,36 @@ def call(Map params) {
         '''
 
         sh '''
-        echo "Debug..."
-
-        ls -lah
-        '''
-
-        sh '''
         echo "Publish to html..."
+
+        jq -r '
+        if length == 0 then
+        "<p>No secrets detected 🎉</p>"
+        else
+        "<table>
+        <tr>
+            <th>File</th>
+            <th>Rule</th>
+            <th>Secret</th>
+            <th>Line</th>
+        </tr>" +
+        ( .[] |
+            "<tr>
+            <td>\\(.File)</td>
+            <td>\\(.RuleID)</td>
+            <td>\\(.Secret)</td>
+            <td>\\(.StartLine)</td>
+            </tr>"
+        ) +
+        "</table>"
+        end
+        ' gitleaks-report.json > gitleaks-table.html
 
         cat <<EOF > gitleaks-report.html
         <html>
         <body>
-        <pre>
-        $(cat gitleaks-report.json | sed 's/</\\\\&lt;/g; s/>/\\\\&gt;/g')
-        </pre>
+        <h2>Gitleaks Report</h2>
+        $(cat gitleaks-table.html)
         </body>
         </html>
         EOF
@@ -133,39 +138,121 @@ def call(Map params) {
 
     stage('Snyk Scan') {
 		sh '''
-		curl -Lo snyk https://static.snyk.io/cli/latest/snyk-linux
-		chmod +x snyk
-		./snyk auth $SNYK_TOKEN
+		snyk auth $SNYK_TOKEN
 
-		./snyk test --file=pom.xml --package-manager=maven --json > snyk-report.json || true
+		snyk test --file=pom.xml --package-manager=maven --json > snyk-report.json || true
 
-        ./snyk test --file=backoffice-bff/pom.xml --package-manager=maven --json > snyk-backoffice-bff-report.json || true
+        snyk test --file=backoffice-bff/pom.xml --package-manager=maven --json > snyk-backoffice-bff-report.json || true
 		'''
 
 		sh '''
 		echo "Publish to html..."
 
-		cat <<EOF > snyk-report.html
-		<html>
-		<body>
-		<pre>
-		$(cat snyk-report.json | sed 's/</\\\\&lt;/g; s/>/\\\\&gt;/g')
-		</pre>
-		</body>
-		</html>
-		EOF
+        jq -r '
+        if (.vulnerabilities | length) == 0 then
+        "<p>No vulnerabilities 🎉</p>"
+        else
+        "<table>
+        <tr>
+            <th>Package</th>
+            <th>Severity</th>
+            <th>Title</th>
+            <th>Version</th>
+            <th>Dependency Path</th>
+        </tr>" +
+        (.vulnerabilities[] |
+            "<tr>
+            <td>\(.packageName)</td>
+            <td>\(.severity)</td>
+            <td>\(.title)</td>
+            <td>\(.version)</td>
+            <td>\(.from | join(\" → \"))</td>
+            </tr>"
+        ) +
+        "</table>"
+        end
+        ' snyk-report.json > snyk-table.html
+
+        cat <<EOF > snyk-report.html
+        <html>
+        <head>
+        <style>
+        body { font-family: Arial; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+
+        /* severity color */
+        .low { color: green; }
+        .medium { color: orange; }
+        .high { color: red; }
+        .critical { color: darkred; font-weight: bold; }
+        </style>
+        </head>
+        <body>
+
+        <h2>Snyk Report</h2>
+
+        $(cat snyk-table.html)
+
+        </body>
+        </html>
+        EOF
         '''
 
         sh '''
+        jq -r '
+        if (.vulnerabilities | length) == 0 then
+        "<p>No vulnerabilities 🎉</p>"
+        else
+        "<table>
+        <tr>
+            <th>Package</th>
+            <th>Severity</th>
+            <th>Title</th>
+            <th>Version</th>
+            <th>Dependency Path</th>
+        </tr>" +
+        (.vulnerabilities[] |
+            "<tr>
+            <td>\(.packageName)</td>
+            <td>\(.severity)</td>
+            <td>\(.title)</td>
+            <td>\(.version)</td>
+            <td>\(.from | join(\" → \"))</td>
+            </tr>"
+        ) +
+        "</table>"
+        end
+        ' snyk-report.json > snyk-backoffice-bff-table.html
+
         cat <<EOF > snyk-backoffice-bff-report.html
-		<html>
-		<body>
-		<pre>
-		$(cat snyk-backoffice-bff-report.json | sed 's/</\\\\&lt;/g; s/>/\\\\&gt;/g')
-		</pre>
-		</body>
-		</html>
-		EOF
+        <html>
+        <head>
+        <style>
+        body { font-family: Arial; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+
+        /* severity color */
+        .low { color: green; }
+        .medium { color: orange; }
+        .high { color: red; }
+        .critical { color: darkred; font-weight: bold; }
+        </style>
+        </head>
+        <body>
+
+        <h2>Snyk backoffice-bff Report</h2>
+
+        $(cat snyk-backoffice-bff-table.html)
+
+        </body>
+        </html>
+        EOF
 		'''
 
 		publishHTML([
