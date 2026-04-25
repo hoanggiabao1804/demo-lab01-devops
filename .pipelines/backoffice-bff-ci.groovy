@@ -149,56 +149,55 @@ def call(Map params) {
 		echo "Publish to html..."
 
         jq -r '
-        if (.vulnerabilities | length) == 0 then
-        "<p>No vulnerabilities 🎉</p>"
-        else
-        "<table>
-        <tr>
-            <th>Package</th>
-            <th>Severity</th>
-            <th>Title</th>
-            <th>Version</th>
-            <th>Dependency Path</th>
-        </tr>" +
-        (.vulnerabilities[] |
-            "<tr>
-            <td>\\(.packageName)</td>
-            <td>\\(.severity)</td>
-            <td>\\(.title)</td>
-            <td>\\(.version)</td>
-            <td>\\(.from | join(\" → \"))</td>
-            </tr>"
-        ) +
-        "</table>"
-        end
-        ' snyk-report.json > snyk-table.html
+        def color(sev):
+        if sev=="critical" then "red"
+        elif sev=="high" then "orange"
+        elif sev=="medium" then "gold"
+        else "green" end;
 
-        cat <<EOF > snyk-report.html
+        "
         <html>
         <head>
         <style>
         body { font-family: Arial; }
         table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ddd; padding: 8px; }
-        th { background-color: #f2f2f2; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-
-        /* severity color */
-        .low { color: green; }
-        .medium { color: orange; }
-        .high { color: red; }
-        .critical { color: darkred; font-weight: bold; }
+        th, td { border: 1px solid #ccc; padding: 8px; }
+        th { background: #f4f4f4; }
         </style>
         </head>
         <body>
 
-        <h2>Snyk Report</h2>
+        <h2>Snyk Vulnerability Report</h2>
 
-        $(cat snyk-table.html)
+        <table>
+        <tr>
+        <th>Severity</th>
+        <th>Package</th>
+        <th>Version</th>
+        <th>Title</th>
+        <th>Fixed In</th>
+        </tr>
+        " +
+
+        (
+        .vulnerabilities[] |
+        "<tr>" +
+        "<td style=\"color:" + color(.severity) + "\">" + .severity + "</td>" +
+        "<td>" + .packageName + "</td>" +
+        "<td>" + .version + "</td>" +
+        "<td>" + .title + "</td>" +
+        "<td>" + (if .fixedIn then (.fixedIn | join(", ")) else "N/A" end) + "</td>" +
+        "</tr>"
+        )
+
+        + "
+
+        </table>
 
         </body>
         </html>
-        EOF
+        "
+        ' snyk-report.json > snyk-report.html
         '''
 
         sh '''
