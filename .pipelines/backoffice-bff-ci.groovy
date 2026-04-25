@@ -173,8 +173,8 @@ def call(Map params) {
     stage('Snyk Scan') {
 		sh '''
 		snyk auth $SNYK_TOKEN
-
-        snyk test --file=backoffice-bff/pom.xml --package-manager=maven --json > snyk-backoffice-bff-report.json || true
+        
+        snyk test --package-manager=maven --file=pom.xml --project-name=backoffice-bff --sub-project=backoffice-bff --json > snyk-backoffice-bff-report.json
 		'''
 
         sh '''
