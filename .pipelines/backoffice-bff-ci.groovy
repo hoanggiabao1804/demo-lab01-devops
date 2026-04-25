@@ -30,39 +30,73 @@ def call(Map params) {
         '''
 
         sh '''
-        echo "Publish to html..."
-
         jq -r '
         if length == 0 then
-        "<p>No secrets detected 🎉</p>"
+        "<p>No secrets detected</p>"
         else
-        "<table>
-        <tr>
-            <th>File</th>
-            <th>Rule</th>
-            <th>Secret</th>
-            <th>Line</th>
-        </tr>" +
-        ( .[] |
-            "<tr>
-            <td>\\(.File)</td>
-            <td>\\(.RuleID)</td>
-            <td>\\(.Secret)</td>
-            <td>\\(.StartLine)</td>
-            </tr>"
-        ) +
-        "</table>"
-        end
-        ' gitleaks-report.json > gitleaks-table.html
+        "<html>
+        <head>
+        <style>
+        body { font-family: Arial; padding: 20px; }
+        h2 { margin-bottom: 20px; }
 
-        cat <<EOF > gitleaks-report.html
-        <html>
+        table {
+        border-collapse: collapse;
+        width: 100%;
+        }
+
+        th, td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: left;
+        }
+
+        th {
+        background-color: #f4f4f4;
+        }
+
+        tr:nth-child(even) {
+        background-color: #fafafa;
+        }
+        </style>
+        </head>
         <body>
+
         <h2>Gitleaks Report</h2>
-        $(cat gitleaks-table.html)
+
+        <table>
+        <thead>
+        <tr>
+        <th>File</th>
+        <th>RuleID</th>
+        <th>Secret</th>
+        <th>StartLine</th>
+        </tr>
+        </thead>
+        <tbody>
+        " +
+
+        (
+        [.[] |
+            "<tr>" +
+            "<td>" + .File + "</td>" +
+            "<td>" + .RuleID + "</td>" +
+            "<td>" + .Secret + "</td>" +
+            "<td>" + .StartLine + "</td>" +
+            "</tr>"
+        ] | join("")
+        )
+
+        + "
+
+        </tbody>
+        </table>
+
         </body>
         </html>
-        EOF
+        "
+        end
+        '  gitleaks-report.json > gitleaks-report.html
         '''
 
         publishHTML([
@@ -149,12 +183,9 @@ def call(Map params) {
         echo "Publish to html..."
 
         jq -r '
-        def color(sev):
-        if sev=="critical" then "red"
-        elif sev=="high" then "orange"
-        elif sev=="medium" then "gold"
-        else "green" end;
-
+        if (.vulnerabilities | length) == 0 then
+        "<p>No vulnerabilities</p>"
+        else
         "<html>
         <head>
         <style>
@@ -201,7 +232,7 @@ def call(Map params) {
         (
         [.vulnerabilities[] |
             "<tr>" +
-            "<td style=\\"color:" + color(.severity) + "; font-weight:bold\\">" + .severity + "</td>" +
+            "<td>" + .severity + "</td>" +
             "<td>" + .packageName + "</td>" +
             "<td>" + .version + "</td>" +
             "<td>" + .title + "</td>" +
@@ -218,61 +249,80 @@ def call(Map params) {
         </body>
         </html>
         "
+        end
         ' snyk-report.json > snyk-report.html
         '''
 
         sh '''
         jq -r '
         if (.vulnerabilities | length) == 0 then
-        "<p>No vulnerabilities 🎉</p>"
+        "<p>No vulnerabilities</p>"
         else
-        "<table>
-        <tr>
-            <th>Package</th>
-            <th>Severity</th>
-            <th>Title</th>
-            <th>Version</th>
-            <th>Dependency Path</th>
-        </tr>" +
-        (.vulnerabilities[] |
-            "<tr>
-            <td>\\(.packageName)</td>
-            <td>\\(.severity)</td>
-            <td>\\(.title)</td>
-            <td>\\(.version)</td>
-            <td>\\(.from | join(\" → \"))</td>
-            </tr>"
-        ) +
-        "</table>"
-        end
-        ' snyk-report.json > snyk-backoffice-bff-table.html
-
-        cat <<EOF > snyk-backoffice-bff-report.html
-        <html>
+        "<html>
         <head>
         <style>
-        body { font-family: Arial; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ddd; padding: 8px; }
-        th { background-color: #f2f2f2; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
+        body { font-family: Arial; padding: 20px; }
+        h2 { margin-bottom: 20px; }
 
-        /* severity color */
-        .low { color: green; }
-        .medium { color: orange; }
-        .high { color: red; }
-        .critical { color: darkred; font-weight: bold; }
+        table {
+        border-collapse: collapse;
+        width: 100%;
+        }
+
+        th, td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: left;
+        }
+
+        th {
+        background-color: #f4f4f4;
+        }
+
+        tr:nth-child(even) {
+        background-color: #fafafa;
+        }
         </style>
         </head>
         <body>
 
-        <h2>Snyk backoffice-bff Report</h2>
+        <h2>Snyk Vulnerability Report</h2>
 
-        $(cat snyk-backoffice-bff-table.html)
+        <table>
+        <thead>
+        <tr>
+        <th>Severity</th>
+        <th>Package</th>
+        <th>Version</th>
+        <th>Title</th>
+        <th>Fixed In</th>
+        </tr>
+        </thead>
+        <tbody>
+        " +
+
+        (
+        [.vulnerabilities[] |
+            "<tr>" +
+            "<td>" + .severity + "</td>" +
+            "<td>" + .packageName + "</td>" +
+            "<td>" + .version + "</td>" +
+            "<td>" + .title + "</td>" +
+            "<td>" + (if .fixedIn then (.fixedIn | join(", ")) else "N/A" end) + "</td>" +
+            "</tr>"
+        ] | join("")
+        )
+
+        + "
+
+        </tbody>
+        </table>
 
         </body>
         </html>
-        EOF
+        "
+        end
+        ' snyk-backoffice-bff-report.json > snyk-backoffice-bff-report.html
 		'''
 
 		publishHTML([
