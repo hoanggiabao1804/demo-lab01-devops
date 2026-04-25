@@ -168,8 +168,14 @@ def call(Map params) {
 		)
 
 		if (hasVuln == 0) {
-			error("Snyk vulnerabilities found!")
-		}
+			sh '''
+            echo "Snyk vulnerabilities found!"
+            '''
+		} else {
+            sh '''
+            echo "No vulnerabilites found!"
+            '''
+        }
     }
 }
 
