@@ -182,7 +182,7 @@ def call(Map params) {
         (
         .vulnerabilities[] |
         "<tr>" +
-        "<td style=\"color:" + color(.severity) + "\">" + .severity + "</td>" +
+        "<td style=\\"color:" + color(.severity) + "\\">" + .severity + "</td>" +
         "<td>" + .packageName + "</td>" +
         "<td>" + .version + "</td>" +
         "<td>" + .title + "</td>" +
@@ -219,7 +219,7 @@ def call(Map params) {
             <td>\\(.severity)</td>
             <td>\\(.title)</td>
             <td>\\(.version)</td>
-            <td>\\(.from | join(\" → \"))</td>
+            <td>\\(.from | join(\\" → \\"))</td>
             </tr>"
         ) +
         "</table>"
