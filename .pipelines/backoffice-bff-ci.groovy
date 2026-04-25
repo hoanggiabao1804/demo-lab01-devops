@@ -219,7 +219,7 @@ def call(Map params) {
             <td>\\(.severity)</td>
             <td>\\(.title)</td>
             <td>\\(.version)</td>
-            <td>\\(.from | join(\\" → \\"))</td>
+            <td>\\(.from | join(\" → \"))</td>
             </tr>"
         ) +
         "</table>"
