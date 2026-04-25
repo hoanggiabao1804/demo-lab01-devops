@@ -640,7 +640,7 @@ pipeline {
 
     post {
         always {
-            cleanWs() // Deletes the entire workspace
+            cleanWs(deleteDirs: true, disableDeferredWipeout: true)
         }
     }
 }
