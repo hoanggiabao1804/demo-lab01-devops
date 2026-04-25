@@ -5,7 +5,9 @@ def servicesToBuild = []
 pipeline {
     agent {
         docker {
-            image 'maven:3.9.14-eclipse-temurin-25'
+            image '23120022/zakirepo:maven-3.9.14-eclipse-temurin-25-v1.0'
+            registryUrl 'https://index.docker.io/v1/'
+            registryCredentialsId 'dockerhub-cred'
             args '''
             --network sonar-network 
             -u root 
