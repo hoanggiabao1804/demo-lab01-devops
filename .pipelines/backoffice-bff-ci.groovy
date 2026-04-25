@@ -174,7 +174,7 @@ def call(Map params) {
 		sh '''
 		snyk auth $SNYK_TOKEN
 
-        snyk test --file=pom.xml --package-manager=maven --json > snyk-report.json
+        snyk test --file=pom.xml --package-manager=maven -d --json > snyk-report.json
 		'''
 
         sh '''
