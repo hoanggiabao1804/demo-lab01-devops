@@ -138,6 +138,8 @@ def call(Map params) {
 		./snyk auth $SNYK_TOKEN
 
 		./snyk test --file=pom.xml --package-manager=maven --json > snyk-report.json || true
+
+        ./snyk test --file=backoffice-bff/pom.xml --package-manager=maven --json > snyk-backoffice-bff-report.json || true
 		'''
 
 		sh '''
@@ -152,11 +154,21 @@ def call(Map params) {
 		</body>
 		</html>
 		EOF
+
+        cat <<EOF > snyk-backoffice-bff-report.html
+		<html>
+		<body>
+		<pre>
+		$(cat snyk-backoffice-bff-report.json | sed 's/</\\\\&lt;/g; s/>/\\\\&gt;/g')
+		</pre>
+		</body>
+		</html>
+		EOF
 		'''
 
 		publishHTML([
 			reportDir: '.',
-			reportFiles: 'snyk-report.html',
+			reportFiles: 'snyk-report.html,snyk-backoffice-bff-report.html',
 			reportName: 'Snyk Report',
 			allowMissing: true,
 			alwaysLinkToLastBuild: true,
