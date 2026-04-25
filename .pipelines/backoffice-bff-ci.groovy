@@ -20,7 +20,7 @@ def call(Map params) {
 
     stage('Gitleak Scan') {
         sh '''
-        apt-get update -qq && apt-get install -y -qq curl tar
+        apt-get update -qq && apt-get install -y -qq curl tar && apt-get install -y -qq jq
 
         echo "Download Gitleaks..."
         curl -fL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz -o gitleaks.tar.gz
@@ -132,7 +132,7 @@ def call(Map params) {
     }
 
     stage('Snyk Scan') {
-		sh '''	
+		sh '''
 		curl -Lo snyk https://static.snyk.io/cli/latest/snyk-linux
 		chmod +x snyk
 		./snyk auth $SNYK_TOKEN
@@ -154,7 +154,9 @@ def call(Map params) {
 		</body>
 		</html>
 		EOF
+        '''
 
+        sh '''
         cat <<EOF > snyk-backoffice-bff-report.html
 		<html>
 		<body>
