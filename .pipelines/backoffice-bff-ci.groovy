@@ -107,6 +107,7 @@ def call(Map params) {
     stage('OWASP Dependency Check') {
         sh '''
         mvn org.owasp:dependency-check-maven:check \
+        -pl backoffice-bff -am \
         -DnvdApiKey=$NVD_API_KEY \
         -Dnvd.api.endpoint=https://services.nvd.nist.gov/rest/json/cves/2.0 \
         -Dcisa.enabled=false \
