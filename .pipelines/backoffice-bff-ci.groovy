@@ -174,6 +174,8 @@ def call(Map params) {
 		sh '''
 		snyk auth $SNYK_TOKEN
 
+        echo "ORG = $SNYK_CFG_ORG"
+
         snyk test --file=pom.xml --package-manager=maven -d --json > snyk-report.json
 		'''
 
