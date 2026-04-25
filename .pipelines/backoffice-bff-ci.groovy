@@ -162,11 +162,11 @@ def call(Map params) {
         </tr>" +
         (.vulnerabilities[] |
             "<tr>
-            <td>\(.packageName)</td>
-            <td>\(.severity)</td>
-            <td>\(.title)</td>
-            <td>\(.version)</td>
-            <td>\(.from | join(\" → \"))</td>
+            <td>\\(.packageName)</td>
+            <td>\\(.severity)</td>
+            <td>\\(.title)</td>
+            <td>\\(.version)</td>
+            <td>\\(.from | join(\" → \"))</td>
             </tr>"
         ) +
         "</table>"
@@ -216,11 +216,11 @@ def call(Map params) {
         </tr>" +
         (.vulnerabilities[] |
             "<tr>
-            <td>\(.packageName)</td>
-            <td>\(.severity)</td>
-            <td>\(.title)</td>
-            <td>\(.version)</td>
-            <td>\(.from | join(\" → \"))</td>
+            <td>\\(.packageName)</td>
+            <td>\\(.severity)</td>
+            <td>\\(.title)</td>
+            <td>\\(.version)</td>
+            <td>\\(.from | join(\" → \"))</td>
             </tr>"
         ) +
         "</table>"
