@@ -640,10 +640,10 @@ pipeline {
         }
     }
 
-    post {
-        always {
-            sh 'chmod -R 777 . || true'
-            deleteDir()
-        }
-    }
+    // post {
+    //     always {
+    //         sh 'chmod -R 777 . || true'
+    //         deleteDir()
+    //     }
+    // }
 }
