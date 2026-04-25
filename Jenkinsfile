@@ -22,6 +22,13 @@ pipeline {
     }
 
     stages {
+        stage('Init') {
+            steps {
+                deleteDir()
+                checkout scm
+            }
+        }
+
         stage('Detect Changes') {
             steps {
                 script {
@@ -640,7 +647,7 @@ pipeline {
 
     post {
         always {
-            cleanWs(deleteDirs: true, disableDeferredWipeout: true)
+            deleteDir()
         }
     }
 }
