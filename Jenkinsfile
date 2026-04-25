@@ -637,4 +637,10 @@ pipeline {
             }
         }
     }
+
+    post {
+        always {
+            cleanWs() // Deletes the entire workspace
+        }
+    }
 }
