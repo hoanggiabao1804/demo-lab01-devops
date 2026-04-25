@@ -145,8 +145,8 @@ def call(Map params) {
         snyk test --file=backoffice-bff/pom.xml --package-manager=maven --json > snyk-backoffice-bff-report.json || true
 		'''
 
-		sh '''
-		echo "Publish to html..."
+        sh '''
+        echo "Publish to html..."
 
         jq -r '
         def color(sev):
@@ -155,14 +155,30 @@ def call(Map params) {
         elif sev=="medium" then "gold"
         else "green" end;
 
-        "
-        <html>
+        "<html>
         <head>
         <style>
-        body { font-family: Arial; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ccc; padding: 8px; }
-        th { background: #f4f4f4; }
+        body { font-family: Arial; padding: 20px; }
+        h2 { margin-bottom: 20px; }
+
+        table {
+        border-collapse: collapse;
+        width: 100%;
+        }
+
+        th, td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: left;
+        }
+
+        th {
+        background-color: #f4f4f4;
+        }
+
+        tr:nth-child(even) {
+        background-color: #fafafa;
+        }
         </style>
         </head>
         <body>
@@ -170,6 +186,7 @@ def call(Map params) {
         <h2>Snyk Vulnerability Report</h2>
 
         <table>
+        <thead>
         <tr>
         <th>Severity</th>
         <th>Package</th>
@@ -177,21 +194,25 @@ def call(Map params) {
         <th>Title</th>
         <th>Fixed In</th>
         </tr>
+        </thead>
+        <tbody>
         " +
 
         (
-        .vulnerabilities[] |
-        "<tr>" +
-        "<td style=\\"color:" + color(.severity) + "\\">" + .severity + "</td>" +
-        "<td>" + .packageName + "</td>" +
-        "<td>" + .version + "</td>" +
-        "<td>" + .title + "</td>" +
-        "<td>" + (if .fixedIn then (.fixedIn | join(", ")) else "N/A" end) + "</td>" +
-        "</tr>"
+        [.vulnerabilities[] |
+            "<tr>" +
+            "<td style=\\"color:" + color(.severity) + "; font-weight:bold\\">" + .severity + "</td>" +
+            "<td>" + .packageName + "</td>" +
+            "<td>" + .version + "</td>" +
+            "<td>" + .title + "</td>" +
+            "<td>" + (if .fixedIn then (.fixedIn | join(", ")) else "N/A" end) + "</td>" +
+            "</tr>"
+        ] | join("")
         )
 
         + "
 
+        </tbody>
         </table>
 
         </body>
