@@ -21,7 +21,21 @@ pipeline {
         SNYK_TOKEN = credentials('snyk-api-token')
     }
 
+    options {
+        skipDefaultCheckout()
+        buildDiscarder(logRotator(
+            numToKeepStr: '10',
+            artifactNumToKeepStr: '5'
+        ))
+    }
+
     stages {
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+
         stage('Detect Changes') {
             steps {
                 script {
