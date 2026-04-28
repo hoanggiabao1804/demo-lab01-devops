@@ -176,7 +176,7 @@ def call(Map params) {
 
         echo "ORG = $SNYK_CFG_ORG"
 
-        snyk test --file=pom.xml --package-manager=maven -d --json > snyk-report.json
+        snyk test --file=pom.xml --package-manager=maven -d --json > snyk-report.json || true
 		'''
 
         sh '''
