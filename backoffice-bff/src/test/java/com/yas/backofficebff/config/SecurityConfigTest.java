@@ -25,7 +25,7 @@ class SecurityConfigTest {
         Collection<GrantedAuthority> authorities = securityConfig.generateAuthoritiesFromClaim(roles);
 
         assertThat(authorities).extracting(GrantedAuthority::getAuthority)
-            .containsExactlyInAnyOrder("ROLE_ADMIN", "ROLE_MANAGER");
+                .containsExactlyInAnyOrder("ROLE_ADMIN", "ROLE_MANAGER");
     }
 
     @Test
@@ -38,12 +38,13 @@ class SecurityConfigTest {
         Collection<? extends GrantedAuthority> mappedAuthorities = mapper.mapAuthorities(Set.of(oauth2UserAuthority));
 
         assertThat(mappedAuthorities).extracting(GrantedAuthority::getAuthority)
-            .containsExactlyInAnyOrder("ROLE_ADMIN", "ROLE_USER");
+                .containsExactlyInAnyOrder("ROLE_ADMIN", "ROLE_USER");
     }
 
     @Test
     void should_return_empty_authorities_when_claim_missing() {
-        OAuth2UserAuthority oauth2UserAuthority = new OAuth2UserAuthority(Map.of());
+        Map<String, Object> attributes = Map.of("preferred_username", "john.doe");
+        OAuth2UserAuthority oauth2UserAuthority = new OAuth2UserAuthority(attributes);
 
         GrantedAuthoritiesMapper mapper = securityConfig.userAuthoritiesMapperForKeycloak();
         Collection<? extends GrantedAuthority> mappedAuthorities = mapper.mapAuthorities(Set.of(oauth2UserAuthority));
