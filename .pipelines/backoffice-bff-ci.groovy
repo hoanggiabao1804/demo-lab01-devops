@@ -176,7 +176,7 @@ def call(Map params) {
 
         find . -name "mvnw" -exec chmod +x {} \\;
 
-        snyk test --file=pom.xml --package-manager=maven -d --json > snyk-report.json || true
+        snyk test --file=pom.xml --package-manager=maven -d --json > snyk-report.json
 		'''
 
         sh '''
