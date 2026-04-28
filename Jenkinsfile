@@ -5,7 +5,9 @@ def servicesToBuild = []
 pipeline {
     agent {
         docker {
-            image 'maven:3.9.14-eclipse-temurin-25'
+            image '23120022/zakirepo:maven-3.9.14-eclipse-temurin-25-v1.0'
+            registryUrl 'https://index.docker.io/v1/'
+            registryCredentialsId 'dockerhub_cred'
             args '''
             --network sonar-network 
             -u root 
@@ -19,6 +21,7 @@ pipeline {
         FROM_ORIGINAL_REPOSITORY = "${env.CHANGE_FORK == null || env.BRANCH_NAME == 'main'}"
         NVD_API_KEY = credentials('nvd-api-key')
         SNYK_TOKEN = credentials('snyk-api-token')
+        SNYK_CFG_ORG = credentials('snyk-org-id')
     }
 
     stages {
@@ -637,4 +640,11 @@ pipeline {
             }
         }
     }
+
+    // post {
+    //     always {
+    //         sh 'chmod -R 777 . || true'
+    //         deleteDir()
+    //     }
+    // }
 }
