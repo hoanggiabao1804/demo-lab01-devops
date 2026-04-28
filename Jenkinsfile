@@ -120,12 +120,14 @@ pipeline {
 
         stage('Run Action') {
             steps {
-                sh '''
-                echo "Setup Java and Sonar Cache"
-                '''
-                def action = load '.pipelines/actions/action.groovy'
+                script {
+                    sh '''
+                    echo "Setup Java and Sonar Cache"
+                    '''
+                    def action = load '.pipelines/actions/action.groovy'
 
-                action.call()
+                    action.call()
+                }
             }
         }
 
