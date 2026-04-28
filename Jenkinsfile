@@ -112,8 +112,8 @@ pipeline {
                 sh '''
                 java -version
                 mvn -version
-                sh 'hostname'
-                sh 'which docker || echo "no docker"'
+                hostname
+                which docker || echo "no docker"
                 '''
             }
         }
