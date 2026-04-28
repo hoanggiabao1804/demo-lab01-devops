@@ -101,7 +101,7 @@ def call(Map params) {
             "<td>" + .File + "</td>" +
             "<td>" + .RuleID + "</td>" +
             "<td>" + .Secret + "</td>" +
-            "<td>" + (.StartLine | toString) + "</td>" +
+            "<td>" + (.StartLine | tostring) + "</td>" +
             "</tr>"
         ] | join("")
         )
