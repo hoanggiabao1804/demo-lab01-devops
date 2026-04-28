@@ -14,21 +14,19 @@ def call(Map params) {
     }
 
     stage('Code Quality') {
-        parallel {
-            stage('Lint') {
+        parallel(
+            failFast: true,
+            "Lint": {
                 dir('backoffice') {
-                    sh '''
-                    npm run lint
-                    '''
+                    sh 'npm run lint'
                 }
-            }
-
-            stage('Format Check') {
+            },
+            "Format Check": {
                 dir('backoffice') {
                     sh 'npx prettier --check .'
                 }
             }
-        }
+        )
     }
 
     stage('Audit') {
