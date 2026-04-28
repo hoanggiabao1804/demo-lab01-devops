@@ -1,5 +1,3 @@
-@Library('my-shared-lib') _
-
 def servicesToBuild = []
 
 pipeline {
