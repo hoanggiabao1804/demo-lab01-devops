@@ -144,10 +144,28 @@ pipeline {
             when {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('backoffice') }
             }
+            agent {
+                docker {
+                    image 'node:20'
+                    args '''
+                    -u root
+                    -v $HOME/.npm:/root/.npm
+                    '''
+                    reuseNode true
+                }
+            }
             steps {
-                sh '''
-                echo "Backoffice pipeline..."
-                '''
+                script {
+                    sh '''
+                    echo "Backoffice pipeline..."
+                    '''
+
+                    def backoffice = load '.pipelines/backoffice-ci.groovy'
+
+                    backoffice.call([
+                        isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
+                    ])
+                }
             }
         }
 
