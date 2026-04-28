@@ -278,8 +278,7 @@ def call(Map params) {
 
     stage('Test') {
         sh '''
-        mvn clean test jacoco:report jacoco:check \
-        -f backoffice-bff
+        mvn clean verify -f backoffice-bff
         '''
     }
 
