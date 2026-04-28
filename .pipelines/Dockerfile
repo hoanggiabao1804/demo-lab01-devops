@@ -4,6 +4,10 @@ RUN apt-get update -qq && \
     apt-get install -y -qq jq tar && \
     rm -rf /var/lib/apt/lists/*
 
+# Install Node.js 20
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs
+
 # Install Gitleaks
 RUN curl -fL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz -o gitleaks.tar.gz && \
     tar -xzf gitleaks.tar.gz && \
@@ -16,6 +20,7 @@ RUN curl -Lo /usr/local/bin/snyk https://static.snyk.io/cli/latest/snyk-linux &&
     chmod +x /usr/local/bin/snyk
 
 # Verify tools
-RUN jq --version && \
+RUN node -v && npm -v && \
+    jq --version && \
     gitleaks version && \
     snyk --version
