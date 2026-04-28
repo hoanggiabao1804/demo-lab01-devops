@@ -4,6 +4,12 @@ def call(Map params) {
         return
     }
 
+    stage('Build') {
+        sh '''
+        mvn clean package -pl backoffice-bff -am -DskipTests
+        '''
+    }
+
     stage('Run Maven Checkstyle') {
         sh '''
         mvn checkstyle:checkstyle \
