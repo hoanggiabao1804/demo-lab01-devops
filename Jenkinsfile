@@ -3,7 +3,7 @@ def servicesToBuild = []
 pipeline {
     agent {
         docker {
-            image '23120022/zakirepo:maven-3.9.14-eclipse-temurin-25-v1.0'
+            image '23120022/zakirepo:maven-3.9.14-eclipse-temurin-25-v2.0'
             registryUrl 'https://index.docker.io/v1/'
             registryCredentialsId 'dockerhub_cred'
             args '''
@@ -11,6 +11,7 @@ pipeline {
             -u root 
             -v $HOME/.sonar:/root/.sonar 
             -v $HOME/.owasp:/owasp
+            -v $HOME/.npm:/root/.npm
             '''
         }
     }
@@ -145,16 +146,6 @@ pipeline {
         stage('Run backoffice pipeline') {
             when {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('backoffice') }
-            }
-            agent {
-                docker {
-                    image 'node:20'
-                    args '''
-                    -u root
-                    -v $HOME/.npm:/root/.npm
-                    '''
-                    reuseNode true
-                }
             }
             steps {
                 script {
