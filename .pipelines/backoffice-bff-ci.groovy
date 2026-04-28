@@ -278,7 +278,7 @@ def call(Map params) {
 
     stage('Test') {
         sh '''
-        mvn clean verify -f backoffice-bff
+        mvn clean verify -pl backoffice-bff -am
         '''
     }
 
