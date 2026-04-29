@@ -291,7 +291,11 @@ def call(Map params) {
         sh '''
         mvn test -pl cart -am
 
-        mvn verify -pl cart -am -Djacoco.skip=false
+        mvn verify -pl cart -am -Djacoco.skip=true
+        '''
+
+        sh '''
+        mvn verify -pl cart -Djacoco.skip=false
         '''
     }
 
