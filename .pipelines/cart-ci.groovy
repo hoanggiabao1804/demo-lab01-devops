@@ -287,25 +287,25 @@ def call(Map params) {
     //     }
     // }
 
-    // stage('Test') {
-    //     sh '''
-    //     mvn clean verify -pl cart
-    //     '''
-    // }
+    stage('Test') {
+        sh '''
+        mvn clean verify -pl cart
+        '''
+    }
 
-    // stage('Publish Test Result') {
-    //     junit 'cart/**/target/surefire-reports/*.xml'
-    // }
+    stage('Publish Test Result') {
+        junit 'cart/**/target/surefire-reports/*.xml'
+    }
 
-    // stage('Publish Coverage Report') {
-    //     publishHTML([
-    //         reportDir: 'cart/target/site/jacoco',
-    //         reportFiles: 'index.html',
-    //         reportName: 'JaCoCo Coverage',
-    //         keepAll: true,
-    //         alwaysLinkToLastBuild: true
-    //     ])
-    // }
+    stage('Publish Coverage Report') {
+        publishHTML([
+            reportDir: 'cart/target/site/jacoco',
+            reportFiles: 'index.html',
+            reportName: 'JaCoCo Coverage',
+            keepAll: true,
+            alwaysLinkToLastBuild: true
+        ])
+    }
 }
 
 return this
