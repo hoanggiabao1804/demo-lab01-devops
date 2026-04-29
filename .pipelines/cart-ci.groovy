@@ -10,6 +10,12 @@ def call(Map params) {
         '''
     }
 
+    stage('Build common-library') {
+        sh '''
+        mvn clean install -f common-library
+        '''
+    }
+
     stage('Run Maven Checkstyle') {
         sh '''
         mvn checkstyle:checkstyle \
