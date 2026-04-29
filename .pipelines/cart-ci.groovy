@@ -138,9 +138,10 @@ def call(Map params) {
     stage('SonarQube Analysis') {
         withSonarQubeEnv('My SonarQube Server') {
             sh '''
-            mvn clean verify sonar:sonar -am \
+            mvn clean verify sonar:sonar
             -Dsonar.host.url=http://sonarqube:9000 \
-            -f cart
+            -pl cart \
+            -am
             '''
         }
         timeout(time: 1, unit: 'HOURS') {
