@@ -135,10 +135,34 @@ def call(Map params) {
         }
     }
 
+    stage('Test') {
+        sh '''
+        mvn clean test -pl cart -am -Djacoco.skip=false
+        '''
+    }
+
+    stage('Publish Test Result') {
+        sh '''
+        mvn jacoco:report -pl cart
+        '''
+
+        junit 'cart/**/target/surefire-reports/*.xml'
+    }
+
+    stage('Publish Coverage Report') {
+        publishHTML([
+            reportDir: 'cart/target/site/jacoco',
+            reportFiles: 'index.html',
+            reportName: 'JaCoCo Coverage',
+            keepAll: true,
+            alwaysLinkToLastBuild: true
+        ])
+    }
+
     stage('SonarQube Analysis') {
         withSonarQubeEnv('My SonarQube Server') {
             sh '''
-            mvn clean verify sonar:sonar \
+            mvn sonar:sonar \
             -pl cart \
             -am \
             -Djacoco.skip.check=true \
@@ -290,41 +314,7 @@ def call(Map params) {
     //     }
     // }
 
-    stage('Test') {
-        sh '''
-        mvn clean test -pl cart -am -Djacoco.skip=false
-        '''
-    }
 
-    // stage('Verify') {
-    //     sh '''
-    //     echo "First verify"
-    //     mvn verify -pl cart -am -Djacoco.skip=true
-    //     '''
-
-    //     sh '''
-    //     echo "Second verify with coverage"
-    //     mvn verify -pl cart -Djacoco.skip=false
-    //     '''
-    // }
-
-    stage('Publish Test Result') {
-        sh '''
-        mvn jacoco:report -pl cart
-        '''
-
-        junit 'cart/**/target/surefire-reports/*.xml'
-    }
-
-    stage('Publish Coverage Report') {
-        publishHTML([
-            reportDir: 'cart/target/site/jacoco',
-            reportFiles: 'index.html',
-            reportName: 'JaCoCo Coverage',
-            keepAll: true,
-            alwaysLinkToLastBuild: true
-        ])
-    }
 }
 
 return this
