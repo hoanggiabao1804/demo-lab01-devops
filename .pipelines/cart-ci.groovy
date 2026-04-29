@@ -18,6 +18,7 @@ def call(Map params) {
         sh '''
         mvn checkstyle:checkstyle \
         -pl cart \
+        -am \
         -Dcheckstyle.output.file=cart-checkstyle-result.xml
         '''
     }
