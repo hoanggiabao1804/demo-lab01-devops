@@ -4,6 +4,12 @@ def call(Map params) {
         return
     }
 
+    stage('Build') {
+        sh '''
+        mvn clean package -pl backoffice-bff -am -DskipTests
+        '''
+    }
+
     stage('Run Maven Checkstyle') {
         sh '''
         mvn checkstyle:checkstyle \
@@ -24,7 +30,7 @@ def call(Map params) {
     //     gitleaks detect \
     //     --source ./backoffice-bff \
     //     --no-git \
-    //     --report-path gitleaks-report.json \
+    //     --report-path backoffice-bff-gitleaks-report.json \
     //     --report-format json \
     //     --exit-code 0
     //     '''
@@ -82,7 +88,7 @@ def call(Map params) {
     //         "<td>" + .File + "</td>" +
     //         "<td>" + .RuleID + "</td>" +
     //         "<td>" + .Secret + "</td>" +
-    //         "<td>" + .StartLine + "</td>" +
+    //         "<td>" + (.StartLine | tostring) + "</td>" +
     //         "</tr>"
     //     ] | join("")
     //     )
@@ -96,12 +102,12 @@ def call(Map params) {
     //     </html>
     //     "
     //     end
-    //     '  gitleaks-report.json > gitleaks-report.html
+    //     '  backoffice-bff-gitleaks-report.json > backoffice-bff-gitleaks-report.html
     //     '''
 
     //     publishHTML([
     //         reportDir: '.',
-    //         reportFiles: 'gitleaks-report.html',
+    //         reportFiles: 'backoffice-bff-gitleaks-report.html',
     //         reportName: 'Gitleak Report',
     //         allowMissing: true,
     //         alwaysLinkToLastBuild: true,
@@ -109,7 +115,7 @@ def call(Map params) {
     //     ])
 
     //     def hasLeak = sh(
-    //         script: '[ grep -q "RuleID" gitleaks-report.json ]',
+    //         script: '[ grep -q "RuleID" backoffice-bff-gitleaks-report.json ]',
     //         returnStatus: true
     //     )
 
@@ -170,110 +176,130 @@ def call(Map params) {
     //     ])
     // }
 
-    stage('Snyk Scan') {
-		sh '''
-		snyk auth $SNYK_TOKEN
+    // stage('Snyk Scan') {
+	// 	sh '''
+	// 	snyk auth $SNYK_TOKEN
 
-        find . -name "mvnw" -exec chmod +x {} \\;
+    //     find . -name "mvnw" -exec chmod +x {} \\;
 
-        snyk test --file=pom.xml --package-manager=maven -d --json > snyk-report.json || true
-		'''
+    //     snyk test --file=pom.xml --package-manager=maven -d --json > snyk-report.json || true
+	// 	'''
 
+    //     sh '''
+    //     jq -r '
+    //     if (.vulnerabilities | length) == 0 then
+    //     "<p>No vulnerabilities</p>"
+    //     else
+    //     "<html>
+    //     <head>
+    //     <style>
+    //     body { font-family: Arial; padding: 20px; }
+    //     h2 { margin-bottom: 20px; }
+
+    //     table {
+    //     border-collapse: collapse;
+    //     width: 100%;
+    //     }
+
+    //     th, td {
+    //     border: 1px solid #ddd;
+    //     padding: 10px;
+    //     text-align: left;
+    //     }
+
+    //     th {
+    //     background-color: #f4f4f4;
+    //     }
+
+    //     tr:nth-child(even) {
+    //     background-color: #fafafa;
+    //     }
+    //     </style>
+    //     </head>
+    //     <body>
+
+    //     <h2>Snyk Vulnerability Report</h2>
+
+    //     <table>
+    //     <thead>
+    //     <tr>
+    //     <th>Severity</th>
+    //     <th>Package</th>
+    //     <th>Version</th>
+    //     <th>Title</th>
+    //     <th>Fixed In</th>
+    //     </tr>
+    //     </thead>
+    //     <tbody>
+    //     " +
+
+    //     (
+    //     [.vulnerabilities[] |
+    //         "<tr>" +
+    //         "<td>" + .severity + "</td>" +
+    //         "<td>" + .packageName + "</td>" +
+    //         "<td>" + .version + "</td>" +
+    //         "<td>" + .title + "</td>" +
+    //         "<td>" + (if .fixedIn then (.fixedIn | join(", ")) else "N/A" end) + "</td>" +
+    //         "</tr>"
+    //     ] | join("")
+    //     )
+
+    //     + "
+
+    //     </tbody>
+    //     </table>
+
+    //     </body>
+    //     </html>
+    //     "
+    //     end
+    //     ' snyk-report.json > snyk-report.html
+	// 	'''
+
+	// 	publishHTML([
+	// 		reportDir: '.',
+	// 		reportFiles: 'snyk-report.html',
+	// 		reportName: 'Snyk Report',
+	// 		allowMissing: true,
+	// 		alwaysLinkToLastBuild: true,
+	// 		keepAll: true
+	// 	])
+
+	// 	def hasVuln = sh(
+	// 		script: 'grep -q "vulnerabilities" snyk-report.json',
+	// 		returnStatus: true
+	// 	)
+
+	// 	if (hasVuln == 0) {
+	// 		sh '''
+    //         echo "Snyk vulnerabilities found!"
+    //         '''
+	// 	} else {
+    //         sh '''
+    //         echo "No vulnerabilites found!"
+    //         '''
+    //     }
+    // }
+
+    stage('Test') {
         sh '''
-        jq -r '
-        if (.vulnerabilities | length) == 0 then
-        "<p>No vulnerabilities</p>"
-        else
-        "<html>
-        <head>
-        <style>
-        body { font-family: Arial; padding: 20px; }
-        h2 { margin-bottom: 20px; }
+        mvn clean verify -pl backoffice-bff
+        '''
+    }
 
-        table {
-        border-collapse: collapse;
-        width: 100%;
-        }
+    stage('Publish Test Result') {
+        junit 'backoffice-bff/**/target/surefire-reports/*.xml'
+    }
 
-        th, td {
-        border: 1px solid #ddd;
-        padding: 10px;
-        text-align: left;
-        }
-
-        th {
-        background-color: #f4f4f4;
-        }
-
-        tr:nth-child(even) {
-        background-color: #fafafa;
-        }
-        </style>
-        </head>
-        <body>
-
-        <h2>Snyk Vulnerability Report</h2>
-
-        <table>
-        <thead>
-        <tr>
-        <th>Severity</th>
-        <th>Package</th>
-        <th>Version</th>
-        <th>Title</th>
-        <th>Fixed In</th>
-        </tr>
-        </thead>
-        <tbody>
-        " +
-
-        (
-        [.vulnerabilities[] |
-            "<tr>" +
-            "<td>" + .severity + "</td>" +
-            "<td>" + .packageName + "</td>" +
-            "<td>" + .version + "</td>" +
-            "<td>" + .title + "</td>" +
-            "<td>" + (if .fixedIn then (.fixedIn | join(", ")) else "N/A" end) + "</td>" +
-            "</tr>"
-        ] | join("")
-        )
-
-        + "
-
-        </tbody>
-        </table>
-
-        </body>
-        </html>
-        "
-        end
-        ' snyk-report.json > snyk-report.html
-		'''
-
-		publishHTML([
-			reportDir: '.',
-			reportFiles: 'snyk-report.html',
-			reportName: 'Snyk Report',
-			allowMissing: true,
-			alwaysLinkToLastBuild: true,
-			keepAll: true
-		])
-
-		def hasVuln = sh(
-			script: 'grep -q "vulnerabilities" snyk-report.json',
-			returnStatus: true
-		)
-
-		if (hasVuln == 0) {
-			sh '''
-            echo "Snyk vulnerabilities found!"
-            '''
-		} else {
-            sh '''
-            echo "No vulnerabilites found!"
-            '''
-        }
+    stage('Publish Coverage Report') {
+        publishHTML([
+            reportDir: 'backoffice-bff/target/site/jacoco',
+            reportFiles: 'index.html',
+            reportName: 'JaCoCo Coverage',
+            keepAll: true,
+            alwaysLinkToLastBuild: true
+        ])
     }
 }
 

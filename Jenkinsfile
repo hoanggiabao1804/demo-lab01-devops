@@ -1,11 +1,9 @@
-@Library('my-shared-lib') _
-
 def servicesToBuild = []
 
 pipeline {
     agent {
         docker {
-            image '23120022/zakirepo:maven-3.9.14-eclipse-temurin-25-v1.0'
+            image '23120022/zakirepo:maven-3.9.14-eclipse-temurin-25-v3.0'
             registryUrl 'https://index.docker.io/v1/'
             registryCredentialsId 'dockerhub_cred'
             args '''
@@ -13,6 +11,7 @@ pipeline {
             -u root 
             -v $HOME/.sonar:/root/.sonar 
             -v $HOME/.owasp:/owasp
+            -v $HOME/.npm:/root/.npm
             '''
         }
     }
@@ -21,7 +20,6 @@ pipeline {
         FROM_ORIGINAL_REPOSITORY = "${env.CHANGE_FORK == null || env.BRANCH_NAME == 'main'}"
         NVD_API_KEY = credentials('nvd-api-key')
         SNYK_TOKEN = credentials('snyk-api-token')
-        SNYK_CFG_ORG = credentials('snyk-org-id')
     }
 
     stages {
@@ -115,17 +113,22 @@ pipeline {
                 sh '''
                 java -version
                 mvn -version
+                hostname
+                which docker || echo "no docker"
                 '''
             }
         }
 
-        stage('Run Custom Action') {
+        stage('Run Action') {
             steps {
-                sh '''
-                echo "Setup Java and Sonar Cache"
-                '''
-                setupJDK()
-                setupSonarCache()
+                script {
+                    sh '''
+                    echo "Setup Java and Sonar Cache"
+                    '''
+                    def action = load '.pipelines/actions/action.groovy'
+
+                    action.call()
+                }
             }
         }
 
@@ -145,9 +148,17 @@ pipeline {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('backoffice') }
             }
             steps {
-                sh '''
-                echo "Backoffice pipeline..."
-                '''
+                script {
+                    sh '''
+                    echo "Backoffice pipeline..."
+                    '''
+
+                    def backoffice = load '.pipelines/backoffice-ci.groovy'
+
+                    backoffice.call([
+                        isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
+                    ])
+                }
             }
         }
 
@@ -424,215 +435,6 @@ pipeline {
         	    '''
             }
         }
-
-        // stage('Run Maven Checkstyle') {
-        //     when {
-        //         expression {env.FROM_ORIGINAL_REPOSITORY == 'true'}
-        //     }
-        //     steps {
-        //         sh '''
-        //         mvn checkstyle:checkstyle \
-        //         -f backoffice-bff \
-        //         -Dcheckstyle.output.file=backoffice-bff-checkstyle-result.xml
-        //         '''
-        //     }
-        // }
-
-        // stage('Publish Checkstyle') {
-        //     when {
-        //         expression {env.FROM_ORIGINAL_REPOSITORY == 'true'}
-        //     }
-        //     steps {
-        //         recordIssues(
-        //             tools: [checkStyle(pattern: '**/backoffice-bff-checkstyle-result.xml')]
-        //         )
-        //     }
-        // }
-
-        // stage('Gitleak Scan') {
-        //     when {
-        //         expression {env.FROM_ORIGINAL_REPOSITORY == 'true'}
-        //     }
-        //     steps {
-        //         script {
-        //             sh '''
-        //             apt-get update -qq && apt-get install -y -qq curl tar
-
-        //             echo "Download Gitleaks..."
-        //             curl -fL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz -o gitleaks.tar.gz
-
-        //             echo "Extract..."
-        //             tar -xzf gitleaks.tar.gz
-
-        //             echo "Make executable..."
-        //             chmod +x gitleaks
-
-        //             echo "Run Gitleaks scan..."
-        //             ./gitleaks detect \
-        //             --source . \
-        //             --report-path gitleaks-report.json \
-        //             --report-format json \
-        //             --exit-code 0
-        //             '''
-
-        //             sh '''
-        //             echo "Debug..."
-
-        //             ls -lah
-        //             '''
-
-        //             sh '''
-        //             echo "Publish to html..."
-
-        //             cat <<EOF > gitleaks-report.html
-        //             <html>
-        //             <body>
-        //             <pre>
-        //             $(cat gitleaks-report.json | sed 's/</\\\\&lt;/g; s/>/\\\\&gt;/g')
-        //             </pre>
-        //             </body>
-        //             </html>
-        //             EOF
-        //             '''
-
-        //             publishHTML([
-        //                 reportDir: '.',
-        //                 reportFiles: 'gitleaks-report.html',
-        //                 reportName: 'Gitleak Report',
-        //                 allowMissing: true,
-        //                 alwaysLinkToLastBuild: true,
-        //                 keepAll: true
-        //             ])
-
-        //             def hasLeak = sh(
-        //                 script: '[ -s gitleaks-report.json ]',
-        //                 returnStatus: true
-        //             )
-
-        //             if (hasLeak == 0) {
-        //                 sh '''
-        //                 echo "Secrets detected!"
-        //                 '''
-        //             } else {
-        //                 sh '''
-        //                 echo "No secrets detected!"
-        //                 '''
-        //             }
-        //         }
-        //     }
-        // }
-
-        // stage('SonarQube Analysis') {
-        //     when {
-        //         expression { env.FROM_ORIGINAL_REPOSITORY == 'true' }
-        //     }
-        //     steps {
-        //         withSonarQubeEnv('My SonarQube Server') {
-        //             sh '''
-        //             mvn clean verify sonar:sonar \
-        //             -Dsonar.host.url=http://sonarqube:9000 \
-        //             -f backoffice-bff
-        //             '''
-        //         }
-        //         timeout(time: 1, unit: 'HOURS') {
-        //             waitForQualityGate abortPipeline: true
-        //         }
-        //     }
-        // }
-
-        // stage('OWASP Dependency Pre-build') {
-        //     when {
-        //         expression { env.FROM_ORIGINAL_REPOSITORY == 'true' }
-        //     }
-        //     steps {
-        //         sh '''
-        //         mvn -B -q clean install -DskipTests
-        //         '''
-        //     }
-        // }
-
-        // stage('OWASP Dependency Check') {
-        //     when {
-        //         expression { env.FROM_ORIGINAL_REPOSITORY == 'true' }
-        //     }
-        //     steps {
-        //         sh '''
-        //         mvn org.owasp:dependency-check-maven:check \
-        //         -DnvdApiKey=$NVD_API_KEY \
-        //         -Dnvd.api.endpoint=https://services.nvd.nist.gov/rest/json/cves/2.0 \
-        //         -Dcisa.enabled=false \
-        //         -Dorg.slf4j.simpleLogger.log.org.owasp=debug \
-        //         -Dformat=HTML \
-        //         -DoutputDirectory=target/dependency-check-report \
-        //         -DdataDirectory=/owasp \
-        //         -DassemblyAnalyzerEnabled=false \
-        //         -DnodeAnalyzerEnabled=false \
-        //         -DpyPackageAnalyzerEnabled=false
-        //         '''
-        //     }
-        // }
-
-        // stage('Publish OWASP Report') {
-        //     when {
-        //         expression { env.FROM_ORIGINAL_REPOSITORY == 'true' }
-        //     }
-        //     steps {
-        //         publishHTML([
-        //             reportDir: '.',
-        //             reportFiles: '**/target/dependency-check-report.html',
-        //             reportName: 'OWASP Dependency Check Report',
-        //             allowMissing: true,
-        //             alwaysLinkToLastBuild: true,
-        //             keepAll: true
-        //         ])
-        //     }
-        // }
-
-        // stage('Snyk Scan') {
-        //     steps {
-        //         script {
-        //             sh '''
-        //             curl -Lo snyk https://static.snyk.io/cli/latest/snyk-linux
-        //             chmod +x snyk
-        //             ./snyk auth $SNYK_TOKEN
-
-        //             ./snyk test --file=pom.xml --package-manager=maven --json > snyk-report.json || true
-        //             '''
-
-        //             sh '''
-        //             echo "Publish to html..."
-
-        //             cat <<EOF > snyk-report.html
-        //             <html>
-        //             <body>
-        //             <pre>
-        //             $(cat snyk-report.json | sed 's/</\\\\&lt;/g; s/>/\\\\&gt;/g')
-        //             </pre>
-        //             </body>
-        //             </html>
-        //             EOF
-        //             '''
-
-        //             publishHTML([
-        //                 reportDir: '.',
-        //                 reportFiles: 'snyk-report.html',
-        //                 reportName: 'Snyk Report',
-        //                 allowMissing: true,
-        //                 alwaysLinkToLastBuild: true,
-        //                 keepAll: true
-        //             ])
-
-        //             def hasVuln = sh(
-        //                 script: 'grep -q "vulnerabilities" snyk-report.json',
-        //                 returnStatus: true
-        //             )
-
-        //             if (hasVuln == 0) {
-        //                 error("Snyk vulnerabilities found!")
-        //             }
-        //         }
-        //     }
-        // }
 
         stage('Build & Test') {
             steps {
