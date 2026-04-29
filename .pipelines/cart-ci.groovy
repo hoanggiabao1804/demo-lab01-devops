@@ -215,18 +215,9 @@ def call(Map params) {
         sh '''
         snyk auth $SNYK_TOKEN
 
-        mvn -q install \
-        -pl cart \
-        -am \
-        -DskipTests \
-        -Djacoco.skip=true
+        find . -name "mvnw" -exec chmod +x {} \\;
 
-        cd cart/
-
-        snyk test \
-        --package-manager=maven \
-        -d \
-        --json > cart-snyk-report.json || true
+        snyk test --file=pom.xml --package-manager=maven -d --json > snyk-report.json || true
         '''
 
         sh '''
