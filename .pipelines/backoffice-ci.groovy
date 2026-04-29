@@ -142,7 +142,7 @@ def call(Map params) {
             '''
         }
     }
-
+    
     stage('SonarQube Analysis') {
         withSonarQubeEnv('My SonarQube Server') {
             sh 'sonar-scanner'
@@ -151,6 +151,7 @@ def call(Map params) {
             waitForQualityGate abortPipeline: true
         }
     }
+
 }
 
 return this
