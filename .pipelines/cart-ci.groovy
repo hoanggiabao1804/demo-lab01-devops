@@ -140,8 +140,7 @@ def call(Map params) {
             sh '''
             mvn sonar:sonar \
             -Dsonar.host.url=http://sonarqube:9000 \
-            -pl cart \
-            -am
+            -pl cart
             '''
         }
         timeout(time: 1, unit: 'HOURS') {
