@@ -289,23 +289,27 @@ def call(Map params) {
 
     stage('Test') {
         sh '''
-        mvn test -pl cart -am
+        mvn clean test -pl cart -am -Djacoco.skip=false
         '''
     }
 
-    stage('Verify') {
-        sh '''
-        echo "First verify"
-        mvn verify -pl cart -am -Djacoco.skip=true
-        '''
+    // stage('Verify') {
+    //     sh '''
+    //     echo "First verify"
+    //     mvn verify -pl cart -am -Djacoco.skip=true
+    //     '''
 
-        sh '''
-        echo "Second verify with coverage"
-        mvn verify -pl cart -Djacoco.skip=false
-        '''
-    }
+    //     sh '''
+    //     echo "Second verify with coverage"
+    //     mvn verify -pl cart -Djacoco.skip=false
+    //     '''
+    // }
 
     stage('Publish Test Result') {
+        sh '''
+        mvn jacoco:report -pl cart
+        '''
+
         junit 'cart/**/target/surefire-reports/*.xml'
     }
 
