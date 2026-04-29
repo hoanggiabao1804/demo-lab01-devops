@@ -216,7 +216,7 @@ def call(Map params) {
             sh '''
             snyk auth $SNYK_TOKEN
 
-            find . -name "mvnw" -exec chmod +x {} \\;
+            mvn -q -DskipTests install
 
             snyk test \
             --package-manager=maven \
