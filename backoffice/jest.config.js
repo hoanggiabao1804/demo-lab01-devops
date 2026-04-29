@@ -13,9 +13,12 @@ module.exports = {
   },
   reporters: [
     'default',
-    ['jest-junit', {
-      outputDirectory: './test-results',
-      outputName: 'backoffice-junit.xml'
-    }]
-  ]
+    [
+      'jest-junit',
+      {
+        outputDirectory: './test-results',
+        outputName: 'backoffice-junit.xml',
+      },
+    ],
+  ],
 };
