@@ -212,116 +212,113 @@ def call(Map params) {
     // }
 
     stage('Snyk Scan') {
-		sh '''
-		snyk auth $SNYK_TOKEN
-
-        find . -name "mvnw" -exec chmod +x {} \\;
-
-        unset MAVEN_OPTS
-        unset MAVEN_CONFIG
-
-        snyk test \
-        --file=cart/pom.xml \
-        --package-manager=maven \
-        -- \
-        -Dmaven.repo.local=/root/.m2 \
-        --json > cart-snyk-report.json 2> snyk-error.log || true
-		'''
-
-        sh '''
-        jq -r '
-        if (.vulnerabilities | length) == 0 then
-        "<p>No vulnerabilities</p>"
-        else
-        "<html>
-        <head>
-        <style>
-        body { font-family: Arial; padding: 20px; }
-        h2 { margin-bottom: 20px; }
-
-        table {
-        border-collapse: collapse;
-        width: 100%;
-        }
-
-        th, td {
-        border: 1px solid #ddd;
-        padding: 10px;
-        text-align: left;
-        }
-
-        th {
-        background-color: #f4f4f4;
-        }
-
-        tr:nth-child(even) {
-        background-color: #fafafa;
-        }
-        </style>
-        </head>
-        <body>
-
-        <h2>Snyk Vulnerability Report</h2>
-
-        <table>
-        <thead>
-        <tr>
-        <th>Severity</th>
-        <th>Package</th>
-        <th>Version</th>
-        <th>Title</th>
-        <th>Fixed In</th>
-        </tr>
-        </thead>
-        <tbody>
-        " +
-
-        (
-        [.vulnerabilities[] |
-            "<tr>" +
-            "<td>" + .severity + "</td>" +
-            "<td>" + .packageName + "</td>" +
-            "<td>" + .version + "</td>" +
-            "<td>" + .title + "</td>" +
-            "<td>" + (if .fixedIn then (.fixedIn | join(", ")) else "N/A" end) + "</td>" +
-            "</tr>"
-        ] | join("")
-        )
-
-        + "
-
-        </tbody>
-        </table>
-
-        </body>
-        </html>
-        "
-        end
-        ' cart-snyk-report.json > cart-snyk-report.html
-		'''
-
-		publishHTML([
-			reportDir: '.',
-			reportFiles: 'cart-snyk-report.html',
-			reportName: 'Snyk Report',
-			allowMissing: true,
-			alwaysLinkToLastBuild: true,
-			keepAll: true
-		])
-
-		def hasVuln = sh(
-			script: 'grep -q "vulnerabilities" cart-snyk-report.json',
-			returnStatus: true
-		)
-
-		if (hasVuln == 0) {
-			sh '''
-            echo "Snyk vulnerabilities found!"
-            '''
-		} else {
+		dir('cart') {
             sh '''
-            echo "No vulnerabilites found!"
+            snyk auth $SNYK_TOKEN
+
+            find . -name "mvnw" -exec chmod +x {} \\;
+
+            snyk test \
+            --package-manager=maven \
+            -d \
+            --json > cart-snyk-report.json || true
             '''
+
+            sh '''
+            jq -r '
+            if (.vulnerabilities | length) == 0 then
+            "<p>No vulnerabilities</p>"
+            else
+            "<html>
+            <head>
+            <style>
+            body { font-family: Arial; padding: 20px; }
+            h2 { margin-bottom: 20px; }
+
+            table {
+            border-collapse: collapse;
+            width: 100%;
+            }
+
+            th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+            }
+
+            th {
+            background-color: #f4f4f4;
+            }
+
+            tr:nth-child(even) {
+            background-color: #fafafa;
+            }
+            </style>
+            </head>
+            <body>
+
+            <h2>Snyk Vulnerability Report</h2>
+
+            <table>
+            <thead>
+            <tr>
+            <th>Severity</th>
+            <th>Package</th>
+            <th>Version</th>
+            <th>Title</th>
+            <th>Fixed In</th>
+            </tr>
+            </thead>
+            <tbody>
+            " +
+
+            (
+            [.vulnerabilities[] |
+                "<tr>" +
+                "<td>" + .severity + "</td>" +
+                "<td>" + .packageName + "</td>" +
+                "<td>" + .version + "</td>" +
+                "<td>" + .title + "</td>" +
+                "<td>" + (if .fixedIn then (.fixedIn | join(", ")) else "N/A" end) + "</td>" +
+                "</tr>"
+            ] | join("")
+            )
+
+            + "
+
+            </tbody>
+            </table>
+
+            </body>
+            </html>
+            "
+            end
+            ' cart-snyk-report.json > cart-snyk-report.html
+            '''
+
+            publishHTML([
+                reportDir: '.',
+                reportFiles: 'cart-snyk-report.html',
+                reportName: 'Snyk Report',
+                allowMissing: true,
+                alwaysLinkToLastBuild: true,
+                keepAll: true
+            ])
+
+            def hasVuln = sh(
+                script: 'grep -q "vulnerabilities" cart-snyk-report.json',
+                returnStatus: true
+            )
+
+            if (hasVuln == 0) {
+                sh '''
+                echo "Snyk vulnerabilities found!"
+                '''
+            } else {
+                sh '''
+                echo "No vulnerabilites found!"
+                '''
+            }
         }
     }
 }
