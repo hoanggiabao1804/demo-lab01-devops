@@ -12,6 +12,7 @@ pipeline {
             -v $HOME/.sonar:/root/.sonar 
             -v $HOME/.owasp:/owasp
             -v $HOME/.npm:/root/.npm
+            -v $HOME/.m2:/root/.m2
             '''
         }
     }
