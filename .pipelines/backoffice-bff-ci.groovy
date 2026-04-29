@@ -128,7 +128,7 @@ def call(Map params) {
     //         echo "No secrets detected!"
     //         '''
     //     }
-    }
+    // }
 
     // stage('SonarQube Analysis') {
     //     withSonarQubeEnv('My SonarQube Server') {
