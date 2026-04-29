@@ -11,8 +11,7 @@
     </parent>
     <groupId>com.yas</groupId>
     <artifactId>yas</artifactId>
-    <!-- <version>${revision}</version> -->
-    <version>1.0-SNAPSHOT</version>
+    <version>${revision}</version>
     <packaging>pom</packaging>
     <name>yas</name>
 
