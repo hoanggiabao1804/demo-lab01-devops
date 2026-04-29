@@ -290,8 +290,8 @@ def call(Map params) {
     stage('Test') {
         sh '''
         mvn test -pl cart -am
-        
-        mvn verify -pl cart -Djacoco.skip=false
+
+        mvn verify -pl cart -am -Djacoco.skip=false
         '''
     }
 
