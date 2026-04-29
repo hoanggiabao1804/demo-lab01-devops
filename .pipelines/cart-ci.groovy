@@ -161,11 +161,16 @@ def call(Map params) {
     stage('SonarQube Analysis') {
         withSonarQubeEnv('My SonarQube Server') {
             sh '''
+            echo "Find Jacoco XML report..."
+            find . -name jacoco.xml
+            '''
+
+            sh '''
             mvn sonar:sonar \
             -pl cart \
             -am \
             -Dsonar.host.url=http://sonarqube:9000 \
-            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+            -Dsonar.coverage.jacoco.xmlReportPaths=cart/target/site/jacoco/jacoco.xml
             '''
         }
         timeout(time: 1, unit: 'HOURS') {
