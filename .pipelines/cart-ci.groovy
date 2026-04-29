@@ -34,9 +34,6 @@ def call(Map params) {
         mvn clean test jacoco:report \
         -pl cart \
         -am \
-        -Dmaven.test.skip=false \
-        -DskipITs=true \
-        -Dfailsafe.skip=true \
         -Djacoco.skip=false
         '''
     }
