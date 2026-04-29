@@ -165,7 +165,6 @@ def call(Map params) {
             mvn sonar:sonar \
             -pl cart \
             -am \
-            -Djacoco.skip.check=true \
             -Dsonar.host.url=http://sonarqube:9000 \
             -Dsonar.coverage.jacoco.xmlReportPaths=cart/target/site/jacoco/jacoco.xml
             '''
