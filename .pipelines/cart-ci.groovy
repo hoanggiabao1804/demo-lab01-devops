@@ -12,7 +12,7 @@ def call(Map params) {
 
     stage('Build common-library') {
         sh '''
-        mvn clean install -f common-library
+        mvn clean install -e -f common-library
         '''
     }
 
