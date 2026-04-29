@@ -165,7 +165,7 @@ def call(Map params) {
             -pl cart \
             -am \
             -Dsonar.host.url=http://sonarqube:9000 \
-            -Dsonar.coverage.jacoco.xmlReportPaths=cart/target/site/jacoco/jacoco.xml
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
             '''
         }
         timeout(time: 1, unit: 'HOURS') {
