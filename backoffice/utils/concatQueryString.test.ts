@@ -6,7 +6,9 @@ describe('concatQueryString', () => {
   });
 
   it('should append query string with ? for the first element', () => {
-    expect(concatQueryString(['a=1'], 'https://example.com/api')).toBe('https://example.com/api?a=1');
+    expect(concatQueryString(['a=1'], 'https://example.com/api')).toBe(
+      'https://example.com/api?a=1'
+    );
   });
 
   it('should append additional query parameters with &', () => {
