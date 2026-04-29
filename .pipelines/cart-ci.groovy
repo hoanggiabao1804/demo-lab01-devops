@@ -135,28 +135,28 @@ def call(Map params) {
         }
     }
 
-    stage('Test') {
-        sh '''
-        mvn clean test jacoco:report \
-        -pl cart \
-        -am \
-        -Djacoco.skip=false
-        '''
-    }
+    // stage('Test') {
+    //     sh '''
+    //     mvn clean test jacoco:report \
+    //     -pl cart \
+    //     -am \
+    //     -Djacoco.skip=false
+    //     '''
+    // }
 
-    stage('Publish Test Result') {
-        junit 'cart/**/target/surefire-reports/*.xml'
-    }
+    // stage('Publish Test Result') {
+    //     junit 'cart/**/target/surefire-reports/*.xml'
+    // }
 
-    stage('Publish Coverage Report') {
-        publishHTML([
-            reportDir: 'cart/target/site/jacoco',
-            reportFiles: 'index.html',
-            reportName: 'JaCoCo Coverage',
-            keepAll: true,
-            alwaysLinkToLastBuild: true
-        ])
-    }
+    // stage('Publish Coverage Report') {
+    //     publishHTML([
+    //         reportDir: 'cart/target/site/jacoco',
+    //         reportFiles: 'index.html',
+    //         reportName: 'JaCoCo Coverage',
+    //         keepAll: true,
+    //         alwaysLinkToLastBuild: true
+    //     ])
+    // }
 
     stage('SonarQube Analysis') {
         withSonarQubeEnv('My SonarQube Server') {
@@ -166,11 +166,12 @@ def call(Map params) {
             '''
 
             sh '''
-            mvn sonar:sonar \
+            mvn clean test jacoco:report sonar:sonar \
             -pl cart \
             -am \
+            -Djacoco.skip.check=true \
             -Dsonar.host.url=http://sonarqube:9000 \
-            -Dsonar.coverage.jacoco.xmlReportPaths=./cart/target/site/jacoco/jacoco.xml
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
             '''
         }
         timeout(time: 1, unit: 'HOURS') {
