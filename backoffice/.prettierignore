@@ -1,2 +1,8 @@
 # Ignore artifacts:
 .next
+coverage/
+node_modules/
+dist/
+build/
+.next/
+out/
