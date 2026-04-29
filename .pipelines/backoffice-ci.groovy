@@ -145,10 +145,12 @@ def call(Map params) {
 
     stage('SonarQube Analysis') {
         withSonarQubeEnv('My SonarQube Server') {
-            sh '''
-            sonar-scanner \
-            -Dsonar.host.url=http://sonarqube:9000
-            '''
+            dir('backoffice') {
+                sh '''
+                sonar-scanner \
+                -Dsonar.host.url=http://sonarqube:9000
+                '''
+            }
         }
         timeout(time: 1, unit: 'HOURS') {
             waitForQualityGate abortPipeline: true
