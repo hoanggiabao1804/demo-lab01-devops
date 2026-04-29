@@ -211,24 +211,21 @@ def call(Map params) {
     //     ])
     // }
 
-    stage('Test Maven Standalone') {
-        sh '''
-        mvn dependency:tree -pl cart -am
-        '''
-    }
-
     stage('Snyk Scan') {
 		sh '''
 		snyk auth $SNYK_TOKEN
 
         find . -name "mvnw" -exec chmod +x {} \\;
 
-        
+        unset MAVEN_OPTS
+        unset MAVEN_CONFIG
 
         snyk test \
         --file=cart/pom.xml \
         --package-manager=maven \
         -d \
+        -- \
+        -Dmaven.repo.local=/root/.m2 \
         --json > cart-snyk-report.json || true
 		'''
 
