@@ -216,7 +216,7 @@ def call(Map params) {
             sh '''
             snyk auth $SNYK_TOKEN
 
-            mvn -q -DskipTests install
+            mvn -q -am -DskipTests install
 
             snyk test \
             --package-manager=maven \
