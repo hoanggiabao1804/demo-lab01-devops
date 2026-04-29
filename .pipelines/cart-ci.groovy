@@ -29,124 +29,155 @@ def call(Map params) {
         )
     }
 
-    // stage('Gitleak Scan') {
+    stage('Gitleak Scan') {
+        sh '''
+        echo "Run Gitleaks scan..."
+        gitleaks detect \
+        --source ./cart \
+        --no-git \
+        --report-path cart-gitleaks-report.json \
+        --report-format json \
+        --exit-code 0
+        '''
+
+        sh '''
+        jq -r '
+        if length == 0 then
+        "<p>No secrets detected</p>"
+        else
+        "<html>
+        <head>
+        <style>
+        body { font-family: Arial; padding: 20px; }
+        h2 { margin-bottom: 20px; }
+
+        table {
+        border-collapse: collapse;
+        width: 100%;
+        }
+
+        th, td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: left;
+        }
+
+        th {
+        background-color: #f4f4f4;
+        }
+
+        tr:nth-child(even) {
+        background-color: #fafafa;
+        }
+        </style>
+        </head>
+        <body>
+
+        <h2>Gitleaks Report</h2>
+
+        <table>
+        <thead>
+        <tr>
+        <th>File</th>
+        <th>RuleID</th>
+        <th>Secret</th>
+        <th>StartLine</th>
+        </tr>
+        </thead>
+        <tbody>
+        " +
+
+        (
+        [.[] |
+            "<tr>" +
+            "<td>" + .File + "</td>" +
+            "<td>" + .RuleID + "</td>" +
+            "<td>" + .Secret + "</td>" +
+            "<td>" + (.StartLine | tostring) + "</td>" +
+            "</tr>"
+        ] | join("")
+        )
+
+        + "
+
+        </tbody>
+        </table>
+
+        </body>
+        </html>
+        "
+        end
+        '  cart-gitleaks-report.json > cart-gitleaks-report.html
+        '''
+
+        publishHTML([
+            reportDir: '.',
+            reportFiles: 'cart-gitleaks-report.html',
+            reportName: 'Gitleak Report',
+            allowMissing: true,
+            alwaysLinkToLastBuild: true,
+            keepAll: true
+        ])
+
+        def hasLeak = sh(
+            script: '[ grep -q "RuleID" cart-gitleaks-report.json ]',
+            returnStatus: true
+        )
+
+        if (hasLeak == 0) {
+            sh '''
+            echo "Secrets detected!"
+            '''
+        } else {
+            sh '''
+            echo "No secrets detected!"
+            '''
+        }
+    }
+
+    // stage('Test') {
     //     sh '''
-    //     echo "Run Gitleaks scan..."
-    //     gitleaks detect \
-    //     --source ./cart \
-    //     --no-git \
-    //     --report-path cart-gitleaks-report.json \
-    //     --report-format json \
-    //     --exit-code 0
+    //     mvn clean test jacoco:report \
+    //     -pl cart \
+    //     -am \
+    //     -Djacoco.skip=false
     //     '''
+    // }
 
-    //     sh '''
-    //     jq -r '
-    //     if length == 0 then
-    //     "<p>No secrets detected</p>"
-    //     else
-    //     "<html>
-    //     <head>
-    //     <style>
-    //     body { font-family: Arial; padding: 20px; }
-    //     h2 { margin-bottom: 20px; }
+    // stage('Publish Test Result') {
+    //     junit 'cart/**/target/surefire-reports/*.xml'
+    // }
 
-    //     table {
-    //     border-collapse: collapse;
-    //     width: 100%;
-    //     }
-
-    //     th, td {
-    //     border: 1px solid #ddd;
-    //     padding: 10px;
-    //     text-align: left;
-    //     }
-
-    //     th {
-    //     background-color: #f4f4f4;
-    //     }
-
-    //     tr:nth-child(even) {
-    //     background-color: #fafafa;
-    //     }
-    //     </style>
-    //     </head>
-    //     <body>
-
-    //     <h2>Gitleaks Report</h2>
-
-    //     <table>
-    //     <thead>
-    //     <tr>
-    //     <th>File</th>
-    //     <th>RuleID</th>
-    //     <th>Secret</th>
-    //     <th>StartLine</th>
-    //     </tr>
-    //     </thead>
-    //     <tbody>
-    //     " +
-
-    //     (
-    //     [.[] |
-    //         "<tr>" +
-    //         "<td>" + .File + "</td>" +
-    //         "<td>" + .RuleID + "</td>" +
-    //         "<td>" + .Secret + "</td>" +
-    //         "<td>" + (.StartLine | tostring) + "</td>" +
-    //         "</tr>"
-    //     ] | join("")
-    //     )
-
-    //     + "
-
-    //     </tbody>
-    //     </table>
-
-    //     </body>
-    //     </html>
-    //     "
-    //     end
-    //     '  cart-gitleaks-report.json > cart-gitleaks-report.html
-    //     '''
-
+    // stage('Publish Coverage Report') {
     //     publishHTML([
-    //         reportDir: '.',
-    //         reportFiles: 'cart-gitleaks-report.html',
-    //         reportName: 'Gitleak Report',
-    //         allowMissing: true,
-    //         alwaysLinkToLastBuild: true,
-    //         keepAll: true
+    //         reportDir: 'cart/target/site/jacoco',
+    //         reportFiles: 'index.html',
+    //         reportName: 'JaCoCo Coverage',
+    //         keepAll: true,
+    //         alwaysLinkToLastBuild: true
     //     ])
-
-    //     def hasLeak = sh(
-    //         script: '[ grep -q "RuleID" cart-gitleaks-report.json ]',
-    //         returnStatus: true
-    //     )
-
-    //     if (hasLeak == 0) {
-    //         sh '''
-    //         echo "Secrets detected!"
-    //         '''
-    //     } else {
-    //         sh '''
-    //         echo "No secrets detected!"
-    //         '''
-    //     }
     // }
 
-    // stage('SonarQube Analysis') {
-    //     withSonarQubeEnv('My SonarQube Server') {
-    //         sh '''
-    //         mvn clean verify sonar:sonar \
-    //         -Dsonar.host.url=http://sonarqube:9000 \
-    //         -f cart
-    //         '''
-    //     }
-    //     timeout(time: 1, unit: 'HOURS') {
-    //         waitForQualityGate abortPipeline: true
-    //     }
-    // }
+    stage('SonarQube Analysis') {
+        withSonarQubeEnv('My SonarQube Server') {
+            sh '''
+            echo "Find Jacoco XML report..."
+            find . -name jacoco.xml
+            '''
+
+            sh '''
+            mvn clean test jacoco:report sonar:sonar \
+            -pl cart \
+            -am \
+            -DskipITs=true \
+            -Djacoco.skip.check=true \
+            -Dsonar.host.url=http://sonarqube:9000 \
+            '''
+        }
+        timeout(time: 1, unit: 'HOURS') {
+            waitForQualityGate abortPipeline: true
+        }
+    }
 
     // stage('OWASP Dependency Pre-build') {
     //     sh '''
@@ -287,25 +318,7 @@ def call(Map params) {
     //     }
     // }
 
-    // stage('Test') {
-    //     sh '''
-    //     mvn clean verify -pl cart
-    //     '''
-    // }
 
-    // stage('Publish Test Result') {
-    //     junit 'cart/**/target/surefire-reports/*.xml'
-    // }
-
-    // stage('Publish Coverage Report') {
-    //     publishHTML([
-    //         reportDir: 'cart/target/site/jacoco',
-    //         reportFiles: 'index.html',
-    //         reportName: 'JaCoCo Coverage',
-    //         keepAll: true,
-    //         alwaysLinkToLastBuild: true
-    //     ])
-    // }
 }
 
 return this
