@@ -6,13 +6,9 @@ def call(Map params) {
 
     stage('Build') {
         sh '''
-        mvn clean package -pl cart -am -DskipTests
-        '''
-    }
-
-    stage('Build common-library') {
-        sh '''
-        mvn clean install -pl common-library -am \
+        mvn clean install \
+            -pl cart \
+            -am \
             -DskipTests \
             -Djacoco.skip=true
         '''
@@ -21,7 +17,7 @@ def call(Map params) {
     stage('Run Maven Checkstyle') {
         sh '''
         mvn checkstyle:checkstyle \
-        -f cart \
+        -pl cart \
         -Dcheckstyle.output.file=cart-checkstyle-result.xml
         '''
     }
