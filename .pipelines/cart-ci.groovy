@@ -12,7 +12,9 @@ def call(Map params) {
 
     stage('Build common-library') {
         sh '''
-        mvn clean install -e -f common-library
+        mvn clean install -pl common-library -am \
+            -DskipTests \
+            -Djacoco.skip=true
         '''
     }
 
