@@ -223,10 +223,9 @@ def call(Map params) {
         snyk test \
         --file=cart/pom.xml \
         --package-manager=maven \
-        -d \
         -- \
         -Dmaven.repo.local=/root/.m2 \
-        --json > cart-snyk-report.json || true
+        --json > cart-snyk-report.json 2> snyk-error.log || true
 		'''
 
         sh '''
