@@ -138,11 +138,8 @@ def call(Map params) {
     stage('SonarQube Analysis') {
         withSonarQubeEnv('My SonarQube Server') {
             sh '''
-            mvn clean verify sonar:sonar \
+            mvn sonar:sonar \
             -pl cart \
-            -am \
-            -Djacoco.skip=false \
-            -Djacoco.skip.check=true \
             -Dsonar.host.url=http://sonarqube:9000 \
             -Dsonar.coverage.jacoco.xmlReportPaths=cart/target/site/jacoco/jacoco.xml
             '''
