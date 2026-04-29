@@ -289,7 +289,7 @@ def call(Map params) {
 
     stage('Test') {
         sh '''
-        mvn clean verify -pl cart
+        mvn clean verify -pl cart -am
         '''
     }
 
