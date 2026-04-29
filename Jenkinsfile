@@ -54,9 +54,15 @@ pipeline {
 							|| file == ".pipelines/backoffice-bff-ci.groovy"
 						) {
                             servicesToBuild << "backoffice-bff"
-                        } else if (file.startsWith("backoffice/") || file == ".github/workflows/backoffice-ci.yaml") {
+                        } else if (file.startsWith("backoffice/") 
+                            || file == ".github/workflows/backoffice-ci.yaml"
+                            || file == ".pipelines/backoffice-ci.groovy"
+                        ) {
                             servicesToBuild << "backoffice"
-                        } else if (file.startsWith("cart/") || file == ".github/workflows/cart-ci.yaml") {
+                        } else if (file.startsWith("cart/") 
+                            || file == ".github/workflows/cart-ci.yaml"
+                            || file == ".pipelines/cart-ci.groovy"
+                        ) {
                             servicesToBuild << "cart"
                         } else if (file.startsWith("common-library/")) {
                             servicesToBuild << "common-library"
@@ -170,8 +176,6 @@ pipeline {
                 script {
 					sh '''
 					echo "Backoffice-bff pipeline..."
-
-					ls -al ./.pipelines
 					'''
 
 					def backoffice_bff = load '.pipelines/backoffice-bff-ci.groovy'
@@ -188,9 +192,18 @@ pipeline {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('cart') }
             }
             steps {
-                sh '''
-                echo "Cart pipeline..."
-                '''
+               
+                script {
+                    sh '''
+                    echo "Cart pipeline..."
+					'''
+
+					def cart = load '.pipelines/cart-ci.groovy'
+
+					cart.call([
+						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
+					])
+				}
             }
         }
 
