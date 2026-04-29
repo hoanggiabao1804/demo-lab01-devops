@@ -143,7 +143,7 @@ def call(Map params) {
 
     stage('Publish Test Result') {
         sh '''
-        mvn jacoco:report -pl cart
+        mvn jacoco:report -pl cart -am
         '''
 
         junit 'cart/**/target/surefire-reports/*.xml'
