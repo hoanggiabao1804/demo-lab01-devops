@@ -34,6 +34,8 @@ def call(Map params) {
         mvn clean test jacoco:report \
         -pl cart \
         -am \
+        -DskipITs=true \
+        -DskipTests=false \
         -Djacoco.skip=false
         '''
     }
@@ -170,6 +172,7 @@ def call(Map params) {
             -pl cart \
             -am \
             -DskipITs=true \
+            -DskipTests=false \
             -Djacoco.skip.check=true \
             -Dsonar.host.url=http://sonarqube:9000 \
             '''
