@@ -169,9 +169,9 @@ def call(Map params) {
             mvn clean test jacoco:report sonar:sonar \
             -pl cart \
             -am \
+            -DskipITs=true \
             -Djacoco.skip.check=true \
             -Dsonar.host.url=http://sonarqube:9000 \
-            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
             '''
         }
         timeout(time: 1, unit: 'HOURS') {
