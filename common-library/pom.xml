@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.yas</groupId>
@@ -9,7 +10,8 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>common-library</artifactId>
-    <version>${revision}</version>
+    <!-- <version>${revision}</version> -->
+    <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Common Library</name>
