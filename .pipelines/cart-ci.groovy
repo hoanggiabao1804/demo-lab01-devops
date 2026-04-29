@@ -137,15 +137,14 @@ def call(Map params) {
 
     stage('Test') {
         sh '''
-        mvn clean test -pl cart -am -Djacoco.skip=false
+        mvn clean test jacoco:report \
+        -pl cart \
+        -am \
+        -Djacoco.skip=false
         '''
     }
 
     stage('Publish Test Result') {
-        sh '''
-        mvn jacoco:report -pl cart -am
-        '''
-
         junit 'cart/**/target/surefire-reports/*.xml'
     }
 
