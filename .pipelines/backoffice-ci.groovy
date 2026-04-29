@@ -263,6 +263,28 @@ def call(Map params) {
         }
     }
 
+    stage('Test') {
+        dir('backoffice') {
+            sh '''
+            npm test -- --runInBand --coverage
+            '''
+        }
+    }
+
+    stage('Publish Test Result') {
+        junit allowEmptyResults: false, testResults: 'backoffice/test-results/*.xml'
+    }
+
+    stage('Publish Coverage Report') {
+        publishHTML([
+            reportDir: 'backoffice/coverage/lcov-report',
+            reportFiles: 'index.html',
+            reportName: 'Node Coverage',
+            keepAll: true,
+            alwaysLinkToLastBuild: true
+        ])
+    }
+
 }
 
 return this
