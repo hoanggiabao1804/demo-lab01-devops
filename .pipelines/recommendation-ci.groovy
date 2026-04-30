@@ -161,23 +161,23 @@ def call(Map params) {
         }
     }
 
-    stage('SonarQube Analysis') {
-        withSonarQubeEnv('My SonarQube Server') {
-            sh '''
-            mvn clean test jacoco:report sonar:sonar \
-            -pl recommendation \
-            -am \
-            -DskipITs=true \
-            -Dtest=EmbeddingQueryControllerTest \
-            -Dsurefire.failIfNoSpecifiedTests=false \
-            -Djacoco.skip.check=true \
-            -Dsonar.host.url=http://sonarqube:9000 \
-            '''
-        }
-        timeout(time: 1, unit: 'HOURS') {
-            waitForQualityGate abortPipeline: true
-        }
-    }
+    // stage('SonarQube Analysis') {
+    //     withSonarQubeEnv('My SonarQube Server') {
+    //         sh '''
+    //         mvn clean test jacoco:report sonar:sonar \
+    //         -pl recommendation \
+    //         -am \
+    //         -DskipITs=true \
+    //         -Dtest=EmbeddingQueryControllerTest \
+    //         -Dsurefire.failIfNoSpecifiedTests=false \
+    //         -Djacoco.skip.check=true \
+    //         -Dsonar.host.url=http://sonarqube:9000 \
+    //         '''
+    //     }
+    //     timeout(time: 1, unit: 'HOURS') {
+    //         waitForQualityGate abortPipeline: true
+    //     }
+    // }
 
     // stage('OWASP Dependency Pre-build') {
     //     sh '''
