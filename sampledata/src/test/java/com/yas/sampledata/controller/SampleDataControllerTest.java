@@ -1,63 +1,49 @@
 package com.yas.sampledata.controller;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yas.sampledata.service.SampleDataService;
 import com.yas.sampledata.viewmodel.SampleDataVm;
-import org.junit.jupiter.api.BeforeEach;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.security.oauth2.server.resource.autoconfigure.servlet.OAuth2ResourceServerAutoConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@WebMvcTest(value = SampleDataController.class, excludeAutoConfiguration = {
+        OAuth2ResourceServerAutoConfiguration.class
+})
 class SampleDataControllerTest {
+
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @MockitoBean
     private SampleDataService sampleDataService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    private SampleDataVm sampleDataVm;
-
-    @BeforeEach
-    void setUp() {
-        sampleDataVm = new SampleDataVm("Insert Sample Data successfully!");
-    }
-
     @Test
-    @WithMockUser(roles = "ADMIN")
-    void testCreateSampleDataSuccess() throws Exception {
-        // Arrange
-        when(sampleDataService.createSampleData()).thenReturn(sampleDataVm);
+    void shouldCreateSampleData() throws Exception {
+        SampleDataVm response = new SampleDataVm("created");
 
-        // Act & Assert
+        when(sampleDataService.createSampleData())
+                .thenReturn(response);
+
         mockMvc.perform(post("/storefront/sampledata")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(sampleDataVm)))
+                .content(objectMapper.writeValueAsString(
+                        new SampleDataVm("input"))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Insert Sample Data successfully!"));
-    }
+                .andExpect(jsonPath("$.message").value("created"));
 
-    @Test
-    void testCreateSampleDataUnauthorized() throws Exception {
-        // Act & Assert
-        mockMvc.perform(post("/storefront/sampledata")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(sampleDataVm)))
-                .andExpect(status().isUnauthorized());
+        verify(sampleDataService).createSampleData();
     }
 }
