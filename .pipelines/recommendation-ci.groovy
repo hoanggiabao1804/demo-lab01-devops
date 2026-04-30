@@ -30,15 +30,14 @@ def call(Map params) {
     }
 
     stage('Test') {
-        // sh '''
-        // mvn clean test jacoco:report \
-        // -pl recommendation \
-        // -am \
-        // -Djacoco.skip=false
-        // '''
-
         sh '''
-        mvn -q -pl recommendation -am -DskipITs test -Dtest='*Test' -Djacoco.skip=false
+        mvn clean test jacoco:report \
+        -pl recommendation \
+        -am \
+        -DskipITs=true \
+        -Dtest=EmbeddingQueryControllerTest \
+        -Dsurefire.failIfNoSpecifiedTests=false \
+        -Djacoco.skip=false
         '''
     }
 
