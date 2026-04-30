@@ -91,7 +91,11 @@ pipeline {
                             || file == ".pipelines/location-ci.groovy"                        
                         ) {
                             servicesToBuild << "location"
-                        } else if (file.startsWith("media/") || file == ".github/workflows/media-ci.yaml") {
+                        } else if (
+                            file.startsWith("media/") 
+                            || file == ".github/workflows/media-ci.yaml"
+                            || file == ".pipelines/media-ci.groovy"    
+                        ) {
                             servicesToBuild << "media"
                         } else if (file.startsWith("nginx/")) {
                             servicesToBuild << "nginx"
@@ -325,9 +329,17 @@ pipeline {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('media') }
             }
             steps {
-                sh '''
-                echo "Media pipeline..."
-        	    '''
+                script {
+                    sh '''
+                    echo "Media pipeline..."
+					'''
+
+					def media = load '.pipelines/media-ci.groovy'
+
+					media.call([
+						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
+					])
+				}
             }
         }
 
