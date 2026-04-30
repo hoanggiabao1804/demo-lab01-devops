@@ -77,7 +77,11 @@ pipeline {
                             servicesToBuild << "delivery"
                         } else if (file.startsWith("docker/")) {
                             servicesToBuild << "docker"
-                        } else if (file.startsWith("inventory/") || file == ".github/workflows/inventory-ci.yaml") {
+                        } else if (
+                            file.startsWith("inventory/") 
+                            || file == ".github/workflows/inventory-ci.yaml"
+                            || file == ".pipelines/inventory-ci.groovy"
+                    ) {
                             servicesToBuild << "inventory"
                         } else if (file.startsWith("k8s/")) {
                             servicesToBuild << "k8s"
@@ -268,9 +272,17 @@ pipeline {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('inventory') }
             }
             steps {
-                sh '''
-                echo "Inventory pipeline..."
-                '''
+                script {
+                    sh '''
+                    echo "Inventory pipeline..."
+					'''
+
+					def inventory = load '.pipelines/inventory-ci.groovy'
+
+					inventory.call([
+						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
+					])
+				}
             }
         }
 
