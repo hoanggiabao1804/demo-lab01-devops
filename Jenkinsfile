@@ -105,7 +105,11 @@ pipeline {
                             || file == ".pipelines/order-ci.groovy"    
                         ) {
                             servicesToBuild << "order"
-                        } else if (file.startsWith("payment/") || file == ".github/workflows/payment-ci.yaml") {
+                        } else if (
+                            file.startsWith("payment/") 
+                            || file == ".github/workflows/payment-ci.yaml"
+                            || file == ".pipelines/payment-ci.groovy"    
+                        ) {
                             servicesToBuild << "payment"
                         } else if (file.startsWith("payment-paypal/") || file == ".github/workflows/payment-paypal-ci.yaml") {
                             servicesToBuild << "payment-paypal"
@@ -382,9 +386,17 @@ pipeline {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('payment') }
             }
             steps {
-                sh '''
-                echo "Payment pipeline..."
-        	    '''
+                script {
+                    sh '''
+                    echo "Payment pipeline..."
+					'''
+
+					def payment = load '.pipelines/payment-ci.groovy'
+
+					payment.call([
+						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
+					])
+				}
             }
         }
 
