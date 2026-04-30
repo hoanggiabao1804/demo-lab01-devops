@@ -111,19 +111,47 @@ pipeline {
                             || file == ".pipelines/payment-ci.groovy"    
                         ) {
                             servicesToBuild << "payment"
-                        } else if (file.startsWith("payment-paypal/") || file == ".github/workflows/payment-paypal-ci.yaml") {
+                        } else if (
+                            file.startsWith("payment-paypal/") 
+                            || file == ".github/workflows/payment-paypal-ci.yaml"
+                            || file == ".pipelines/payment-paypal-ci.groovy"    
+                        ) {
                             servicesToBuild << "payment-paypal"
-                        } else if (file.startsWith("product/") || file == ".github/workflows/product-ci.yaml") {
+                        } else if (
+                            file.startsWith("product/") 
+                            || file == ".github/workflows/product-ci.yaml"
+                            || file == ".pipelines/product-ci.groovy"    
+                        ) {
                             servicesToBuild << "product"
-                        } else if (file.startsWith("promotion/") || file == ".github/workflows/promotion-ci.yaml") {
+                        } else if (
+                            file.startsWith("promotion/") 
+                            || file == ".github/workflows/promotion-ci.yaml"
+                            || file == ".pipelines/promotion-ci.groovy"
+                        ) {
                             servicesToBuild << "promotion"
-                        } else if (file.startsWith("rating/") || file == ".github/workflows/rating-ci.yaml") {
+                        } else if (
+                            file.startsWith("rating/") 
+                            || file == ".github/workflows/rating-ci.yaml"
+                            || file == ".pipelines/rating-ci.groovy"    
+                        ) {
                             servicesToBuild << "rating"
-                        } else if (file.startsWith("recommendation/") || file == ".github/workflows/recommendation-ci.yaml") {
+                        } else if (
+                            file.startsWith("recommendation/") 
+                            || file == ".github/workflows/recommendation-ci.yaml"
+                            || file == ".pipelines/recommendation-ci.groovy"    
+                        ) {
                             servicesToBuild << "recommendation"
-                        } else if (file.startsWith("sampledata/") || file == ".github/workflows/sampledata-ci.yaml") {
+                        } else if (
+                            file.startsWith("sampledata/") 
+                            || file == ".github/workflows/sampledata-ci.yaml"
+                            || file == ".pipelines/sampledata-ci.groovy"    
+                        ) {
                             servicesToBuild << "sampledata"
-                        } else if (file.startsWith("search/") || file == ".github/workflows/search-ci.yaml") {
+                        } else if (
+                            file.startsWith("search/") 
+                            || file == ".github/workflows/search-ci.yaml"
+                            || file == ".pipelines/search-ci.groovy"    
+                        ) {
                             servicesToBuild << "search"
                         } else if (file.startsWith("storefront/") || file == ".github/workflows/storefront-ci.yaml") {
                             servicesToBuild << "storefront"
@@ -405,9 +433,17 @@ pipeline {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('payment-paypal') }
             }
             steps {
-                sh '''
-                echo "Payment-paypal pipeline..."
-        	    '''
+                script {
+                    sh '''
+                    echo "Payment-paypal pipeline..."
+					'''
+
+					def paymentPaypal = load '.pipelines/payment-paypal-ci.groovy'
+
+					paymentPaypal.call([
+						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
+					])
+				}
             }
         }
 
@@ -416,9 +452,17 @@ pipeline {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('product') }
             }
             steps {
-                sh '''
-                echo "Product pipeline..."
-        	    '''
+                script {
+                    sh '''
+                    echo "Product pipeline..."
+					'''
+
+					def product = load '.pipelines/product-ci.groovy'
+
+					product.call([
+						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
+					])
+				}
             }
         }
 
@@ -427,9 +471,17 @@ pipeline {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('promotion')}
             }
             steps {
-                sh '''
-                echo "Promotion pipeline..."
-        	    '''
+                script {
+                    sh '''
+                    echo "Promotion pipeline..."
+					'''
+
+					def promotion = load '.pipelines/promotion-ci.groovy'
+
+					promotion.call([
+						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
+					])
+				}
             }
         }
 
@@ -438,9 +490,17 @@ pipeline {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('rating') }
             }
             steps {
-                sh '''
-                echo "Rating pipeline..."
-        	    '''
+                script {
+                    sh '''
+                    echo "Rating pipeline..."
+					'''
+
+					def rating = load '.pipelines/rating-ci.groovy'
+
+					rating.call([
+						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
+					])
+				}
             }
         }
 
@@ -449,9 +509,17 @@ pipeline {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('recommendation') }
             }
             steps {
-                sh '''
-                echo "Recommendation pipeline..."
-        	    '''
+                script {
+                    sh '''
+                    echo "Recommendation pipeline..."
+					'''
+
+					def recommendation = load '.pipelines/recommendation-ci.groovy'
+
+					recommendation.call([
+						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
+					])
+				}
             }
         }
 
@@ -460,9 +528,17 @@ pipeline {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('sampledata') }
             }
             steps {
-                sh '''
-                echo "Sampledata pipeline..."
-        	    '''
+                script {
+                    sh '''
+                    echo "Sampledata pipeline..."
+					'''
+
+					def sampledata = load '.pipelines/sampledata-ci.groovy'
+
+					sampledata.call([
+						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
+					])
+				}
             }
         }
 
@@ -471,9 +547,17 @@ pipeline {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('search') }
             }
             steps {
-                sh '''
-                echo "Search pipeline..."
-        	    '''
+                script {
+                    sh '''
+                    echo "Search pipeline..."
+					'''
+
+					def search = load '.pipelines/search-ci.groovy'
+
+					search.call([
+						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
+					])
+				}
             }
         }
 
