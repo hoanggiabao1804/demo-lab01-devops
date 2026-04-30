@@ -67,7 +67,11 @@ pipeline {
                             servicesToBuild << "cart"
                         } else if (file.startsWith("common-library/")) {
                             servicesToBuild << "common-library"
-                        } else if (file.startsWith("customer/") || file == ".github/workflows/customer-ci.yaml") {
+                        } else if (
+                            file.startsWith("customer/") 
+                            || file == ".github/workflows/customer-ci.yaml"
+                            || file == ".pipelines/customer-ci.groovy"
+                        ) {
                             servicesToBuild << "customer"
                         } else if (file.startsWith("delivery/")) {
                             servicesToBuild << "delivery"
@@ -193,7 +197,6 @@ pipeline {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('cart') }
             }
             steps {
-               
                 script {
                     sh '''
                     echo "Cart pipeline..."
@@ -224,9 +227,17 @@ pipeline {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('customer') }
             }
             steps {
-                sh '''
-                echo "Customer pipeline..."
-                '''
+                script {
+                    sh '''
+                    echo "Customer pipeline..."
+					'''
+
+					def customer = load '.pipelines/customer-ci.groovy'
+
+					customer.call([
+						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
+					])
+				}
             }
         }
 
