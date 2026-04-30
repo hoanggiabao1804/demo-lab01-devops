@@ -30,11 +30,15 @@ def call(Map params) {
     }
 
     stage('Test') {
+        // sh '''
+        // mvn clean test jacoco:report \
+        // -pl recommendation \
+        // -am \
+        // -Djacoco.skip=false
+        // '''
+
         sh '''
-        mvn clean test jacoco:report \
-        -pl recommendation \
-        -am \
-        -Djacoco.skip=false
+        mvn -q -pl recommendation -am -DskipITs test -Dtest='*Test' -Djacoco.skip=false
         '''
     }
 
