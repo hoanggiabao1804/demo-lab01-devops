@@ -99,7 +99,11 @@ pipeline {
                             servicesToBuild << "media"
                         } else if (file.startsWith("nginx/")) {
                             servicesToBuild << "nginx"
-                        } else if (file.startsWith("order/") || file == ".github/workflows/order-ci.yaml") {
+                        } else if (
+                            file.startsWith("order/") 
+                            || file == ".github/workflows/order-ci.yaml"
+                            || file == ".pipelines/order-ci.groovy"    
+                        ) {
                             servicesToBuild << "order"
                         } else if (file.startsWith("payment/") || file == ".github/workflows/payment-ci.yaml") {
                             servicesToBuild << "payment"
@@ -359,9 +363,17 @@ pipeline {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('order') }
             }
             steps {
-                sh '''
-                echo "Order pipeline..."
-        	    '''
+                script {
+                    sh '''
+                    echo "Order pipeline..."
+					'''
+
+					def order = load '.pipelines/order-ci.groovy'
+
+					order.call([
+						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
+					])
+				}
             }
         }
 
