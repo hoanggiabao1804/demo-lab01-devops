@@ -85,7 +85,11 @@ pipeline {
                             servicesToBuild << "inventory"
                         } else if (file.startsWith("k8s/")) {
                             servicesToBuild << "k8s"
-                        } else if (file.startsWith("location/") || file == ".github/workflows/location-ci.yaml") {
+                        } else if (
+                            file.startsWith("location/") 
+                            || file == ".github/workflows/location-ci.yaml"
+                            || file == ".pipelines/location-ci.groovy"                        
+                        ) {
                             servicesToBuild << "location"
                         } else if (file.startsWith("media/") || file == ".github/workflows/media-ci.yaml") {
                             servicesToBuild << "media"
@@ -302,9 +306,17 @@ pipeline {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('location') }
             }
             steps {
-                sh '''
-                echo "Location pipeline..."
-        	    '''
+                script {
+                    sh '''
+                    echo "Location pipeline..."
+					'''
+
+					def location = load '.pipelines/location-ci.groovy'
+
+					location.call([
+						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
+					])
+				}
             }
         }
 
