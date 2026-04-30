@@ -161,11 +161,6 @@ def call(Map params) {
     // stage('SonarQube Analysis') {
     //     withSonarQubeEnv('My SonarQube Server') {
     //         sh '''
-    //         echo "Find Jacoco XML report..."
-    //         find . -name jacoco.xml
-    //         '''
-
-    //         sh '''
     //         mvn clean test jacoco:report sonar:sonar \
     //         -pl customer \
     //         -am \
