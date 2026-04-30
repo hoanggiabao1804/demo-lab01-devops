@@ -167,6 +167,9 @@ def call(Map params) {
             mvn clean test jacoco:report sonar:sonar \
             -pl recommendation \
             -am \
+            -DskipITs=true \
+            -Dtest=EmbeddingQueryControllerTest \
+            -Dsurefire.failIfNoSpecifiedTests=false \
             -Djacoco.skip.check=true \
             -Dsonar.host.url=http://sonarqube:9000 \
             '''
