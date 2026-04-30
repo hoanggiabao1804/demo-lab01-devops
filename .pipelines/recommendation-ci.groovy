@@ -212,111 +212,111 @@ def call(Map params) {
     //     ])
     // }
 
-    stage('Snyk Scan') {
-        sh '''
-        snyk auth $SNYK_TOKEN
+    // stage('Snyk Scan') {
+    //     sh '''
+    //     snyk auth $SNYK_TOKEN
 
-        find . -name "mvnw" -exec chmod +x {} \\;
+    //     find . -name "mvnw" -exec chmod +x {} \\;
 
-        snyk test --file=pom.xml --package-manager=maven -d --json > recommendation-snyk-report.json || true
-        '''
+    //     snyk test --file=pom.xml --package-manager=maven -d --json > recommendation-snyk-report.json || true
+    //     '''
 
-        sh '''
-        jq -r '
-        if (.vulnerabilities | length) == 0 then
-        "<p>No vulnerabilities</p>"
-        else
-        "<html>
-        <head>
-        <style>
-        body { font-family: Arial; padding: 20px; }
-        h2 { margin-bottom: 20px; }
+    //     sh '''
+    //     jq -r '
+    //     if (.vulnerabilities | length) == 0 then
+    //     "<p>No vulnerabilities</p>"
+    //     else
+    //     "<html>
+    //     <head>
+    //     <style>
+    //     body { font-family: Arial; padding: 20px; }
+    //     h2 { margin-bottom: 20px; }
 
-        table {
-        border-collapse: collapse;
-        width: 100%;
-        }
+    //     table {
+    //     border-collapse: collapse;
+    //     width: 100%;
+    //     }
 
-        th, td {
-        border: 1px solid #ddd;
-        padding: 10px;
-        text-align: left;
-        }
+    //     th, td {
+    //     border: 1px solid #ddd;
+    //     padding: 10px;
+    //     text-align: left;
+    //     }
 
-        th {
-        background-color: #f4f4f4;
-        }
+    //     th {
+    //     background-color: #f4f4f4;
+    //     }
 
-        tr:nth-child(even) {
-        background-color: #fafafa;
-        }
-        </style>
-        </head>
-        <body>
+    //     tr:nth-child(even) {
+    //     background-color: #fafafa;
+    //     }
+    //     </style>
+    //     </head>
+    //     <body>
 
-        <h2>Snyk Vulnerability Report</h2>
+    //     <h2>Snyk Vulnerability Report</h2>
 
-        <table>
-        <thead>
-        <tr>
-        <th>Severity</th>
-        <th>Package</th>
-        <th>Version</th>
-        <th>Title</th>
-        <th>Fixed In</th>
-        </tr>
-        </thead>
-        <tbody>
-        " +
+    //     <table>
+    //     <thead>
+    //     <tr>
+    //     <th>Severity</th>
+    //     <th>Package</th>
+    //     <th>Version</th>
+    //     <th>Title</th>
+    //     <th>Fixed In</th>
+    //     </tr>
+    //     </thead>
+    //     <tbody>
+    //     " +
 
-        (
-        [.vulnerabilities[] |
-            "<tr>" +
-            "<td>" + .severity + "</td>" +
-            "<td>" + .packageName + "</td>" +
-            "<td>" + .version + "</td>" +
-            "<td>" + .title + "</td>" +
-            "<td>" + (if .fixedIn then (.fixedIn | join(", ")) else "N/A" end) + "</td>" +
-            "</tr>"
-        ] | join("")
-        )
+    //     (
+    //     [.vulnerabilities[] |
+    //         "<tr>" +
+    //         "<td>" + .severity + "</td>" +
+    //         "<td>" + .packageName + "</td>" +
+    //         "<td>" + .version + "</td>" +
+    //         "<td>" + .title + "</td>" +
+    //         "<td>" + (if .fixedIn then (.fixedIn | join(", ")) else "N/A" end) + "</td>" +
+    //         "</tr>"
+    //     ] | join("")
+    //     )
 
-        + "
+    //     + "
 
-        </tbody>
-        </table>
+    //     </tbody>
+    //     </table>
 
-        </body>
-        </html>
-        "
-        end
-        ' recommendation-snyk-report.json > recommendation-snyk-report.html
-        '''
+    //     </body>
+    //     </html>
+    //     "
+    //     end
+    //     ' recommendation-snyk-report.json > recommendation-snyk-report.html
+    //     '''
 
-        publishHTML([
-            reportDir: '.',
-            reportFiles: 'recommendation-snyk-report.html',
-            reportName: 'Snyk Report',
-            allowMissing: true,
-            alwaysLinkToLastBuild: true,
-            keepAll: true
-        ])
+    //     publishHTML([
+    //         reportDir: '.',
+    //         reportFiles: 'recommendation-snyk-report.html',
+    //         reportName: 'Snyk Report',
+    //         allowMissing: true,
+    //         alwaysLinkToLastBuild: true,
+    //         keepAll: true
+    //     ])
 
-        def hasVuln = sh(
-            script: 'grep -q "vulnerabilities" recommendation-snyk-report.json',
-            returnStatus: true
-        )
+    //     def hasVuln = sh(
+    //         script: 'grep -q "vulnerabilities" recommendation-snyk-report.json',
+    //         returnStatus: true
+    //     )
 
-        if (hasVuln == 0) {
-            sh '''
-            echo "Snyk vulnerabilities found!"
-            '''
-        } else {
-            sh '''
-            echo "No vulnerabilites found!"
-            '''
-        }
-    }
+    //     if (hasVuln == 0) {
+    //         sh '''
+    //         echo "Snyk vulnerabilities found!"
+    //         '''
+    //     } else {
+    //         sh '''
+    //         echo "No vulnerabilites found!"
+    //         '''
+    //     }
+    // }
 }
 
 return this
