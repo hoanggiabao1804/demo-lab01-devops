@@ -155,7 +155,11 @@ pipeline {
                             servicesToBuild << "search"
                         } else if (file.startsWith("storefront/") || file == ".github/workflows/storefront-ci.yaml") {
                             servicesToBuild << "storefront"
-                        } else if (file.startsWith("storefront-bff/") || file == ".github/workflows/storefront-bff-ci.yaml") {
+                        } else if (
+                            file.startsWith("storefront-bff/") 
+                            || file == ".github/workflows/storefront-bff-ci.yaml"
+                            || file == ".pipelines/storefront-bff-ci.groovy"    
+                        ) {
                             servicesToBuild << "storefront-bff"
                         } else if (file.startsWith("tax/") || file == ".github/workflows/tax-ci.yaml") {
                             servicesToBuild << "tax"
@@ -566,9 +570,17 @@ pipeline {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('storefront') }
             }
             steps {
-                sh '''
-                echo "Storefront pipeline..."
-        	    '''
+                script {
+					sh '''
+					echo "Storefront-bff pipeline..."
+					'''
+
+					def storefront_bff = load '.pipelines/storefront-bff-ci.groovy'
+
+					storefront_bff.call([
+						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
+					])
+				}
             }
         }
 
