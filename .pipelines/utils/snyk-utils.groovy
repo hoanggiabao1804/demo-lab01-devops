@@ -1,4 +1,4 @@
-import groovy.json.JsonSlurper
+import groovy.json.JsonSlurperClassic
 
 def jsonToHtml(String jsonPath, String htmlPath) {
 
