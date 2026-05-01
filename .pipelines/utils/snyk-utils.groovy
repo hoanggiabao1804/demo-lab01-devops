@@ -1,19 +1,10 @@
-import groovy.json.JsonSlurperClassic
-
 def jsonToHtml(String jsonPath, String htmlPath) {
 
     if (!fileExists(jsonPath)) {
         error "Snyk JSON file not found: ${jsonPath}"
     }
 
-    def jsonContent
-    try {
-        jsonContent = readFile(jsonPath)
-    } catch (Exception e) {
-        error "Cannot read file: ${jsonPath}"
-    }
-
-    def data = parseJson(jsonContent)
+    def data = readJSON file: jsonPath
 
     def html = buildHtml(data)
 
@@ -22,12 +13,6 @@ def jsonToHtml(String jsonPath, String htmlPath) {
     echo "Snyk HTML report generated: ${htmlPath}"
 }
 
-@NonCPS
-def parseJson(String text) {
-    new JsonSlurperClassic().parseText(text)
-}
-
-@NonCPS
 def buildHtml(data) {
     if (!data || data.size() == 0) {
         return "<p>No data</p>"
