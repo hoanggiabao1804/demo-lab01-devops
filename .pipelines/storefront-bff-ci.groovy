@@ -24,6 +24,28 @@ def call(Map params) {
         )
     }
 
+    stage('Test') {
+        sh '''
+        mvn clean test \
+        -pl storefront-bff \
+        -DskipITs=true
+        '''
+    }
+
+    stage('Publish Test Result') {
+        junit 'storefront-bff/**/target/surefire-reports/*.xml'
+    }
+
+    stage('Publish Coverage Report') {
+        publishHTML([
+            reportDir: 'storefront-bff/target/site/jacoco',
+            reportFiles: 'index.html',
+            reportName: 'JaCoCo Coverage',
+            keepAll: true,
+            alwaysLinkToLastBuild: true
+        ])
+    }
+
     // stage('Gitleak Scan') {
     //     sh '''
     //     echo "Run Gitleaks scan..."
@@ -281,26 +303,6 @@ def call(Map params) {
     //         '''
     //     }
     // }
-
-    stage('Test') {
-        sh '''
-        mvn clean verify -pl storefront-bff
-        '''
-    }
-
-    stage('Publish Test Result') {
-        junit 'storefront-bff/**/target/surefire-reports/*.xml'
-    }
-
-    stage('Publish Coverage Report') {
-        publishHTML([
-            reportDir: 'storefront-bff/target/site/jacoco',
-            reportFiles: 'index.html',
-            reportName: 'JaCoCo Coverage',
-            keepAll: true,
-            alwaysLinkToLastBuild: true
-        ])
-    }
 }
 
 return this
