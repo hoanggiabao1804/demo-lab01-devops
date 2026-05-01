@@ -1,6 +1,5 @@
 package com.yas.cart.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -8,48 +7,31 @@ import org.junit.jupiter.api.Test;
 
 class AbstractCircuitBreakFallbackHandlerTest {
 
-    // Tạo một class cụ thể kế thừa từ abstract class để có thể test
-    private static class TestFallbackHandler extends AbstractCircuitBreakFallbackHandler {
-        // Expose các protected methods ra thành public để dễ gọi trong test
-        public void testBodilessFallback(Throwable throwable) throws Throwable {
-            handleBodilessFallback(throwable);
-        }
-
-        public <T> T testTypedFallback(Throwable throwable) throws Throwable {
-            return handleTypedFallback(throwable);
-        }
-    }
-
-    private TestFallbackHandler fallbackHandler;
+    private AbstractCircuitBreakFallbackHandler fallbackHandler;
 
     @BeforeEach
     void setUp() {
-        fallbackHandler = new TestFallbackHandler();
+        fallbackHandler = new AbstractCircuitBreakFallbackHandler() {
+        };
     }
 
     @Test
-    void handleBodilessFallback_ShouldLogAndRethrowException() {
-        // Arrange
-        String errorMessage = "Test Bodiless Exception";
-        Throwable testException = new RuntimeException(errorMessage);
+    void handleBodilessFallback_ShouldCallHandleErrorAndRethrow() {
+        Throwable testException = new RuntimeException("Test Bodiless Exception");
 
-        // Act & Assert
-        assertThatThrownBy(() -> fallbackHandler.testBodilessFallback(testException))
+        assertThatThrownBy(() -> fallbackHandler.handleBodilessFallback(testException))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessage(errorMessage)
-                .isSameAs(testException); // Đảm bảo ném ra đúng object lỗi ban đầu
+                .hasMessage("Test Bodiless Exception")
+                .isSameAs(testException);
     }
 
     @Test
-    void handleTypedFallback_ShouldLogAndRethrowException() {
-        // Arrange
-        String errorMessage = "Test Typed Exception";
-        Throwable testException = new RuntimeException(errorMessage);
+    void handleTypedFallback_ShouldCallHandleErrorAndRethrow() {
+        Throwable testException = new RuntimeException("Test Typed Exception");
 
-        // Act & Assert
-        assertThatThrownBy(() -> fallbackHandler.testTypedFallback(testException))
+        assertThatThrownBy(() -> fallbackHandler.handleTypedFallback(testException))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessage(errorMessage)
+                .hasMessage("Test Typed Exception")
                 .isSameAs(testException);
     }
 }
