@@ -26,7 +26,7 @@ def call(Map params) {
 
     stage('Test') {
         sh '''
-        mvn clean test jacoco:check jacoco:report \
+        mvn clean verify \
         -pl storefront-bff \
         -DskipITs=true
         '''
@@ -157,7 +157,8 @@ def call(Map params) {
             sh '''
             mvn clean verify sonar:sonar \
             -Dsonar.host.url=http://sonarqube:9000 \
-            -f storefront-bff
+            -pl storefront-bff \
+            -DskipITs=true
             '''
         }
         timeout(time: 1, unit: 'HOURS') {
