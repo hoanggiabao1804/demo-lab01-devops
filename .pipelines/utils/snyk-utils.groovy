@@ -15,7 +15,7 @@ def jsonToHtml(String jsonPath, String htmlPath) {
 
     def data
     try {
-        data = new JsonSlurper().parseText(jsonContent)
+        data = new JsonSlurperClassic().parseText(jsonContent)
     } catch (Exception e) {
         error "Invalid JSON format: ${jsonPath}"
     }
