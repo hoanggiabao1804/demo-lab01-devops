@@ -46,111 +46,117 @@ def call(Map params) {
         ])
     }
 
-    // stage('Gitleak Scan') {
-    //     sh '''
-    //     echo "Run Gitleaks scan..."
-    //     gitleaks detect \
-    //     --source ./backoffice-bff \
-    //     --no-git \
-    //     --report-path backoffice-bff-gitleaks-report.json \
-    //     --report-format json \
-    //     --exit-code 0
-    //     '''
+    stage('Gitleak Scan') {
+        sh '''
+        echo "Run Gitleaks scan..."
+        gitleaks detect \
+        --source ./backoffice-bff \
+        --no-git \
+        --report-path backoffice-bff-gitleaks-report.json \
+        --report-format json \
+        --exit-code 0
+        '''
 
-    //     sh '''
-    //     jq -r '
-    //     if length == 0 then
-    //     "<p>No secrets detected</p>"
-    //     else
-    //     "<html>
-    //     <head>
-    //     <style>
-    //     body { font-family: Arial; padding: 20px; }
-    //     h2 { margin-bottom: 20px; }
+        def gitleaksUtils = load '.pipelines/utils/gitleaks-utils.groovy'
+        gitleaksUtils.jsonToHtml(
+            'backoffice-bff-gitleaks-report.json', 
+            'backoffice-bff-gitleaks-report.html'
+        )
 
-    //     table {
-    //     border-collapse: collapse;
-    //     width: 100%;
-    //     }
+        // sh '''
+        // jq -r '
+        // if length == 0 then
+        // "<p>No secrets detected</p>"
+        // else
+        // "<html>
+        // <head>
+        // <style>
+        // body { font-family: Arial; padding: 20px; }
+        // h2 { margin-bottom: 20px; }
 
-    //     th, td {
-    //     border: 1px solid #ddd;
-    //     padding: 10px;
-    //     text-align: left;
-    //     }
+        // table {
+        // border-collapse: collapse;
+        // width: 100%;
+        // }
 
-    //     th {
-    //     background-color: #f4f4f4;
-    //     }
+        // th, td {
+        // border: 1px solid #ddd;
+        // padding: 10px;
+        // text-align: left;
+        // }
 
-    //     tr:nth-child(even) {
-    //     background-color: #fafafa;
-    //     }
-    //     </style>
-    //     </head>
-    //     <body>
+        // th {
+        // background-color: #f4f4f4;
+        // }
 
-    //     <h2>Gitleaks Report</h2>
+        // tr:nth-child(even) {
+        // background-color: #fafafa;
+        // }
+        // </style>
+        // </head>
+        // <body>
 
-    //     <table>
-    //     <thead>
-    //     <tr>
-    //     <th>File</th>
-    //     <th>RuleID</th>
-    //     <th>Secret</th>
-    //     <th>StartLine</th>
-    //     </tr>
-    //     </thead>
-    //     <tbody>
-    //     " +
+        // <h2>Gitleaks Report</h2>
 
-    //     (
-    //     [.[] |
-    //         "<tr>" +
-    //         "<td>" + .File + "</td>" +
-    //         "<td>" + .RuleID + "</td>" +
-    //         "<td>" + .Secret + "</td>" +
-    //         "<td>" + (.StartLine | tostring) + "</td>" +
-    //         "</tr>"
-    //     ] | join("")
-    //     )
+        // <table>
+        // <thead>
+        // <tr>
+        // <th>File</th>
+        // <th>RuleID</th>
+        // <th>Secret</th>
+        // <th>StartLine</th>
+        // </tr>
+        // </thead>
+        // <tbody>
+        // " +
 
-    //     + "
+        // (
+        // [.[] |
+        //     "<tr>" +
+        //     "<td>" + .File + "</td>" +
+        //     "<td>" + .RuleID + "</td>" +
+        //     "<td>" + .Secret + "</td>" +
+        //     "<td>" + (.StartLine | tostring) + "</td>" +
+        //     "</tr>"
+        // ] | join("")
+        // )
 
-    //     </tbody>
-    //     </table>
+        // + "
 
-    //     </body>
-    //     </html>
-    //     "
-    //     end
-    //     '  backoffice-bff-gitleaks-report.json > backoffice-bff-gitleaks-report.html
-    //     '''
+        // </tbody>
+        // </table>
 
-    //     publishHTML([
-    //         reportDir: '.',
-    //         reportFiles: 'backoffice-bff-gitleaks-report.html',
-    //         reportName: 'Gitleak Report',
-    //         allowMissing: true,
-    //         alwaysLinkToLastBuild: true,
-    //         keepAll: true
-    //     ])
+        // </body>
+        // </html>
+        // "
+        // end
+        // '  backoffice-bff-gitleaks-report.json > backoffice-bff-gitleaks-report.html
+        // '''
 
-    //     def hasLeak = sh(
-    //         script: '[ grep -q "RuleID" backoffice-bff-gitleaks-report.json ]',
-    //         returnStatus: true
-    //     )
+        publishHTML([
+            reportDir: '.',
+            reportFiles: 'backoffice-bff-gitleaks-report.html',
+            reportName: 'Gitleak Report',
+            allowMissing: true,
+            alwaysLinkToLastBuild: true,
+            keepAll: true
+        ])
 
-    //     if (hasLeak == 0) {
-    //         sh '''
-    //         echo "Secrets detected!"
-    //         '''
-    //     } else {
-    //         sh '''
-    //         echo "No secrets detected!"
-    //         '''
-    //     }
-    // }
+        // def hasLeak = sh(
+        //     script: '[ grep -q "RuleID" backoffice-bff-gitleaks-report.json ]',
+        //     returnStatus: true
+        // )
+
+        // if (hasLeak == 0) {
+        //     sh '''
+        //     echo "Secrets detected!"
+        //     '''
+        // } else {
+        //     sh '''
+        //     echo "No secrets detected!"
+        //     '''
+        // }
+    }
 
     // stage('SonarQube Analysis') {
     //     withSonarQubeEnv('My SonarQube Server') {
@@ -199,111 +205,117 @@ def call(Map params) {
     //     ])
     // }
 
-    // stage('Snyk Scan') {
-	// 	sh '''
-	// 	snyk auth $SNYK_TOKEN
+    stage('Snyk Scan') {
+		sh '''
+		snyk auth $SNYK_TOKEN
 
-    //     find . -name "mvnw" -exec chmod +x {} \\;
+        find . -name "mvnw" -exec chmod +x {} \\;
 
-    //     snyk test --file=pom.xml --package-manager=maven -d --json > snyk-report.json || true
-	// 	'''
+        snyk test --file=pom.xml --package-manager=maven -d --json > snyk-report.json || true
+		'''
 
-    //     sh '''
-    //     jq -r '
-    //     if (.vulnerabilities | length) == 0 then
-    //     "<p>No vulnerabilities</p>"
-    //     else
-    //     "<html>
-    //     <head>
-    //     <style>
-    //     body { font-family: Arial; padding: 20px; }
-    //     h2 { margin-bottom: 20px; }
+        def snykUtils = load '.pipelines/utils/snyk-utils.groovy'
+        snykUtils.jsonToHtml(
+            'snyk-report.json', 
+            'snyk-report.html'
+        )
 
-    //     table {
-    //     border-collapse: collapse;
-    //     width: 100%;
-    //     }
+        // sh '''
+        // jq -r '
+        // if (.vulnerabilities | length) == 0 then
+        // "<p>No vulnerabilities</p>"
+        // else
+        // "<html>
+        // <head>
+        // <style>
+        // body { font-family: Arial; padding: 20px; }
+        // h2 { margin-bottom: 20px; }
 
-    //     th, td {
-    //     border: 1px solid #ddd;
-    //     padding: 10px;
-    //     text-align: left;
-    //     }
+        // table {
+        // border-collapse: collapse;
+        // width: 100%;
+        // }
 
-    //     th {
-    //     background-color: #f4f4f4;
-    //     }
+        // th, td {
+        // border: 1px solid #ddd;
+        // padding: 10px;
+        // text-align: left;
+        // }
 
-    //     tr:nth-child(even) {
-    //     background-color: #fafafa;
-    //     }
-    //     </style>
-    //     </head>
-    //     <body>
+        // th {
+        // background-color: #f4f4f4;
+        // }
 
-    //     <h2>Snyk Vulnerability Report</h2>
+        // tr:nth-child(even) {
+        // background-color: #fafafa;
+        // }
+        // </style>
+        // </head>
+        // <body>
 
-    //     <table>
-    //     <thead>
-    //     <tr>
-    //     <th>Severity</th>
-    //     <th>Package</th>
-    //     <th>Version</th>
-    //     <th>Title</th>
-    //     <th>Fixed In</th>
-    //     </tr>
-    //     </thead>
-    //     <tbody>
-    //     " +
+        // <h2>Snyk Vulnerability Report</h2>
 
-    //     (
-    //     [.vulnerabilities[] |
-    //         "<tr>" +
-    //         "<td>" + .severity + "</td>" +
-    //         "<td>" + .packageName + "</td>" +
-    //         "<td>" + .version + "</td>" +
-    //         "<td>" + .title + "</td>" +
-    //         "<td>" + (if .fixedIn then (.fixedIn | join(", ")) else "N/A" end) + "</td>" +
-    //         "</tr>"
-    //     ] | join("")
-    //     )
+        // <table>
+        // <thead>
+        // <tr>
+        // <th>Severity</th>
+        // <th>Package</th>
+        // <th>Version</th>
+        // <th>Title</th>
+        // <th>Fixed In</th>
+        // </tr>
+        // </thead>
+        // <tbody>
+        // " +
 
-    //     + "
+        // (
+        // [.vulnerabilities[] |
+        //     "<tr>" +
+        //     "<td>" + .severity + "</td>" +
+        //     "<td>" + .packageName + "</td>" +
+        //     "<td>" + .version + "</td>" +
+        //     "<td>" + .title + "</td>" +
+        //     "<td>" + (if .fixedIn then (.fixedIn | join(", ")) else "N/A" end) + "</td>" +
+        //     "</tr>"
+        // ] | join("")
+        // )
 
-    //     </tbody>
-    //     </table>
+        // + "
 
-    //     </body>
-    //     </html>
-    //     "
-    //     end
-    //     ' snyk-report.json > snyk-report.html
-	// 	'''
+        // </tbody>
+        // </table>
 
-	// 	publishHTML([
-	// 		reportDir: '.',
-	// 		reportFiles: 'snyk-report.html',
-	// 		reportName: 'Snyk Report',
-	// 		allowMissing: true,
-	// 		alwaysLinkToLastBuild: true,
-	// 		keepAll: true
-	// 	])
+        // </body>
+        // </html>
+        // "
+        // end
+        // ' snyk-report.json > snyk-report.html
+		// '''
 
-	// 	def hasVuln = sh(
-	// 		script: 'grep -q "vulnerabilities" snyk-report.json',
-	// 		returnStatus: true
-	// 	)
+		publishHTML([
+			reportDir: '.',
+			reportFiles: 'snyk-report.html',
+			reportName: 'Snyk Report',
+			allowMissing: true,
+			alwaysLinkToLastBuild: true,
+			keepAll: true
+		])
 
-	// 	if (hasVuln == 0) {
-	// 		sh '''
-    //         echo "Snyk vulnerabilities found!"
-    //         '''
-	// 	} else {
-    //         sh '''
-    //         echo "No vulnerabilites found!"
-    //         '''
-    //     }
-    // }
+		def hasVuln = sh(
+			script: 'grep -q "vulnerabilities" snyk-report.json',
+			returnStatus: true
+		)
+
+		if (hasVuln == 0) {
+			sh '''
+            echo "Snyk vulnerabilities found!"
+            '''
+		} else {
+            sh '''
+            echo "No vulnerabilites found!"
+            '''
+        }
+    }
 }
 
 return this
