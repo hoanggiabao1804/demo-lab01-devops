@@ -26,7 +26,7 @@ def call(Map params) {
 
     stage('Test') {
         sh '''
-        mvn clean test jacoco:report \
+        mvn clean test jacoco:check jacoco:report \
         -pl storefront-bff \
         -DskipITs=true
         '''
