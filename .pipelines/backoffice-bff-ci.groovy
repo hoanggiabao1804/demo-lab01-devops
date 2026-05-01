@@ -63,76 +63,6 @@ def call(Map params) {
             'backoffice-bff-gitleaks-report.html'
         )
 
-        // sh '''
-        // jq -r '
-        // if length == 0 then
-        // "<p>No secrets detected</p>"
-        // else
-        // "<html>
-        // <head>
-        // <style>
-        // body { font-family: Arial; padding: 20px; }
-        // h2 { margin-bottom: 20px; }
-
-        // table {
-        // border-collapse: collapse;
-        // width: 100%;
-        // }
-
-        // th, td {
-        // border: 1px solid #ddd;
-        // padding: 10px;
-        // text-align: left;
-        // }
-
-        // th {
-        // background-color: #f4f4f4;
-        // }
-
-        // tr:nth-child(even) {
-        // background-color: #fafafa;
-        // }
-        // </style>
-        // </head>
-        // <body>
-
-        // <h2>Gitleaks Report</h2>
-
-        // <table>
-        // <thead>
-        // <tr>
-        // <th>File</th>
-        // <th>RuleID</th>
-        // <th>Secret</th>
-        // <th>StartLine</th>
-        // </tr>
-        // </thead>
-        // <tbody>
-        // " +
-
-        // (
-        // [.[] |
-        //     "<tr>" +
-        //     "<td>" + .File + "</td>" +
-        //     "<td>" + .RuleID + "</td>" +
-        //     "<td>" + .Secret + "</td>" +
-        //     "<td>" + (.StartLine | tostring) + "</td>" +
-        //     "</tr>"
-        // ] | join("")
-        // )
-
-        // + "
-
-        // </tbody>
-        // </table>
-
-        // </body>
-        // </html>
-        // "
-        // end
-        // '  backoffice-bff-gitleaks-report.json > backoffice-bff-gitleaks-report.html
-        // '''
-
         publishHTML([
             reportDir: '.',
             reportFiles: 'backoffice-bff-gitleaks-report.html',
@@ -141,69 +71,21 @@ def call(Map params) {
             alwaysLinkToLastBuild: true,
             keepAll: true
         ])
-
-        // def hasLeak = sh(
-        //     script: '[ grep -q "RuleID" backoffice-bff-gitleaks-report.json ]',
-        //     returnStatus: true
-        // )
-
-        // if (hasLeak == 0) {
-        //     sh '''
-        //     echo "Secrets detected!"
-        //     '''
-        // } else {
-        //     sh '''
-        //     echo "No secrets detected!"
-        //     '''
-        // }
     }
 
-    // stage('SonarQube Analysis') {
-    //     withSonarQubeEnv('My SonarQube Server') {
-    //         sh '''
-    //         mvn clean verify sonar:sonar \
-    //         -Dsonar.host.url=http://sonarqube:9000 \
-    //         -f backoffice-bff \
-    //         -DskipITs=true
-    //         '''
-    //     }
-    //     timeout(time: 1, unit: 'HOURS') {
-    //         waitForQualityGate abortPipeline: true
-    //     }
-    // }
-
-    // stage('OWASP Dependency Pre-build') {
-    //     sh '''
-    //     mvn -B -q clean install -DskipTests
-    //     '''
-    // }
-
-    // stage('OWASP Dependency Check') {
-    //     sh '''
-    //     mvn org.owasp:dependency-check-maven:check \
-    //     -pl backoffice-bff -am \
-    //     -DnvdApiKey=$NVD_API_KEY \
-    //     -Dnvd.api.endpoint=https://services.nvd.nist.gov/rest/json/cves/2.0 \
-    //     -Dcisa.enabled=false \
-    //     -Dformat=HTML \
-    //     -DoutputDirectory=target/dependency-check-report \
-    //     -DdataDirectory=/owasp \
-    //     -DassemblyAnalyzerEnabled=false \
-    //     -DnodeAnalyzerEnabled=false \
-    //     -DpyPackageAnalyzerEnabled=false
-    //     '''
-    // }
-
-    // stage('Publish OWASP Report') {
-    //     publishHTML([
-    //         reportDir: '.',
-    //         reportFiles: '**/target/dependency-check-report.html',
-    //         reportName: 'OWASP Dependency Check Report',
-    //         allowMissing: true,
-    //         alwaysLinkToLastBuild: true,
-    //         keepAll: true
-    //     ])
-    // }
+    stage('SonarQube Analysis') {
+        withSonarQubeEnv('My SonarQube Server') {
+            sh '''
+            mvn clean verify sonar:sonar \
+            -Dsonar.host.url=http://sonarqube:9000 \
+            -f backoffice-bff \
+            -DskipITs=true
+            '''
+        }
+        timeout(time: 1, unit: 'HOURS') {
+            waitForQualityGate abortPipeline: true
+        }
+    }
 
     stage('Snyk Scan') {
 		sh '''
@@ -220,78 +102,6 @@ def call(Map params) {
             'snyk-report.html'
         )
 
-        // sh '''
-        // jq -r '
-        // if (.vulnerabilities | length) == 0 then
-        // "<p>No vulnerabilities</p>"
-        // else
-        // "<html>
-        // <head>
-        // <style>
-        // body { font-family: Arial; padding: 20px; }
-        // h2 { margin-bottom: 20px; }
-
-        // table {
-        // border-collapse: collapse;
-        // width: 100%;
-        // }
-
-        // th, td {
-        // border: 1px solid #ddd;
-        // padding: 10px;
-        // text-align: left;
-        // }
-
-        // th {
-        // background-color: #f4f4f4;
-        // }
-
-        // tr:nth-child(even) {
-        // background-color: #fafafa;
-        // }
-        // </style>
-        // </head>
-        // <body>
-
-        // <h2>Snyk Vulnerability Report</h2>
-
-        // <table>
-        // <thead>
-        // <tr>
-        // <th>Severity</th>
-        // <th>Package</th>
-        // <th>Version</th>
-        // <th>Title</th>
-        // <th>Fixed In</th>
-        // </tr>
-        // </thead>
-        // <tbody>
-        // " +
-
-        // (
-        // [.vulnerabilities[] |
-        //     "<tr>" +
-        //     "<td>" + .severity + "</td>" +
-        //     "<td>" + .packageName + "</td>" +
-        //     "<td>" + .version + "</td>" +
-        //     "<td>" + .title + "</td>" +
-        //     "<td>" + (if .fixedIn then (.fixedIn | join(", ")) else "N/A" end) + "</td>" +
-        //     "</tr>"
-        // ] | join("")
-        // )
-
-        // + "
-
-        // </tbody>
-        // </table>
-
-        // </body>
-        // </html>
-        // "
-        // end
-        // ' snyk-report.json > snyk-report.html
-		// '''
-
 		publishHTML([
 			reportDir: '.',
 			reportFiles: 'snyk-report.html',
@@ -300,21 +110,6 @@ def call(Map params) {
 			alwaysLinkToLastBuild: true,
 			keepAll: true
 		])
-
-		def hasVuln = sh(
-			script: 'grep -q "vulnerabilities" snyk-report.json',
-			returnStatus: true
-		)
-
-		if (hasVuln == 0) {
-			sh '''
-            echo "Snyk vulnerabilities found!"
-            '''
-		} else {
-            sh '''
-            echo "No vulnerabilites found!"
-            '''
-        }
     }
 }
 
