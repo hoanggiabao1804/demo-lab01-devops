@@ -87,3 +87,5 @@ def jsonToHtml(String jsonPath, String htmlPath) {
 
     echo "Snyk HTML report generated: ${htmlPath}"
 }
+
+return this
