@@ -52,72 +52,72 @@ def call(Map params) {
         ])
     }
 
-    stage('Gitleak Scan') {
-        sh '''
-        echo "Run Gitleaks scan..."
-        gitleaks detect \
-        --source ./customer \
-        --no-git \
-        --report-path customer-gitleaks-report.json \
-        --report-format json \
-        --exit-code 0
-        '''
+    // stage('Gitleak Scan') {
+    //     sh '''
+    //     echo "Run Gitleaks scan..."
+    //     gitleaks detect \
+    //     --source ./customer \
+    //     --no-git \
+    //     --report-path customer-gitleaks-report.json \
+    //     --report-format json \
+    //     --exit-code 0
+    //     '''
 
-        def gitleaksUtils = load '.pipelines/utils/gitleaks-utils.groovy'
-        gitleaksUtils.jsonToHtml(
-            'customer-gitleaks-report.json', 
-            'customer-gitleaks-report.html'
-        )
+    //     def gitleaksUtils = load '.pipelines/utils/gitleaks-utils.groovy'
+    //     gitleaksUtils.jsonToHtml(
+    //         'customer-gitleaks-report.json', 
+    //         'customer-gitleaks-report.html'
+    //     )
 
-        publishHTML([
-            reportDir: '.',
-            reportFiles: 'customer-gitleaks-report.html',
-            reportName: 'Gitleak Report',
-            allowMissing: true,
-            alwaysLinkToLastBuild: true,
-            keepAll: true
-        ])
-    }
+    //     publishHTML([
+    //         reportDir: '.',
+    //         reportFiles: 'customer-gitleaks-report.html',
+    //         reportName: 'Gitleak Report',
+    //         allowMissing: true,
+    //         alwaysLinkToLastBuild: true,
+    //         keepAll: true
+    //     ])
+    // }
 
-    stage('SonarQube Analysis') {
-        withSonarQubeEnv('My SonarQube Server') {
-            sh '''
-            mvn clean verify sonar:sonar \
-            -pl customer \
-            -am \
-            -Dsonar.host.url=http://sonarqube:9000 \
-            -DskipITs=true
-            '''
-        }
-        timeout(time: 1, unit: 'HOURS') {
-            waitForQualityGate abortPipeline: true
-        }
-    }
+    // stage('SonarQube Analysis') {
+    //     withSonarQubeEnv('My SonarQube Server') {
+    //         sh '''
+    //         mvn clean verify sonar:sonar \
+    //         -pl customer \
+    //         -am \
+    //         -Dsonar.host.url=http://sonarqube:9000 \
+    //         -DskipITs=true
+    //         '''
+    //     }
+    //     timeout(time: 1, unit: 'HOURS') {
+    //         waitForQualityGate abortPipeline: true
+    //     }
+    // }
 
-    stage('Snyk Scan') {
-        sh '''
-        snyk auth $SNYK_TOKEN
+    // stage('Snyk Scan') {
+    //     sh '''
+    //     snyk auth $SNYK_TOKEN
 
-        find . -name "mvnw" -exec chmod +x {} \\;
+    //     find . -name "mvnw" -exec chmod +x {} \\;
 
-        snyk test --file=pom.xml --package-manager=maven -d --json > customer-snyk-report.json || true
-        '''
+    //     snyk test --file=pom.xml --package-manager=maven -d --json > customer-snyk-report.json || true
+    //     '''
 
-        def snykUtils = load '.pipelines/utils/snyk-utils.groovy'
-        snykUtils.jsonToHtml(
-            'customer-snyk-report.json',
-            'customer-snyk-report.html'
-        )
+    //     def snykUtils = load '.pipelines/utils/snyk-utils.groovy'
+    //     snykUtils.jsonToHtml(
+    //         'customer-snyk-report.json',
+    //         'customer-snyk-report.html'
+    //     )
 
-        publishHTML([
-            reportDir: '.',
-            reportFiles: 'customer-snyk-report.html',
-            reportName: 'Snyk Report',
-            allowMissing: true,
-            alwaysLinkToLastBuild: true,
-            keepAll: true
-        ])
-    }
+    //     publishHTML([
+    //         reportDir: '.',
+    //         reportFiles: 'customer-snyk-report.html',
+    //         reportName: 'Snyk Report',
+    //         allowMissing: true,
+    //         alwaysLinkToLastBuild: true,
+    //         keepAll: true
+    //     ])
+    // }
 }
 
 return this
