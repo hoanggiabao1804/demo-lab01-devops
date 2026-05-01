@@ -27,7 +27,7 @@ def call(Map params) {
     stage('Test') {
         sh '''
         mvn clean verify \
-        -f storefront-bff \
+        -pl storefront-bff \
         -DskipITs=true
         '''
     }
