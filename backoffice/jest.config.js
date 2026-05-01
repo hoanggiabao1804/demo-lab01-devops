@@ -3,9 +3,9 @@ module.exports = {
   testEnvironment: 'node',
   testMatch: ['**/?(*.)+(spec|test).[jt]s?(x)'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-  collectCoverage: true,
-  coverageDirectory: 'coverage',
-  coverageReporters: ['lcov', 'text', 'clover'],
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/$1',
+  },
   coverageThreshold: {
     global: {
       branches: 70,
