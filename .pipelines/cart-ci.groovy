@@ -31,7 +31,7 @@ def call(Map params) {
 
     stage('Test') {
         sh '''
-        mvn clean test jacoco:report \
+        mvn clean verify \
         -pl cart \
         -am \
         -Djacoco.skip=false
