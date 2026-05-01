@@ -165,19 +165,19 @@ def call(Map params) {
     //     }
     // }
 
-    // stage('SonarQube Analysis') {
-    //     withSonarQubeEnv('My SonarQube Server') {
-    //         dir('storefront') {
-    //             sh '''
-    //             sonar-scanner \
-    //             -Dsonar.host.url=http://sonarqube:9000
-    //             '''
-    //         }
-    //     }
-    //     timeout(time: 1, unit: 'HOURS') {
-    //         waitForQualityGate abortPipeline: true
-    //     }
-    // }
+    stage('SonarQube Analysis') {
+        withSonarQubeEnv('My SonarQube Server') {
+            dir('storefront') {
+                sh '''
+                sonar-scanner \
+                -Dsonar.host.url=http://sonarqube:9000
+                '''
+            }
+        }
+        timeout(time: 1, unit: 'HOURS') {
+            waitForQualityGate abortPipeline: true
+        }
+    }
 
     // stage('Snyk Scan') {
 	// 	dir('storefront') {
