@@ -4,7 +4,7 @@ def jsonToHtml(String jsonPath, String htmlPath) {
         error "Snyk JSON file not found: ${jsonPath}"
     }
 
-    sh '''
+    sh """
     jq -r '
     if (.vulnerabilities | length) == 0 then
     "<p>No vulnerabilities</p>"
@@ -74,7 +74,7 @@ def jsonToHtml(String jsonPath, String htmlPath) {
     "
     end
     ' ${jsonPath} > ${htmlPath}
-    '''
+    """
 
     echo "Snyk HTML report generated: ${htmlPath}"
 }
