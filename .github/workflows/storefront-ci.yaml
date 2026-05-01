@@ -35,7 +35,6 @@ jobs:
               working-directory: storefront
             - run: npx prettier --check .
               working-directory: storefront
-
             # - name: SonarCloud Scan
             #   if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
             #   uses: SonarSource/sonarcloud-github-action@master
