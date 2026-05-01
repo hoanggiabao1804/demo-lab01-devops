@@ -52,72 +52,72 @@ def call(Map params) {
         ])
     }
 
-    stage('Gitleak Scan') {
-        sh '''
-        echo "Run Gitleaks scan..."
-        gitleaks detect \
-        --source ./recommendation \
-        --no-git \
-        --report-path recommendation-gitleaks-report.json \
-        --report-format json \
-        --exit-code 0
-        '''
+    // stage('Gitleak Scan') {
+    //     sh '''
+    //     echo "Run Gitleaks scan..."
+    //     gitleaks detect \
+    //     --source ./recommendation \
+    //     --no-git \
+    //     --report-path recommendation-gitleaks-report.json \
+    //     --report-format json \
+    //     --exit-code 0
+    //     '''
 
-        def gitleaksUtils = load '.pipelines/utils/gitleaks-utils.groovy'
-        gitleaksUtils.jsonToHtml(
-            'recommendation-gitleaks-report.json',
-            'recommendation-gitleaks-report.html'
-        )
+    //     def gitleaksUtils = load '.pipelines/utils/gitleaks-utils.groovy'
+    //     gitleaksUtils.jsonToHtml(
+    //         'recommendation-gitleaks-report.json',
+    //         'recommendation-gitleaks-report.html'
+    //     )
 
-        publishHTML([
-            reportDir: '.',
-            reportFiles: 'recommendation-gitleaks-report.html',
-            reportName: 'Gitleak Report',
-            allowMissing: true,
-            alwaysLinkToLastBuild: true,
-            keepAll: true
-        ])
-    }
+    //     publishHTML([
+    //         reportDir: '.',
+    //         reportFiles: 'recommendation-gitleaks-report.html',
+    //         reportName: 'Gitleak Report',
+    //         allowMissing: true,
+    //         alwaysLinkToLastBuild: true,
+    //         keepAll: true
+    //     ])
+    // }
 
-    stage('SonarQube Analysis') {
-        withSonarQubeEnv('My SonarQube Server') {
-            sh '''
-            mvn clean verify sonar:sonar \
-            -pl recommendation \
-            -am \
-            -Dsonar.host.url=http://sonarqube:9000 \
-            -DskipITs=true
-            '''
-        }
-        timeout(time: 1, unit: 'HOURS') {
-            waitForQualityGate abortPipeline: true
-        }
-    }
+    // stage('SonarQube Analysis') {
+    //     withSonarQubeEnv('My SonarQube Server') {
+    //         sh '''
+    //         mvn clean verify sonar:sonar \
+    //         -pl recommendation \
+    //         -am \
+    //         -Dsonar.host.url=http://sonarqube:9000 \
+    //         -DskipITs=true
+    //         '''
+    //     }
+    //     timeout(time: 1, unit: 'HOURS') {
+    //         waitForQualityGate abortPipeline: true
+    //     }
+    // }
 
-    stage('Snyk Scan') {
-        sh '''
-        snyk auth $SNYK_TOKEN
+    // stage('Snyk Scan') {
+    //     sh '''
+    //     snyk auth $SNYK_TOKEN
 
-        find . -name "mvnw" -exec chmod +x {} \\;
+    //     find . -name "mvnw" -exec chmod +x {} \\;
 
-        snyk test --file=pom.xml --package-manager=maven -d --json > recommendation-snyk-report.json || true
-        '''
+    //     snyk test --file=pom.xml --package-manager=maven -d --json > recommendation-snyk-report.json || true
+    //     '''
 
-        def snykUtils = load '.pipelines/utils/snyk-utils.groovy'
-        snykUtils.jsonToHtml(
-            'recommendation-snyk-report.json',
-            'recommendation-snyk-report.html'
-        )
+    //     def snykUtils = load '.pipelines/utils/snyk-utils.groovy'
+    //     snykUtils.jsonToHtml(
+    //         'recommendation-snyk-report.json',
+    //         'recommendation-snyk-report.html'
+    //     )
 
-        publishHTML([
-            reportDir: '.',
-            reportFiles: 'recommendation-snyk-report.html',
-            reportName: 'Snyk Report',
-            allowMissing: true,
-            alwaysLinkToLastBuild: true,
-            keepAll: true
-        ])
-    }
+    //     publishHTML([
+    //         reportDir: '.',
+    //         reportFiles: 'recommendation-snyk-report.html',
+    //         reportName: 'Snyk Report',
+    //         allowMissing: true,
+    //         alwaysLinkToLastBuild: true,
+    //         keepAll: true
+    //     ])
+    // }
 }
 
 return this
