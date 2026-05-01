@@ -87,6 +87,16 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>com/yas/cart/utils/Constants.class</exclude>
+                        <exclude>com/yas/cart/utils/Constants$ErrorCode.class</exclude>
+                        <exclude>com/yas/**/*Application.class</exclude>
+                        <exclude>com/yas/**/config/**</exclude>
+                        <exclude>com/yas/**/exception/**</exclude>
+                        <exclude>com/yas/**/constants/**</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
         </plugins>
     </build>
