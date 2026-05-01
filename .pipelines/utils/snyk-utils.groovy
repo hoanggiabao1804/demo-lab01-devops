@@ -13,19 +13,31 @@ def jsonToHtml(String jsonPath, String htmlPath) {
         error "Cannot read file: ${jsonPath}"
     }
 
-    def data
-    try {
-        data = new JsonSlurperClassic().parseText(jsonContent)
-    } catch (Exception e) {
-        error "Invalid JSON format: ${jsonPath}"
+    def data = parseJson(jsonContent)
+
+    def html = buildHtml(data)
+
+    writeFile file: htmlPath, text: html
+
+    echo "Snyk HTML report generated: ${htmlPath}"
+}
+
+@NonCPS
+def parseJson(String text) {
+    new JsonSlurperClassic().parseText(text)
+}
+
+@NonCPS
+def buildHtml(data) {
+    if (!data || data.size() == 0) {
+        return "<p>No data</p>"
     }
 
     def vulnerabilities = data?.vulnerabilities ?: []
 
     if (vulnerabilities.isEmpty()) {
-        writeFile file: htmlPath, text: "<p>No vulnerabilities</p>"
         echo "No vulnerabilities found."
-        return
+        return "<p>No vulnerabilities</p>"
     }
 
     def rows = vulnerabilities.collect { v ->
@@ -44,7 +56,7 @@ def jsonToHtml(String jsonPath, String htmlPath) {
         """
     }.join("\n")
 
-    def html = """
+    return """
     <html>
     <head>
         <style>
@@ -82,10 +94,6 @@ def jsonToHtml(String jsonPath, String htmlPath) {
     </body>
     </html>
     """
-
-    writeFile file: htmlPath, text: html
-
-    echo "Snyk HTML report generated: ${htmlPath}"
 }
 
 return this
