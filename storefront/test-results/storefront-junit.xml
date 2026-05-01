@@ -1,33 +1,59 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="14" failures="0" errors="0" time="0.44">
-  <testsuite name="formatPrice" errors="0" failures="0" skipped="0" timestamp="2026-05-01T03:22:48" time="0.161" tests="3">
-    <testcase classname="formatPrice should format USD currency correctly" name="formatPrice should format USD currency correctly" time="0.012">
+<testsuites name="jest tests" tests="27" failures="0" errors="0" time="0.654">
+  <testsuite name="formatPrice" errors="0" failures="0" skipped="0" timestamp="2026-05-01T04:02:26" time="0.303" tests="3">
+    <testcase classname="formatPrice should format USD currency correctly" name="formatPrice should format USD currency correctly" time="0.013">
     </testcase>
-    <testcase classname="formatPrice should format decimal prices correctly" name="formatPrice should format decimal prices correctly" time="0.001">
+    <testcase classname="formatPrice should format decimal prices correctly" name="formatPrice should format decimal prices correctly" time="0">
     </testcase>
-    <testcase classname="formatPrice should format zero correctly" name="formatPrice should format zero correctly" time="0">
-    </testcase>
-  </testsuite>
-  <testsuite name="getOrderStatusTitle" errors="0" failures="0" skipped="0" timestamp="2026-05-01T03:22:48" time="0.059" tests="7">
-    <testcase classname="getOrderStatusTitle should return correct title for PENDING status" name="getOrderStatusTitle should return correct title for PENDING status" time="0">
-    </testcase>
-    <testcase classname="getOrderStatusTitle should return correct title for COMPLETED status" name="getOrderStatusTitle should return correct title for COMPLETED status" time="0.001">
-    </testcase>
-    <testcase classname="getOrderStatusTitle should return &quot;All&quot; for null status" name="getOrderStatusTitle should return &quot;All&quot; for null status" time="0">
-    </testcase>
-    <testcase classname="getDeliveryMethodTitle should return correct title for GRAB_EXPRESS" name="getDeliveryMethodTitle should return correct title for GRAB_EXPRESS" time="0">
-    </testcase>
-    <testcase classname="getDeliveryMethodTitle should return &quot;Preparing&quot; for unknown method" name="getDeliveryMethodTitle should return &quot;Preparing&quot; for unknown method" time="0">
-    </testcase>
-    <testcase classname="getDeliveryStatusTitle should return correct title for DELIVERED status" name="getDeliveryStatusTitle should return correct title for DELIVERED status" time="0">
-    </testcase>
-    <testcase classname="getDeliveryStatusTitle should return correct title for CANCELLED status" name="getDeliveryStatusTitle should return correct title for CANCELLED status" time="0">
+    <testcase classname="formatPrice should format zero correctly" name="formatPrice should format zero correctly" time="0.001">
     </testcase>
   </testsuite>
-  <testsuite name="concatQueryString" errors="0" failures="0" skipped="0" timestamp="2026-05-01T03:22:48" time="0.041" tests="4">
-    <testcase classname="concatQueryString should return original url when array is empty" name="concatQueryString should return original url when array is empty" time="0">
+  <testsuite name="getOrderStatusTitle" errors="0" failures="0" skipped="0" timestamp="2026-05-01T04:02:27" time="0.12" tests="20">
+    <testcase classname="getOrderStatusTitle PENDING" name="getOrderStatusTitle PENDING" time="0.001">
     </testcase>
-    <testcase classname="concatQueryString should append query string with ? for the first element" name="concatQueryString should append query string with ? for the first element" time="0">
+    <testcase classname="getOrderStatusTitle ACCEPTED" name="getOrderStatusTitle ACCEPTED" time="0">
+    </testcase>
+    <testcase classname="getOrderStatusTitle COMPLETED" name="getOrderStatusTitle COMPLETED" time="0">
+    </testcase>
+    <testcase classname="getOrderStatusTitle CANCELLED" name="getOrderStatusTitle CANCELLED" time="0">
+    </testcase>
+    <testcase classname="getOrderStatusTitle PENDING_PAYMENT" name="getOrderStatusTitle PENDING_PAYMENT" time="0">
+    </testcase>
+    <testcase classname="getOrderStatusTitle PAID" name="getOrderStatusTitle PAID" time="0">
+    </testcase>
+    <testcase classname="getOrderStatusTitle REFUND" name="getOrderStatusTitle REFUND" time="0">
+    </testcase>
+    <testcase classname="getOrderStatusTitle SHIPPING" name="getOrderStatusTitle SHIPPING" time="0.001">
+    </testcase>
+    <testcase classname="getOrderStatusTitle REJECT" name="getOrderStatusTitle REJECT" time="0">
+    </testcase>
+    <testcase classname="getOrderStatusTitle default (null)" name="getOrderStatusTitle default (null)" time="0">
+    </testcase>
+    <testcase classname="getDeliveryMethodTitle GRAB_EXPRESS" name="getDeliveryMethodTitle GRAB_EXPRESS" time="0">
+    </testcase>
+    <testcase classname="getDeliveryMethodTitle VIETTEL_POST" name="getDeliveryMethodTitle VIETTEL_POST" time="0.001">
+    </testcase>
+    <testcase classname="getDeliveryMethodTitle SHOPEE_EXPRESS" name="getDeliveryMethodTitle SHOPEE_EXPRESS" time="0">
+    </testcase>
+    <testcase classname="getDeliveryMethodTitle YAS_EXPRESS" name="getDeliveryMethodTitle YAS_EXPRESS" time="0">
+    </testcase>
+    <testcase classname="getDeliveryMethodTitle default" name="getDeliveryMethodTitle default" time="0">
+    </testcase>
+    <testcase classname="getDeliveryStatusTitle DELIVERED" name="getDeliveryStatusTitle DELIVERED" time="0.001">
+    </testcase>
+    <testcase classname="getDeliveryStatusTitle CANCELLED" name="getDeliveryStatusTitle CANCELLED" time="0">
+    </testcase>
+    <testcase classname="getDeliveryStatusTitle DELIVERING" name="getDeliveryStatusTitle DELIVERING" time="0">
+    </testcase>
+    <testcase classname="getDeliveryStatusTitle PENDING" name="getDeliveryStatusTitle PENDING" time="0">
+    </testcase>
+    <testcase classname="getDeliveryStatusTitle default" name="getDeliveryStatusTitle default" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="concatQueryString" errors="0" failures="0" skipped="0" timestamp="2026-05-01T04:02:27" time="0.043" tests="4">
+    <testcase classname="concatQueryString should return original url when array is empty" name="concatQueryString should return original url when array is empty" time="0.001">
+    </testcase>
+    <testcase classname="concatQueryString should append query string with ? for the first element" name="concatQueryString should append query string with ? for the first element" time="0.001">
     </testcase>
     <testcase classname="concatQueryString should append additional query parameters with &amp;" name="concatQueryString should append additional query parameters with &amp;" time="0">
     </testcase>

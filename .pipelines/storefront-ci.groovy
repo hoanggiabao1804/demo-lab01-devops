@@ -37,6 +37,28 @@ def call(Map params) {
         }
     }
 
+    stage('Test') {
+        dir('storefront') {
+            sh '''
+            npm test -- --runInBand --coverage
+            '''
+        }
+    }
+
+    stage('Publish Test Result') {
+        junit allowEmptyResults: false, testResults: 'storefront/test-results/*.xml'
+    }
+
+    stage('Publish Coverage Report') {
+        publishHTML([
+            reportDir: 'storefront/coverage/lcov-report',
+            reportFiles: 'index.html',
+            reportName: 'Node Coverage',
+            keepAll: true,
+            alwaysLinkToLastBuild: true
+        ])
+    }
+
     // stage('Gitleak Scan') {
     //     sh '''
     //     echo "Run Gitleaks scan..."
@@ -262,29 +284,6 @@ def call(Map params) {
     //         }
     //     }
     // }
-
-    stage('Test') {
-        dir('storefront') {
-            sh '''
-            npm test -- --runInBand --coverage
-            '''
-        }
-    }
-
-    stage('Publish Test Result') {
-        junit allowEmptyResults: false, testResults: 'storefront/test-results/*.xml'
-    }
-
-    stage('Publish Coverage Report') {
-        publishHTML([
-            reportDir: 'storefront/coverage/lcov-report',
-            reportFiles: 'index.html',
-            reportName: 'Node Coverage',
-            keepAll: true,
-            alwaysLinkToLastBuild: true
-        ])
-    }
-
 }
 
 return this
