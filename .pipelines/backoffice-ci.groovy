@@ -108,7 +108,7 @@ def call(Map params) {
             snyk test -d --json > backoffice-snyk-report.json || true
             '''
 
-            def snykUtils = load '.pipelines/utils/snyk-utils.groovy'
+            def snykUtils = load '../.pipelines/utils/snyk-utils.groovy'
             snykUtils.jsonToHtml(
                 'backoffice-snyk-report.json',
                 'backoffice-snyk-report.html'
