@@ -27,7 +27,7 @@ def call(Map params) {
     stage('Test') {
         sh '''
         mvn clean verify \
-        -pl storefront-bff \
+        -f storefront-bff \
         -DskipITs=true
         '''
     }
@@ -157,7 +157,7 @@ def call(Map params) {
             sh '''
             mvn clean verify sonar:sonar \
             -Dsonar.host.url=http://sonarqube:9000 \
-            -pl storefront-bff \
+            -f storefront-bff \
             -DskipITs=true
             '''
         }
