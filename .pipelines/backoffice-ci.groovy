@@ -92,6 +92,7 @@ def call(Map params) {
                 sh '''
                 sonar-scanner \
                 -Dsonar.host.url=http://sonarqube:9000
+                -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
                 '''
             }
         }
