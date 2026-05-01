@@ -91,7 +91,8 @@ public abstract class SimpleVectorRepository<D extends BaseDocument, E> implemen
 
     /**
      * Updates a record in the vector store for the given entity ID.
-     * The method first deletes the existing record by invoking {@link #delete(Long)}
+     * The method first deletes the existing record by invoking
+     * {@link #delete(Long)}
      * and then adds a new record using {@link #add(Long)}.
      *
      * @param entityId the ID of the entity to be updated in the vector store
@@ -113,12 +114,11 @@ public abstract class SimpleVectorRepository<D extends BaseDocument, E> implemen
         final var entityContentMap = objectMapper.convertValue(entity, Map.class);
         final var content = documentFormatter.format(entityContentMap, documentMetadata.contentFormat(), objectMapper);
         return vectorStore.similaritySearch(
-                        SearchRequest
-                                .query(content)
-                                .withTopK(embeddingSearchConfiguration.topK())
-                                .withFilterExpression(this.excludeSameEntityExpression(id))
-                                .withSimilarityThreshold(embeddingSearchConfiguration.similarityThreshold())
-                )
+                SearchRequest
+                        .query(content)
+                        .withTopK(embeddingSearchConfiguration.topK())
+                        .withFilterExpression(this.excludeSameEntityExpression(id))
+                        .withSimilarityThreshold(embeddingSearchConfiguration.similarityThreshold()))
                 .stream()
                 .map(this::toBaseDocument)
                 .toList();
