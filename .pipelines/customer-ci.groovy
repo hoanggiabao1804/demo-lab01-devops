@@ -31,10 +31,10 @@ def call(Map params) {
 
     stage('Test') {
         sh '''
-        mvn clean test jacoco:report \
+        mvn clean verify \
         -pl customer \
         -am \
-        -Djacoco.skip=false
+        -DskipITs=true
         '''
     }
 
@@ -52,265 +52,72 @@ def call(Map params) {
         ])
     }
 
-    // stage('Gitleak Scan') {
-    //     sh '''
-    //     echo "Run Gitleaks scan..."
-    //     gitleaks detect \
-    //     --source ./customer \
-    //     --no-git \
-    //     --report-path customer-gitleaks-report.json \
-    //     --report-format json \
-    //     --exit-code 0
-    //     '''
+    stage('Gitleak Scan') {
+        sh '''
+        echo "Run Gitleaks scan..."
+        gitleaks detect \
+        --source ./customer \
+        --no-git \
+        --report-path customer-gitleaks-report.json \
+        --report-format json \
+        --exit-code 0
+        '''
 
-    //     sh '''
-    //     jq -r '
-    //     if length == 0 then
-    //     "<p>No secrets detected</p>"
-    //     else
-    //     "<html>
-    //     <head>
-    //     <style>
-    //     body { font-family: Arial; padding: 20px; }
-    //     h2 { margin-bottom: 20px; }
+        def gitleaksUtils = load '.pipelines/utils/gitleaks-utils.groovy'
+        gitleaksUtils.jsonToHtml(
+            'customer-gitleaks-report.json', 
+            'customer-gitleaks-report.html'
+        )
 
-    //     table {
-    //     border-collapse: collapse;
-    //     width: 100%;
-    //     }
+        publishHTML([
+            reportDir: '.',
+            reportFiles: 'customer-gitleaks-report.html',
+            reportName: 'Gitleak Report',
+            allowMissing: true,
+            alwaysLinkToLastBuild: true,
+            keepAll: true
+        ])
+    }
 
-    //     th, td {
-    //     border: 1px solid #ddd;
-    //     padding: 10px;
-    //     text-align: left;
-    //     }
+    stage('SonarQube Analysis') {
+        withSonarQubeEnv('My SonarQube Server') {
+            sh '''
+            mvn clean verify sonar:sonar \
+            -pl customer \
+            -am \
+            -Dsonar.host.url=http://sonarqube:9000 \
+            -DskipITs=true
+            '''
+        }
+        timeout(time: 1, unit: 'HOURS') {
+            waitForQualityGate abortPipeline: true
+        }
+    }
 
-    //     th {
-    //     background-color: #f4f4f4;
-    //     }
+    stage('Snyk Scan') {
+        sh '''
+        snyk auth $SNYK_TOKEN
 
-    //     tr:nth-child(even) {
-    //     background-color: #fafafa;
-    //     }
-    //     </style>
-    //     </head>
-    //     <body>
+        find . -name "mvnw" -exec chmod +x {} \\;
 
-    //     <h2>Gitleaks Report</h2>
+        snyk test --file=pom.xml --package-manager=maven -d --json > customer-snyk-report.json || true
+        '''
 
-    //     <table>
-    //     <thead>
-    //     <tr>
-    //     <th>File</th>
-    //     <th>RuleID</th>
-    //     <th>Secret</th>
-    //     <th>StartLine</th>
-    //     </tr>
-    //     </thead>
-    //     <tbody>
-    //     " +
+        def snykUtils = load '.pipelines/utils/snyk-utils.groovy'
+        snykUtils.jsonToHtml(
+            'customer-snyk-report.json',
+            'customer-snyk-report.html'
+        )
 
-    //     (
-    //     [.[] |
-    //         "<tr>" +
-    //         "<td>" + .File + "</td>" +
-    //         "<td>" + .RuleID + "</td>" +
-    //         "<td>" + .Secret + "</td>" +
-    //         "<td>" + (.StartLine | tostring) + "</td>" +
-    //         "</tr>"
-    //     ] | join("")
-    //     )
-
-    //     + "
-
-    //     </tbody>
-    //     </table>
-
-    //     </body>
-    //     </html>
-    //     "
-    //     end
-    //     '  customer-gitleaks-report.json > customer-gitleaks-report.html
-    //     '''
-
-    //     publishHTML([
-    //         reportDir: '.',
-    //         reportFiles: 'customer-gitleaks-report.html',
-    //         reportName: 'Gitleak Report',
-    //         allowMissing: true,
-    //         alwaysLinkToLastBuild: true,
-    //         keepAll: true
-    //     ])
-
-    //     def hasLeak = sh(
-    //         script: '[ grep -q "RuleID" customer-gitleaks-report.json ]',
-    //         returnStatus: true
-    //     )
-
-    //     if (hasLeak == 0) {
-    //         sh '''
-    //         echo "Secrets detected!"
-    //         '''
-    //     } else {
-    //         sh '''
-    //         echo "No secrets detected!"
-    //         '''
-    //     }
-    // }
-
-    // stage('SonarQube Analysis') {
-    //     withSonarQubeEnv('My SonarQube Server') {
-    //         sh '''
-    //         mvn clean test jacoco:report sonar:sonar \
-    //         -pl customer \
-    //         -am \
-    //         -Djacoco.skip.check=true \
-    //         -Dsonar.host.url=http://sonarqube:9000 \
-    //         '''
-    //     }
-    //     timeout(time: 1, unit: 'HOURS') {
-    //         waitForQualityGate abortPipeline: true
-    //     }
-    // }
-
-    // stage('OWASP Dependency Pre-build') {
-    //     sh '''
-    //     mvn -B -q clean install -DskipTests
-    //     '''
-    // }
-
-    // stage('OWASP Dependency Check') {
-    //     sh '''
-    //     mvn org.owasp:dependency-check-maven:check \
-    //     -pl customer -am \
-    //     -DnvdApiKey=$NVD_API_KEY \
-    //     -Dnvd.api.endpoint=https://services.nvd.nist.gov/rest/json/cves/2.0 \
-    //     -Dcisa.enabled=false \
-    //     -Dformat=HTML \
-    //     -DoutputDirectory=target/dependency-check-report \
-    //     -DdataDirectory=/owasp \
-    //     -DassemblyAnalyzerEnabled=false \
-    //     -DnodeAnalyzerEnabled=false \
-    //     -DpyPackageAnalyzerEnabled=false
-    //     '''
-    // }
-
-    // stage('Publish OWASP Report') {
-    //     publishHTML([
-    //         reportDir: '.',
-    //         reportFiles: '**/target/dependency-check-report.html',
-    //         reportName: 'OWASP Dependency Check Report',
-    //         allowMissing: true,
-    //         alwaysLinkToLastBuild: true,
-    //         keepAll: true
-    //     ])
-    // }
-
-    // stage('Snyk Scan') {
-    //     sh '''
-    //     snyk auth $SNYK_TOKEN
-
-    //     find . -name "mvnw" -exec chmod +x {} \\;
-
-    //     snyk test --file=pom.xml --package-manager=maven -d --json > customer-snyk-report.json || true
-    //     '''
-
-    //     sh '''
-    //     jq -r '
-    //     if (.vulnerabilities | length) == 0 then
-    //     "<p>No vulnerabilities</p>"
-    //     else
-    //     "<html>
-    //     <head>
-    //     <style>
-    //     body { font-family: Arial; padding: 20px; }
-    //     h2 { margin-bottom: 20px; }
-
-    //     table {
-    //     border-collapse: collapse;
-    //     width: 100%;
-    //     }
-
-    //     th, td {
-    //     border: 1px solid #ddd;
-    //     padding: 10px;
-    //     text-align: left;
-    //     }
-
-    //     th {
-    //     background-color: #f4f4f4;
-    //     }
-
-    //     tr:nth-child(even) {
-    //     background-color: #fafafa;
-    //     }
-    //     </style>
-    //     </head>
-    //     <body>
-
-    //     <h2>Snyk Vulnerability Report</h2>
-
-    //     <table>
-    //     <thead>
-    //     <tr>
-    //     <th>Severity</th>
-    //     <th>Package</th>
-    //     <th>Version</th>
-    //     <th>Title</th>
-    //     <th>Fixed In</th>
-    //     </tr>
-    //     </thead>
-    //     <tbody>
-    //     " +
-
-    //     (
-    //     [.vulnerabilities[] |
-    //         "<tr>" +
-    //         "<td>" + .severity + "</td>" +
-    //         "<td>" + .packageName + "</td>" +
-    //         "<td>" + .version + "</td>" +
-    //         "<td>" + .title + "</td>" +
-    //         "<td>" + (if .fixedIn then (.fixedIn | join(", ")) else "N/A" end) + "</td>" +
-    //         "</tr>"
-    //     ] | join("")
-    //     )
-
-    //     + "
-
-    //     </tbody>
-    //     </table>
-
-    //     </body>
-    //     </html>
-    //     "
-    //     end
-    //     ' customer-snyk-report.json > customer-snyk-report.html
-    //     '''
-
-    //     publishHTML([
-    //         reportDir: '.',
-    //         reportFiles: 'customer-snyk-report.html',
-    //         reportName: 'Snyk Report',
-    //         allowMissing: true,
-    //         alwaysLinkToLastBuild: true,
-    //         keepAll: true
-    //     ])
-
-    //     def hasVuln = sh(
-    //         script: 'grep -q "vulnerabilities" customer-snyk-report.json',
-    //         returnStatus: true
-    //     )
-
-    //     if (hasVuln == 0) {
-    //         sh '''
-    //         echo "Snyk vulnerabilities found!"
-    //         '''
-    //     } else {
-    //         sh '''
-    //         echo "No vulnerabilites found!"
-    //         '''
-    //     }
-    // }
+        publishHTML([
+            reportDir: '.',
+            reportFiles: 'customer-snyk-report.html',
+            reportName: 'Snyk Report',
+            allowMissing: true,
+            alwaysLinkToLastBuild: true,
+            keepAll: true
+        ])
+    }
 }
 
 return this
