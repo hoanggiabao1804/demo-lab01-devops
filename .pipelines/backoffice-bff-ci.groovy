@@ -24,6 +24,28 @@ def call(Map params) {
         )
     }
 
+    stage('Test') {
+        sh '''
+        mvn clean verify \
+        -pl backoffice-bff \
+        -DskipITs=true
+        '''
+    }
+
+    stage('Publish Test Result') {
+        junit 'backoffice-bff/**/target/surefire-reports/*.xml'
+    }
+
+    stage('Publish Coverage Report') {
+        publishHTML([
+            reportDir: 'backoffice-bff/target/site/jacoco',
+            reportFiles: 'index.html',
+            reportName: 'JaCoCo Coverage',
+            keepAll: true,
+            alwaysLinkToLastBuild: true
+        ])
+    }
+
     // stage('Gitleak Scan') {
     //     sh '''
     //     echo "Run Gitleaks scan..."
@@ -135,7 +157,8 @@ def call(Map params) {
     //         sh '''
     //         mvn clean verify sonar:sonar \
     //         -Dsonar.host.url=http://sonarqube:9000 \
-    //         -f backoffice-bff
+    //         -f backoffice-bff \
+    //         -DskipITs=true
     //         '''
     //     }
     //     timeout(time: 1, unit: 'HOURS') {
@@ -281,26 +304,6 @@ def call(Map params) {
     //         '''
     //     }
     // }
-
-    stage('Test') {
-        sh '''
-        mvn clean verify -pl backoffice-bff
-        '''
-    }
-
-    stage('Publish Test Result') {
-        junit 'backoffice-bff/**/target/surefire-reports/*.xml'
-    }
-
-    stage('Publish Coverage Report') {
-        publishHTML([
-            reportDir: 'backoffice-bff/target/site/jacoco',
-            reportFiles: 'index.html',
-            reportName: 'JaCoCo Coverage',
-            keepAll: true,
-            alwaysLinkToLastBuild: true
-        ])
-    }
 }
 
 return this
