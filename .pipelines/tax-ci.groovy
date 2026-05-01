@@ -7,7 +7,7 @@ def call(Map params) {
     stage('Build') {
         sh '''
         mvn clean install \
-            -pl search \
+            -pl tax \
             -am \
             -DskipTests \
             -Djacoco.skip=true
@@ -17,34 +17,34 @@ def call(Map params) {
     stage('Run Maven Checkstyle') {
         sh '''
         mvn checkstyle:checkstyle \
-        -pl search \
+        -pl tax \
         -am \
-        -Dcheckstyle.output.file=search-checkstyle-result.xml
+        -Dcheckstyle.output.file=tax-checkstyle-result.xml
         '''
     }
 
     stage('Publish Checkstyle') {
         recordIssues(
-            tools: [checkStyle(pattern: '**/search-checkstyle-result.xml')]
+            tools: [checkStyle(pattern: '**/tax-checkstyle-result.xml')]
         )
     }
 
     stage('Test') {
         sh '''
         mvn clean test jacoco:report \
-        -pl search \
+        -pl tax \
         -am \
         -Djacoco.skip=false
         '''
     }
 
     stage('Publish Test Result') {
-        junit 'search/**/target/surefire-reports/*.xml'
+        junit 'tax/**/target/surefire-reports/*.xml'
     }
 
     stage('Publish Coverage Report') {
         publishHTML([
-            reportDir: 'search/target/site/jacoco',
+            reportDir: 'tax/target/site/jacoco',
             reportFiles: 'index.html',
             reportName: 'JaCoCo Coverage',
             keepAll: true,
@@ -56,9 +56,9 @@ def call(Map params) {
     //     sh '''
     //     echo "Run Gitleaks scan..."
     //     gitleaks detect \
-    //     --source ./search \
+    //     --source ./tax \
     //     --no-git \
-    //     --report-path search-gitleaks-report.json \
+    //     --report-path tax-gitleaks-report.json \
     //     --report-format json \
     //     --exit-code 0
     //     '''
@@ -130,12 +130,12 @@ def call(Map params) {
     //     </html>
     //     "
     //     end
-    //     '  search-gitleaks-report.json > search-gitleaks-report.html
+    //     '  tax-gitleaks-report.json > tax-gitleaks-report.html
     //     '''
 
     //     publishHTML([
     //         reportDir: '.',
-    //         reportFiles: 'search-gitleaks-report.html',
+    //         reportFiles: 'tax-gitleaks-report.html',
     //         reportName: 'Gitleak Report',
     //         allowMissing: true,
     //         alwaysLinkToLastBuild: true,
@@ -143,7 +143,7 @@ def call(Map params) {
     //     ])
 
     //     def hasLeak = sh(
-    //         script: '[ grep -q "RuleID" search-gitleaks-report.json ]',
+    //         script: '[ grep -q "RuleID" tax-gitleaks-report.json ]',
     //         returnStatus: true
     //     )
 
@@ -162,7 +162,7 @@ def call(Map params) {
     //     withSonarQubeEnv('My SonarQube Server') {
     //         sh '''
     //         mvn clean test jacoco:report sonar:sonar \
-    //         -pl search \
+    //         -pl tax \
     //         -am \
     //         -Djacoco.skip.check=true \
     //         -Dsonar.host.url=http://sonarqube:9000 \
@@ -182,7 +182,7 @@ def call(Map params) {
     // stage('OWASP Dependency Check') {
     //     sh '''
     //     mvn org.owasp:dependency-check-maven:check \
-    //     -pl search -am \
+    //     -pl tax -am \
     //     -DnvdApiKey=$NVD_API_KEY \
     //     -Dnvd.api.endpoint=https://services.nvd.nist.gov/rest/json/cves/2.0 \
     //     -Dcisa.enabled=false \
@@ -212,7 +212,7 @@ def call(Map params) {
 
     //     find . -name "mvnw" -exec chmod +x {} \\;
 
-    //     snyk test --file=pom.xml --package-manager=maven -d --json > search-snyk-report.json || true
+    //     snyk test --file=pom.xml --package-manager=maven -d --json > tax-snyk-report.json || true
     //     '''
 
     //     sh '''
@@ -284,12 +284,12 @@ def call(Map params) {
     //     </html>
     //     "
     //     end
-    //     ' search-snyk-report.json > search-snyk-report.html
+    //     ' tax-snyk-report.json > tax-snyk-report.html
     //     '''
 
     //     publishHTML([
     //         reportDir: '.',
-    //         reportFiles: 'search-snyk-report.html',
+    //         reportFiles: 'tax-snyk-report.html',
     //         reportName: 'Snyk Report',
     //         allowMissing: true,
     //         alwaysLinkToLastBuild: true,
@@ -297,7 +297,7 @@ def call(Map params) {
     //     ])
 
     //     def hasVuln = sh(
-    //         script: 'grep -q "vulnerabilities" search-snyk-report.json',
+    //         script: 'grep -q "vulnerabilities" tax-snyk-report.json',
     //         returnStatus: true
     //     )
 
