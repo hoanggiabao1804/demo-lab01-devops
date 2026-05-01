@@ -153,7 +153,11 @@ pipeline {
                             || file == ".pipelines/search-ci.groovy"    
                         ) {
                             servicesToBuild << "search"
-                        } else if (file.startsWith("storefront/") || file == ".github/workflows/storefront-ci.yaml") {
+                        } else if (
+                            file.startsWith("storefront/") 
+                            || file == ".github/workflows/storefront-ci.yaml"
+                            || file == ".pipelines/storefront-ci.groovy"    
+                        ) {
                             servicesToBuild << "storefront"
                         } else if (
                             file.startsWith("storefront-bff/") 
@@ -161,9 +165,17 @@ pipeline {
                             || file == ".pipelines/storefront-bff-ci.groovy"    
                         ) {
                             servicesToBuild << "storefront-bff"
-                        } else if (file.startsWith("tax/") || file == ".github/workflows/tax-ci.yaml") {
+                        } else if (
+                            file.startsWith("tax/") 
+                            || file == ".github/workflows/tax-ci.yaml"
+                            || file == ".pipelines/tax-ci.groovy"    
+                        ) {
                             servicesToBuild << "tax"
-                        } else if (file.startsWith("webhook/") || file == ".github/workflows/webhook-ci.yaml") {
+                        } else if (
+                            file.startsWith("webhook/") 
+                            || file == ".github/workflows/webhook-ci.yaml"
+                            || file == ".pipelines/webhook-ci.groovy"
+                        ) {
                             servicesToBuild << "webhook"
                         }
                     }
@@ -571,6 +583,25 @@ pipeline {
             }
             steps {
                 script {
+                    sh '''
+                    echo "Storefront pipeline..."
+                    '''
+
+                    def storefront = load '.pipelines/storefront-ci.groovy'
+
+                    storefront.call([
+                        isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
+                    ])
+                }
+            }
+        }
+
+        stage('Run storefront-bff pipeline') {
+            when {
+                expression { servicesToBuild.contains('all') || servicesToBuild.contains('storefront-bff') }
+            }
+            steps {
+                script {
 					sh '''
 					echo "Storefront-bff pipeline..."
 					'''
@@ -584,25 +615,22 @@ pipeline {
             }
         }
 
-        stage('Run storefront-bff pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('storefront-bff') }
-            }
-            steps {
-                sh '''
-                echo "Storefront-bff pipeline..."
-        	    '''
-            }
-        }
-
         stage('Run tax pipeline') {
             when {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('tax') }
             }
             steps {
-                sh '''
-                echo "Tax pipeline..."
-        	    '''
+                script {
+                    sh '''
+                    echo "Tax pipeline..."
+					'''
+
+					def tax = load '.pipelines/tax-ci.groovy'
+
+					tax.call([
+						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
+					])
+				}
             }
         }
 
@@ -611,9 +639,17 @@ pipeline {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('webhook') }
             }
             steps {
-                sh '''
-                echo "Webhook pipeline..."
-        	    '''
+                script {
+                    sh '''
+                    echo "Webhook pipeline..."
+					'''
+
+					def webhook = load '.pipelines/webhook-ci.groovy'
+
+					webhook.call([
+						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
+					])
+				}
             }
         }
 
