@@ -4,6 +4,15 @@ def call(Map params) {
         return
     }
 
+    stage('Run Action') {
+        sh '''
+        echo "Setup Java and Sonar Cache"
+        '''
+        
+        def action = load '.pipelines/actions/action.groovy'
+        action.call()
+    }
+
     stage('Build') {
         sh '''
         mvn clean package -pl backoffice-bff -am -DskipTests
