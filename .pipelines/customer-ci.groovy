@@ -55,7 +55,7 @@ def call(Map params) {
         publishHTML([
             reportDir: 'customer/target/site/jacoco',
             reportFiles: 'index.html',
-            reportName: 'JaCoCo Coverage',
+            reportName: 'Customer JaCoCo Coverage',
             keepAll: true,
             alwaysLinkToLastBuild: true
         ])
@@ -77,15 +77,6 @@ def call(Map params) {
             'reports/gitleaks/customer-gitleaks-report.json',
             'reports/gitleaks/customer-gitleaks-report.html'
         )
-
-        publishHTML([
-            reportDir: '.',
-            reportFiles: 'reports/gitleaks/customer-gitleaks-report.html',
-            reportName: 'Gitleak Report',
-            allowMissing: true,
-            alwaysLinkToLastBuild: true,
-            keepAll: true
-        ])
     }
 
     stage('SonarQube Analysis') {
@@ -117,15 +108,6 @@ def call(Map params) {
             'reports/snyk/customer-snyk-report.json',
             'reports/snyk/customer-snyk-report.html'
         )
-
-        publishHTML([
-            reportDir: '.',
-            reportFiles: 'reports/snyk/customer-snyk-report.html',
-            reportName: 'Snyk Report',
-            allowMissing: true,
-            alwaysLinkToLastBuild: true,
-            keepAll: true
-        ])
     }
 }
 
