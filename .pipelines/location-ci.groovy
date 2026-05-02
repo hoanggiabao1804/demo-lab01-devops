@@ -28,7 +28,7 @@ def call(Map params) {
         mvn checkstyle:checkstyle \
         -pl location \
         -am \
-        -Dcheckstyle.output.file=location-checkstyle-result.xml
+        -Dcheckstyle.output.file=reports/checkstyle/location-checkstyle-result.xml
         '''
     }
 
@@ -61,87 +61,72 @@ def call(Map params) {
         ])
     }
 
-    // stage('Gitleak Scan') {
-    //     sh '''
-    //     echo "Run Gitleaks scan..."
-    //     gitleaks detect \
-    //     --source ./location \
-    //     --no-git \
-    //     --report-path location-gitleaks-report.json \
-    //     --report-format json \
-    //     --exit-code 0
-    //     '''
+    stage('Gitleak Scan') {
+        sh '''
+        echo "Run Gitleaks scan..."
+        gitleaks detect \
+        --source ./location \
+        --no-git \
+        --report-path reports/gitleaks/location-gitleaks-report.json \
+        --report-format json \
+        --exit-code 0
+        '''
 
-    //     def gitleaksUtils = load '.pipelines/utils/gitleaks-utils.groovy'
-    //     gitleaksUtils.jsonToHtml(
-    //         'location-gitleaks-report.json',
-    //         'location-gitleaks-report.html'
-    //     )
+        def gitleaksUtils = load '.pipelines/utils/gitleaks-utils.groovy'
+        gitleaksUtils.jsonToHtml(
+            'reports/gitleaks/location-gitleaks-report.json',
+            'reports/gitleaks/location-gitleaks-report.html'
+        )
 
-    //     publishHTML([
-    //         reportDir: '.',
-    //         reportFiles: 'location-gitleaks-report.html',
-    //         reportName: 'Gitleak Report',
-    //         allowMissing: true,
-    //         alwaysLinkToLastBuild: true,
-    //         keepAll: true
-    //     ])
-    // }
+        publishHTML([
+            reportDir: '.',
+            reportFiles: 'reports/gitleaks/location-gitleaks-report.html',
+            reportName: 'Gitleak Report',
+            allowMissing: true,
+            alwaysLinkToLastBuild: true,
+            keepAll: true
+        ])
+    }
 
-    // stage('SonarQube Analysis') {
-    //     withSonarQubeEnv('My SonarQube Server') {
-    //         sh '''
-    //         mvn clean verify sonar:sonar \
-    //         -pl location \
-    //         -am \
-    //         -Dsonar.host.url=http://sonarqube:9000 \
-    //         -DskipITs=true
-    //         '''
-    //     }
-    //     timeout(time: 1, unit: 'HOURS') {
-    //         waitForQualityGate abortPipeline: true
-    //     }
-    // }
+    stage('SonarQube Analysis') {
+        withSonarQubeEnv('My SonarQube Server') {
+            sh '''
+            mvn clean verify sonar:sonar \
+            -pl location \
+            -am \
+            -Dsonar.host.url=http://sonarqube:9000 \
+            -DskipITs=true
+            '''
+        }
+        timeout(time: 1, unit: 'HOURS') {
+            waitForQualityGate abortPipeline: true
+        }
+    }
 
-    // stage('Snyk Scan') {
-    //     sh '''
-    //     snyk auth $SNYK_TOKEN
+    stage('Snyk Scan') {
+        sh '''
+        snyk auth $SNYK_TOKEN
 
-    //     find . -name "mvnw" -exec chmod +x {} \\;
+        find . -name "mvnw" -exec chmod +x {} \\;
 
-    //     snyk test --file=pom.xml --package-manager=maven -d --json > location-snyk-report.json || true
-    //     '''
+        snyk test --file=pom.xml --package-manager=maven -d --json > reports/snyk/location-snyk-report.json || true
+        '''
 
-    //     def snykUtils = load '.pipelines/utils/snyk-utils.groovy'
-    //     snykUtils.jsonToHtml(
-    //         'location-snyk-report.json',
-    //         'location-snyk-report.html'
-    //     )
+        def snykUtils = load '.pipelines/utils/snyk-utils.groovy'
+        snykUtils.jsonToHtml(
+            'reports/snyk/location-snyk-report.json',
+            'reports/snyk/location-snyk-report.html'
+        )
 
-    //     publishHTML([
-    //         reportDir: '.',
-    //         reportFiles: 'location-snyk-report.html',
-    //         reportName: 'Snyk Report',
-    //         allowMissing: true,
-    //         alwaysLinkToLastBuild: true,
-    //         keepAll: true
-    //     ])
-
-    //     def hasVuln = sh(
-    //         script: 'grep -q "vulnerabilities" location-snyk-report.json',
-    //         returnStatus: true
-    //     )
-
-    //     if (hasVuln == 0) {
-    //         sh '''
-    //         echo "Snyk vulnerabilities found!"
-    //         '''
-    //     } else {
-    //         sh '''
-    //         echo "No vulnerabilites found!"
-    //         '''
-    //     }
-    // }
+        publishHTML([
+            reportDir: '.',
+            reportFiles: 'reports/snyk/location-snyk-report.html',
+            reportName: 'Snyk Report',
+            allowMissing: true,
+            alwaysLinkToLastBuild: true,
+            keepAll: true
+        ])
+    }
 }
 
 return this
