@@ -25,9 +25,13 @@ pipeline {
 
     stages {
         stage('Initialize reports storage') {
-            sh '''
-            mkdir -p reports/checkstyle reports/gitleaks reports/snyk
-            '''
+            steps {
+                sh '''
+                mkdir -p reports/gitleaks
+                mkdir -p reports/snyk
+                mkdir -p reports/checkstyle
+                '''
+            }
         }
 
         stage('Detect Changes') {
