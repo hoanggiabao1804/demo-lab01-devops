@@ -24,6 +24,16 @@ pipeline {
     }
 
     stages {
+        stage('Initialize reports storage') {
+            steps {
+                sh '''
+                mkdir -p reports/gitleaks
+                mkdir -p reports/snyk
+                mkdir -p reports/checkstyle
+                '''
+            }
+        }
+
         stage('Detect Changes') {
             steps {
                 script {
@@ -179,30 +189,6 @@ pipeline {
                             servicesToBuild << "webhook"
                         }
                     }
-                }
-            }
-        }
-
-        stage('Debug') {
-            steps {
-                sh '''
-                java -version
-                mvn -version
-                hostname
-                which docker || echo "no docker"
-                '''
-            }
-        }
-
-        stage('Run Action') {
-            steps {
-                script {
-                    sh '''
-                    echo "Setup Java and Sonar Cache"
-                    '''
-                    def action = load '.pipelines/actions/action.groovy'
-
-                    action.call()
                 }
             }
         }
