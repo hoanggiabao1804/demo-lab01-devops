@@ -639,9 +639,79 @@ pipeline {
             }
         }
 
-        stage('Build & Test') {
+        stage('Publish Gitleaks Reports') {
             steps {
-                sh 'echo "Build & Test phase"'
+                sh 'echo "Publish Gitleaks reports..."'
+
+                // publishHTML([
+                //     reportDir: '.',
+                //     reportFiles: 'reports/gitleaks/*gitleaks-report.html',
+                //     reportName: 'Gitleak Report',
+                //     allowMissing: true,
+                //     alwaysLinkToLastBuild: true,
+                //     keepAll: true
+                // ])
+
+                sh '''
+                mkdir -p reports/gitleaks/merged
+
+                echo "<html><body><h1>Gitleaks Reports</h1><ul>" > reports/gitleaks/merged/index.html
+
+                for f in reports/gitleaks/*gitleaks-report.html; do
+                    name=$(basename $f)
+                    cp $f reports/gitleaks/merged/
+                    echo "<li><a href='$name'>$name</a></li>" >> reports/gitleaks/merged/index.html
+                done
+
+                echo "</ul></body></html>" >> reports/gitleaks/merged/index.html
+                '''
+
+                publishHTML([
+                    reportDir: 'reports/gitleaks/merged',
+                    reportFiles: 'index.html',
+                    reportName: 'Gitleaks Report',
+                    allowMissing: true,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true
+                ])
+            }
+        }
+
+        stage('Publish Snyk Reports') {
+            steps {
+                sh 'echo "Publish Snyk reports..."'
+
+                // publishHTML([
+                //     reportDir: '.',
+                //     reportFiles: 'reports/snyk/*snyk-report.html',
+                //     reportName: 'Snyk Report',
+                //     allowMissing: true,
+                //     alwaysLinkToLastBuild: true,
+                //     keepAll: true
+                // ])
+
+                sh '''
+                mkdir -p reports/snyk/merged
+
+                echo "<html><body><h1>Snyk Reports</h1><ul>" > reports/snyk/merged/index.html
+
+                for f in reports/snyk/*snyk-report.html; do
+                    name=$(basename $f)
+                    cp $f reports/snyk/merged/
+                    echo "<li><a href='$name'>$name</a></li>" >> reports/snyk/merged/index.html
+                done
+
+                echo "</ul></body></html>" >> reports/snyk/merged/index.html
+                '''
+
+                publishHTML([
+                    reportDir: 'reports/snyk/merged',
+                    reportFiles: 'index.html',
+                    reportName: 'Snyk Report',
+                    allowMissing: true,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true
+                ])
             }
         }
     }
