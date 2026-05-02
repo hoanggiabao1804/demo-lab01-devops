@@ -59,71 +59,71 @@ def call(Map params) {
         ])
     }
 
-    // stage('Gitleak Scan') {
-    //     sh '''
-    //     echo "Run Gitleaks scan..."
-    //     gitleaks detect \
-    //     --source ./backoffice \
-    //     --no-git \
-    //     --report-path backoffice-gitleaks-report.json \
-    //     --report-format json \
-    //     --exit-code 0
-    //     '''
+    stage('Gitleak Scan') {
+        sh '''
+        echo "Run Gitleaks scan..."
+        gitleaks detect \
+        --source ./backoffice \
+        --no-git \
+        --report-path reports/gitleaks/backoffice-gitleaks-report.json \
+        --report-format json \
+        --exit-code 0
+        '''
 
-    //     def gitleaksUtils = load '.pipelines/utils/gitleaks-utils.groovy'
-    //     gitleaksUtils.jsonToHtml(
-    //         'backoffice-gitleaks-report.json', 
-    //         'backoffice-gitleaks-report.html'
-    //     )
+        def gitleaksUtils = load '.pipelines/utils/gitleaks-utils.groovy'
+        gitleaksUtils.jsonToHtml(
+            'reports/gitleaks/backoffice-gitleaks-report.json', 
+            'reports/gitleaks/backoffice-gitleaks-report.html'
+        )
 
-    //     publishHTML([
-    //         reportDir: '.',
-    //         reportFiles: 'backoffice-gitleaks-report.html',
-    //         reportName: 'Gitleak Report',
-    //         allowMissing: true,
-    //         alwaysLinkToLastBuild: true,
-    //         keepAll: true
-    //     ])
-    // }
+        publishHTML([
+            reportDir: '.',
+            reportFiles: 'reports/gitleaks/backoffice-gitleaks-report.html',
+            reportName: 'Gitleak Report',
+            allowMissing: true,
+            alwaysLinkToLastBuild: true,
+            keepAll: true
+        ])
+    }
 
-    // stage('SonarQube Analysis') {
-    //     withSonarQubeEnv('My SonarQube Server') {
-    //         dir('backoffice') {
-    //             sh '''
-    //             sonar-scanner \
-    //             -Dsonar.host.url=http://sonarqube:9000
-    //             '''
-    //         }
-    //     }
-    //     timeout(time: 1, unit: 'HOURS') {
-    //         waitForQualityGate abortPipeline: true
-    //     }
-    // }
+    stage('SonarQube Analysis') {
+        withSonarQubeEnv('My SonarQube Server') {
+            dir('backoffice') {
+                sh '''
+                sonar-scanner \
+                -Dsonar.host.url=http://sonarqube:9000
+                '''
+            }
+        }
+        timeout(time: 1, unit: 'HOURS') {
+            waitForQualityGate abortPipeline: true
+        }
+    }
 
-    // stage('Snyk Scan') {
-	// 	dir('backoffice') {
-    //         sh '''
-    //         snyk auth $SNYK_TOKEN
+    stage('Snyk Scan') {
+		dir('backoffice') {
+            sh '''
+            snyk auth $SNYK_TOKEN
 
-    //         snyk test -d --json > backoffice-snyk-report.json || true
-    //         '''
+            snyk test -d --json > ../reports/snyk/backoffice-snyk-report.json || true
+            '''
 
-    //         def snykUtils = load '../.pipelines/utils/snyk-utils.groovy'
-    //         snykUtils.jsonToHtml(
-    //             'backoffice-snyk-report.json',
-    //             'backoffice-snyk-report.html'
-    //         )
+            def snykUtils = load '../.pipelines/utils/snyk-utils.groovy'
+            snykUtils.jsonToHtml(
+                '../reports/snyk/backoffice-snyk-report.json',
+                '../reports/snyk/backoffice-snyk-report.html'
+            )
 
-    //         publishHTML([
-    //             reportDir: '.',
-    //             reportFiles: 'backoffice-snyk-report.html',
-    //             reportName: 'Snyk Report',
-    //             allowMissing: true,
-    //             alwaysLinkToLastBuild: true,
-    //             keepAll: true
-    //         ])
-    //     }
-    // }
+            publishHTML([
+                reportDir: '.',
+                reportFiles: '../reports/snyk/backoffice-snyk-report.html',
+                reportName: 'Snyk Report',
+                allowMissing: true,
+                alwaysLinkToLastBuild: true,
+                keepAll: true
+            ])
+        }
+    }
 }
 
 return this
