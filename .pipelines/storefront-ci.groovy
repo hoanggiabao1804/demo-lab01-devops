@@ -59,111 +59,32 @@ def call(Map params) {
         ])
     }
 
-    // stage('Gitleak Scan') {
-    //     sh '''
-    //     echo "Run Gitleaks scan..."
-    //     gitleaks detect \
-    //     --source ./storefront \
-    //     --no-git \
-    //     --report-path storefront-gitleaks-report.json \
-    //     --report-format json \
-    //     --exit-code 0
-    //     '''
+    stage('Gitleak Scan') {
+        sh '''
+        echo "Run Gitleaks scan..."
+        gitleaks detect \
+        --source ./storefront \
+        --no-git \
+        --report-path storefront-gitleaks-report.json \
+        --report-format json \
+        --exit-code 0
+        '''
 
-    //     sh '''
-    //     jq -r '
-    //     if length == 0 then
-    //     "<p>No secrets detected</p>"
-    //     else
-    //     "<html>
-    //     <head>
-    //     <style>
-    //     body { font-family: Arial; padding: 20px; }
-    //     h2 { margin-bottom: 20px; }
+        def gitleaksUtils = load '.pipelines/utils/gitleaks-utils.groovy'
+        gitleaksUtils.jsonToHtml(
+            'storefront-gitleaks-report.json', 
+            'storefront-gitleaks-report.html'
+        )
 
-    //     table {
-    //     border-collapse: collapse;
-    //     width: 100%;
-    //     }
-
-    //     th, td {
-    //     border: 1px solid #ddd;
-    //     padding: 10px;
-    //     text-align: left;
-    //     }
-
-    //     th {
-    //     background-color: #f4f4f4;
-    //     }
-
-    //     tr:nth-child(even) {
-    //     background-color: #fafafa;
-    //     }
-    //     </style>
-    //     </head>
-    //     <body>
-
-    //     <h2>Gitleaks Report</h2>
-
-    //     <table>
-    //     <thead>
-    //     <tr>
-    //     <th>File</th>
-    //     <th>RuleID</th>
-    //     <th>Secret</th>
-    //     <th>StartLine</th>
-    //     </tr>
-    //     </thead>
-    //     <tbody>
-    //     " +
-
-    //     (
-    //     [.[] |
-    //         "<tr>" +
-    //         "<td>" + .File + "</td>" +
-    //         "<td>" + .RuleID + "</td>" +
-    //         "<td>" + .Secret + "</td>" +
-    //         "<td>" + (.StartLine | tostring) + "</td>" +
-    //         "</tr>"
-    //     ] | join("")
-    //     )
-
-    //     + "
-
-    //     </tbody>
-    //     </table>
-
-    //     </body>
-    //     </html>
-    //     "
-    //     end
-    //     '  storefront-gitleaks-report.json > storefront-gitleaks-report.html
-    //     '''
-
-    //     publishHTML([
-    //         reportDir: '.',
-    //         reportFiles: 'storefront-gitleaks-report.html',
-    //         reportName: 'Gitleak Report',
-    //         allowMissing: true,
-    //         alwaysLinkToLastBuild: true,
-    //         keepAll: true
-    //     ])
-
-    //     def hasLeak = sh(
-    //         script: '[ grep -q "RuleID" storefront-gitleaks-report.json ]',
-    //         returnStatus: true
-    //     )
-
-    //     if (hasLeak == 0) {
-    //         sh '''
-    //         echo "Secrets detected!"
-    //         '''
-    //     } else {
-    //         sh '''
-    //         echo "No secrets detected!"
-    //         '''
-    //     }
-    // }
+        publishHTML([
+            reportDir: '.',
+            reportFiles: 'storefront-gitleaks-report.html',
+            reportName: 'Gitleak Report',
+            allowMissing: true,
+            alwaysLinkToLastBuild: true,
+            keepAll: true
+        ])
+    }
 
     stage('SonarQube Analysis') {
         withSonarQubeEnv('My SonarQube Server') {
@@ -179,111 +100,30 @@ def call(Map params) {
         }
     }
 
-    // stage('Snyk Scan') {
-	// 	dir('storefront') {
-    //         sh '''
-    //         snyk auth $SNYK_TOKEN
+    stage('Snyk Scan') {
+		dir('storefront') {
+            sh '''
+            snyk auth $SNYK_TOKEN
 
-    //         snyk test -d --json > storefront-snyk-report.json || true
-    //         '''
+            snyk test -d --json > storefront-snyk-report.json || true
+            '''
 
-    //         sh '''
-    //         jq -r '
-    //         if (.vulnerabilities | length) == 0 then
-    //         "<p>No vulnerabilities</p>"
-    //         else
-    //         "<html>
-    //         <head>
-    //         <style>
-    //         body { font-family: Arial; padding: 20px; }
-    //         h2 { margin-bottom: 20px; }
+            def snykUtils = load '.pipelines/utils/snyk-utils.groovy'
+            snykUtils.jsonToHtml(
+                'storefront-snyk-report.json', 
+                'storefront-snyk-report.html'
+            )
 
-    //         table {
-    //         border-collapse: collapse;
-    //         width: 100%;
-    //         }
-
-    //         th, td {
-    //         border: 1px solid #ddd;
-    //         padding: 10px;
-    //         text-align: left;
-    //         }
-
-    //         th {
-    //         background-color: #f4f4f4;
-    //         }
-
-    //         tr:nth-child(even) {
-    //         background-color: #fafafa;
-    //         }
-    //         </style>
-    //         </head>
-    //         <body>
-
-    //         <h2>Snyk Vulnerability Report</h2>
-
-    //         <table>
-    //         <thead>
-    //         <tr>
-    //         <th>Severity</th>
-    //         <th>Package</th>
-    //         <th>Version</th>
-    //         <th>Title</th>
-    //         <th>Fixed In</th>
-    //         </tr>
-    //         </thead>
-    //         <tbody>
-    //         " +
-
-    //         (
-    //         [.vulnerabilities[] |
-    //             "<tr>" +
-    //             "<td>" + .severity + "</td>" +
-    //             "<td>" + .packageName + "</td>" +
-    //             "<td>" + .version + "</td>" +
-    //             "<td>" + .title + "</td>" +
-    //             "<td>" + (if .fixedIn then (.fixedIn | join(", ")) else "N/A" end) + "</td>" +
-    //             "</tr>"
-    //         ] | join("")
-    //         )
-
-    //         + "
-
-    //         </tbody>
-    //         </table>
-
-    //         </body>
-    //         </html>
-    //         "
-    //         end
-    //         ' storefront-snyk-report.json > storefront-snyk-report.html
-    //         '''
-
-    //         publishHTML([
-    //             reportDir: '.',
-    //             reportFiles: 'storefront-snyk-report.html',
-    //             reportName: 'Snyk Report',
-    //             allowMissing: true,
-    //             alwaysLinkToLastBuild: true,
-    //             keepAll: true
-    //         ])
-
-    //         def hasVuln = sh(
-    //             script: 'grep -q "vulnerabilities" storefront-snyk-report.json',
-    //             returnStatus: true
-    //         )
-
-    //         if (hasVuln == 0) {
-    //             sh '''
-    //             echo "Snyk vulnerabilities found!"
-    //             '''
-    //         } else {
-    //             sh '''
-    //             echo "No vulnerabilites found!"
-    //             '''
-    //         }
-    //     }
-    // }
+            publishHTML([
+                reportDir: '.',
+                reportFiles: 'storefront-snyk-report.html',
+                reportName: 'Snyk Report',
+                allowMissing: true,
+                alwaysLinkToLastBuild: true,
+                keepAll: true
+            ])
+        }
+    }
 }
 
 return this
