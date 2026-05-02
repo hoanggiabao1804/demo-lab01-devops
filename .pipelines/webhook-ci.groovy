@@ -28,7 +28,7 @@ def call(Map params) {
         mvn checkstyle:checkstyle \
         -pl webhook \
         -am \
-        -Dcheckstyle.output.file=webhook-checkstyle-result.xml
+        -Dcheckstyle.output.file=reports/checkstyle/webhook-checkstyle-result.xml
         '''
     }
 
@@ -61,72 +61,72 @@ def call(Map params) {
         ])
     }
 
-    // stage('Gitleak Scan') {
-    //     sh '''
-    //     echo "Run Gitleaks scan..."
-    //     gitleaks detect \
-    //     --source ./webhook \
-    //     --no-git \
-    //     --report-path webhook-gitleaks-report.json \
-    //     --report-format json \
-    //     --exit-code 0
-    //     '''
+    stage('Gitleak Scan') {
+        sh '''
+        echo "Run Gitleaks scan..."
+        gitleaks detect \
+        --source ./webhook \
+        --no-git \
+        --report-path reports/gitleaks/webhook-gitleaks-report.json \
+        --report-format json \
+        --exit-code 0
+        '''
 
-    //     def gitleaksUtils = load '.pipelines/utils/gitleaks-utils.groovy'
-    //     gitleaksUtils.jsonToHtml(
-    //         'webhook-gitleaks-report.json',
-    //         'webhook-gitleaks-report.html'
-    //     )
+        def gitleaksUtils = load '.pipelines/utils/gitleaks-utils.groovy'
+        gitleaksUtils.jsonToHtml(
+            'reports/gitleaks/webhook-gitleaks-report.json',
+            'reports/gitleaks/webhook-gitleaks-report.html'
+        )
 
-    //     publishHTML([
-    //         reportDir: '.',
-    //         reportFiles: 'webhook-gitleaks-report.html',
-    //         reportName: 'Gitleak Report',
-    //         allowMissing: true,
-    //         alwaysLinkToLastBuild: true,
-    //         keepAll: true
-    //     ])
-    // }
+        publishHTML([
+            reportDir: '.',
+            reportFiles: 'reports/gitleaks/webhook-gitleaks-report.html',
+            reportName: 'Gitleak Report',
+            allowMissing: true,
+            alwaysLinkToLastBuild: true,
+            keepAll: true
+        ])
+    }
 
-    // stage('SonarQube Analysis') {
-    //     withSonarQubeEnv('My SonarQube Server') {
-    //         sh '''
-    //         mvn clean verify sonar:sonar \
-    //         -pl webhook \
-    //         -am \
-    //         -Dsonar.host.url=http://sonarqube:9000 \
-    //         -DskipITs=true
-    //         '''
-    //     }
-    //     timeout(time: 1, unit: 'HOURS') {
-    //         waitForQualityGate abortPipeline: true
-    //     }
-    // }
+    stage('SonarQube Analysis') {
+        withSonarQubeEnv('My SonarQube Server') {
+            sh '''
+            mvn clean verify sonar:sonar \
+            -pl webhook \
+            -am \
+            -Dsonar.host.url=http://sonarqube:9000 \
+            -DskipITs=true
+            '''
+        }
+        timeout(time: 1, unit: 'HOURS') {
+            waitForQualityGate abortPipeline: true
+        }
+    }
 
-    // stage('Snyk Scan') {
-    //     sh '''
-    //     snyk auth $SNYK_TOKEN
+    stage('Snyk Scan') {
+        sh '''
+        snyk auth $SNYK_TOKEN
 
-    //     find . -name "mvnw" -exec chmod +x {} \\;
+        find . -name "mvnw" -exec chmod +x {} \\;
 
-    //     snyk test --file=pom.xml --package-manager=maven -d --json > webhook-snyk-report.json || true
-    //     '''
+        snyk test --file=pom.xml --package-manager=maven -d --json > reports/snyk/webhook-snyk-report.json || true
+        '''
 
-    //     def snykUtils = load '.pipelines/utils/snyk-utils.groovy'
-    //     snykUtils.jsonToHtml(
-    //         'webhook-snyk-report.json',
-    //         'webhook-snyk-report.html'
-    //     )
+        def snykUtils = load '.pipelines/utils/snyk-utils.groovy'
+        snykUtils.jsonToHtml(
+            'reports/snyk/webhook-snyk-report.json',
+            'reports/snyk/webhook-snyk-report.html'
+        )
 
-    //     publishHTML([
-    //         reportDir: '.',
-    //         reportFiles: 'webhook-snyk-report.html',
-    //         reportName: 'Snyk Report',
-    //         allowMissing: true,
-    //         alwaysLinkToLastBuild: true,
-    //         keepAll: true
-    //     ])
-    // }
+        publishHTML([
+            reportDir: '.',
+            reportFiles: 'reports/snyk/webhook-snyk-report.html',
+            reportName: 'Snyk Report',
+            allowMissing: true,
+            alwaysLinkToLastBuild: true,
+            keepAll: true
+        ])
+    }
 }
 
 return this

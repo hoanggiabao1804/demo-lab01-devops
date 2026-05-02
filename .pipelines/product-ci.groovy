@@ -28,7 +28,7 @@ def call(Map params) {
         mvn checkstyle:checkstyle \
         -pl product \
         -am \
-        -Dcheckstyle.output.file=product-checkstyle-result.xml
+        -Dcheckstyle.output.file=reports/checkstyle/product-checkstyle-result.xml
         '''
     }
 
@@ -61,72 +61,72 @@ def call(Map params) {
         ])
     }
 
-    // stage('Gitleak Scan') {
-    //     sh '''
-    //     echo "Run Gitleaks scan..."
-    //     gitleaks detect \
-    //     --source ./product \
-    //     --no-git \
-    //     --report-path product-gitleaks-report.json \
-    //     --report-format json \
-    //     --exit-code 0
-    //     '''
+    stage('Gitleak Scan') {
+        sh '''
+        echo "Run Gitleaks scan..."
+        gitleaks detect \
+        --source ./product \
+        --no-git \
+        --report-path reports/gitleaks/product-gitleaks-report.json \
+        --report-format json \
+        --exit-code 0
+        '''
 
-    //     def gitleaksUtils = load '.pipelines/utils/gitleaks-utils.groovy'
-    //     gitleaksUtils.jsonToHtml(
-    //         'product-gitleaks-report.json',
-    //         'product-gitleaks-report.html'
-    //     )
+        def gitleaksUtils = load '.pipelines/utils/gitleaks-utils.groovy'
+        gitleaksUtils.jsonToHtml(
+            'reports/gitleaks/product-gitleaks-report.json',
+            'reports/gitleaks/product-gitleaks-report.html'
+        )
 
-    //     publishHTML([
-    //         reportDir: '.',
-    //         reportFiles: 'product-gitleaks-report.html',
-    //         reportName: 'Gitleak Report',
-    //         allowMissing: true,
-    //         alwaysLinkToLastBuild: true,
-    //         keepAll: true
-    //     ])
-    // }
+        publishHTML([
+            reportDir: '.',
+            reportFiles: 'reports/gitleaks/product-gitleaks-report.html',
+            reportName: 'Gitleak Report',
+            allowMissing: true,
+            alwaysLinkToLastBuild: true,
+            keepAll: true
+        ])
+    }
 
-    // stage('SonarQube Analysis') {
-    //     withSonarQubeEnv('My SonarQube Server') {
-    //         sh '''
-    //         mvn clean verify sonar:sonar \
-    //         -pl product \
-    //         -am \
-    //         -Dsonar.host.url=http://sonarqube:9000 \
-    //         -DskipITs=true
-    //         '''
-    //     }
-    //     timeout(time: 1, unit: 'HOURS') {
-    //         waitForQualityGate abortPipeline: true
-    //     }
-    // }
+    stage('SonarQube Analysis') {
+        withSonarQubeEnv('My SonarQube Server') {
+            sh '''
+            mvn clean verify sonar:sonar \
+            -pl product \
+            -am \
+            -Dsonar.host.url=http://sonarqube:9000 \
+            -DskipITs=true
+            '''
+        }
+        timeout(time: 1, unit: 'HOURS') {
+            waitForQualityGate abortPipeline: true
+        }
+    }
 
-    // stage('Snyk Scan') {
-    //     sh '''
-    //     snyk auth $SNYK_TOKEN
+    stage('Snyk Scan') {
+        sh '''
+        snyk auth $SNYK_TOKEN
 
-    //     find . -name "mvnw" -exec chmod +x {} \\;
+        find . -name "mvnw" -exec chmod +x {} \\;
 
-    //     snyk test --file=pom.xml --package-manager=maven -d --json > product-snyk-report.json || true
-    //     '''
+        snyk test --file=pom.xml --package-manager=maven -d --json > reports/snyk/product-snyk-report.json || true
+        '''
 
-    //     def snykUtils = load '.pipelines/utils/snyk-utils.groovy'
-    //     snykUtils.jsonToHtml(
-    //         'product-snyk-report.json',
-    //         'product-snyk-report.html'
-    //     )
+        def snykUtils = load '.pipelines/utils/snyk-utils.groovy'
+        snykUtils.jsonToHtml(
+            'reports/snyk/product-snyk-report.json',
+            'reports/snyk/product-snyk-report.html'
+        )
 
-    //     publishHTML([
-    //         reportDir: '.',
-    //         reportFiles: 'product-snyk-report.html',
-    //         reportName: 'Snyk Report',
-    //         allowMissing: true,
-    //         alwaysLinkToLastBuild: true,
-    //         keepAll: true
-    //     ])
-    // }
+        publishHTML([
+            reportDir: '.',
+            reportFiles: 'reports/snyk/product-snyk-report.html',
+            reportName: 'Snyk Report',
+            allowMissing: true,
+            alwaysLinkToLastBuild: true,
+            keepAll: true
+        ])
+    }
 }
 
 return this
