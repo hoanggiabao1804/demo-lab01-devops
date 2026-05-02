@@ -42,6 +42,7 @@ jobs:
                   path: "**/backoffice-bff-checkstyle-result.xml"
             - name: Run Maven Verify
               run: mvn clean verify -f backoffice-bff
+
             # - name: Analyze with sonar cloud
             #   if: ${{ env.FROM_ORIGINAL_REPOSITORY == 'true' }}
             #   env:

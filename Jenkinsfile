@@ -57,9 +57,7 @@ pipeline {
                             break
                         }
 
-                        if (file.startsWith("automation-ui/")) {
-                            servicesToBuild << "automation-ui"
-                        } else if (
+                        if (
 							file.startsWith("backoffice-bff/") 
 							|| file == ".github/workflows/backoffice-bff-ci.yaml"
 							|| file == ".pipelines/backoffice-bff-ci.groovy"
@@ -75,8 +73,6 @@ pipeline {
                             || file == ".pipelines/cart-ci.groovy"
                         ) {
                             servicesToBuild << "cart"
-                        } else if (file.startsWith("common-library/")) {
-                            servicesToBuild << "common-library"
                         } else if (
                             file.startsWith("customer/") 
                             || file == ".github/workflows/customer-ci.yaml"
@@ -85,16 +81,12 @@ pipeline {
                             servicesToBuild << "customer"
                         } else if (file.startsWith("delivery/")) {
                             servicesToBuild << "delivery"
-                        } else if (file.startsWith("docker/")) {
-                            servicesToBuild << "docker"
                         } else if (
                             file.startsWith("inventory/") 
                             || file == ".github/workflows/inventory-ci.yaml"
                             || file == ".pipelines/inventory-ci.groovy"
                     ) {
                             servicesToBuild << "inventory"
-                        } else if (file.startsWith("k8s/")) {
-                            servicesToBuild << "k8s"
                         } else if (
                             file.startsWith("location/") 
                             || file == ".github/workflows/location-ci.yaml"
@@ -107,8 +99,6 @@ pipeline {
                             || file == ".pipelines/media-ci.groovy"    
                         ) {
                             servicesToBuild << "media"
-                        } else if (file.startsWith("nginx/")) {
-                            servicesToBuild << "nginx"
                         } else if (
                             file.startsWith("order/") 
                             || file == ".github/workflows/order-ci.yaml"
@@ -193,17 +183,6 @@ pipeline {
             }
         }
 
-        stage ('Run automation-ui pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('automation-ui') }
-            }
-            steps {
-                sh '''
-                echo "Automation-ui pipeline..."
-                '''
-            }
-        }
-
         stage('Run backoffice pipeline') {
             when {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('backoffice') }
@@ -261,17 +240,6 @@ pipeline {
             }
         }
 
-        stage('Run common-library pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('common-library') }
-            }
-            steps {
-                sh '''
-                echo "Common-library pipeline..."
-                '''
-            }
-        }
-
         stage('Run customer pipeline') {
             when {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('customer') }
@@ -302,17 +270,6 @@ pipeline {
             }
         }
 
-        stage('Run docker pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('docker') }
-            }
-            steps {
-                sh '''
-                echo "Docker pipeline..."
-                '''
-            }
-        }
-
         stage('Run inventory pipeline') {
             when {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('inventory') }
@@ -329,17 +286,6 @@ pipeline {
 						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
 					])
 				}
-            }
-        }
-
-        stage('Run k8s pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('k8s') }
-            }
-            steps {
-                sh '''
-                echo "k8s pipeline..."
-                '''
             }
         }
 
@@ -378,17 +324,6 @@ pipeline {
 						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
 					])
 				}
-            }
-        }
-
-        stage('Run nginx pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('nginx') }
-            }
-            steps {
-                sh '''
-                echo "Nginx pipeline..."
-        	    '''
             }
         }
 
@@ -643,15 +578,6 @@ pipeline {
             steps {
                 sh 'echo "Publish Gitleaks reports..."'
 
-                // publishHTML([
-                //     reportDir: '.',
-                //     reportFiles: 'reports/gitleaks/*gitleaks-report.html',
-                //     reportName: 'Gitleak Report',
-                //     allowMissing: true,
-                //     alwaysLinkToLastBuild: true,
-                //     keepAll: true
-                // ])
-
                 sh '''
                 mkdir -p reports/gitleaks/merged
 
@@ -680,15 +606,6 @@ pipeline {
         stage('Publish Snyk Reports') {
             steps {
                 sh 'echo "Publish Snyk reports..."'
-
-                // publishHTML([
-                //     reportDir: '.',
-                //     reportFiles: 'reports/snyk/*snyk-report.html',
-                //     reportName: 'Snyk Report',
-                //     allowMissing: true,
-                //     alwaysLinkToLastBuild: true,
-                //     keepAll: true
-                // ])
 
                 sh '''
                 mkdir -p reports/snyk/merged
