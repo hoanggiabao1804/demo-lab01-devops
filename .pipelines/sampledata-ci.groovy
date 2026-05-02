@@ -28,7 +28,7 @@ def call(Map params) {
         mvn checkstyle:checkstyle \
         -pl sampledata \
         -am \
-        -Dcheckstyle.output.file=sampledata-checkstyle-result.xml
+        -Dcheckstyle.output.file=reports/checkstyle/sampledata-checkstyle-result.xml
         '''
     }
 
@@ -61,72 +61,72 @@ def call(Map params) {
         ])
     }
 
-    // stage('Gitleak Scan') {
-    //     sh '''
-    //     echo "Run Gitleaks scan..."
-    //     gitleaks detect \
-    //     --source ./sampledata \
-    //     --no-git \
-    //     --report-path sampledata-gitleaks-report.json \
-    //     --report-format json \
-    //     --exit-code 0
-    //     '''
+    stage('Gitleak Scan') {
+        sh '''
+        echo "Run Gitleaks scan..."
+        gitleaks detect \
+        --source ./sampledata \
+        --no-git \
+        --report-path reports/gitleaks/sampledata-gitleaks-report.json \
+        --report-format json \
+        --exit-code 0
+        '''
 
-    //     def gitleaksUtils = load '.pipelines/utils/gitleaks-utils.groovy'
-    //     gitleaksUtils.jsonToHtml(
-    //         'sampledata-gitleaks-report.json',
-    //         'sampledata-gitleaks-report.html'
-    //     )
+        def gitleaksUtils = load '.pipelines/utils/gitleaks-utils.groovy'
+        gitleaksUtils.jsonToHtml(
+            'reports/gitleaks/sampledata-gitleaks-report.json',
+            'reports/gitleaks/sampledata-gitleaks-report.html'
+        )
 
-    //     publishHTML([
-    //         reportDir: '.',
-    //         reportFiles: 'sampledata-gitleaks-report.html',
-    //         reportName: 'Gitleak Report',
-    //         allowMissing: true,
-    //         alwaysLinkToLastBuild: true,
-    //         keepAll: true
-    //     ])
-    // }
+        publishHTML([
+            reportDir: '.',
+            reportFiles: 'reports/gitleaks/sampledata-gitleaks-report.html',
+            reportName: 'Gitleak Report',
+            allowMissing: true,
+            alwaysLinkToLastBuild: true,
+            keepAll: true
+        ])
+    }
 
-    // stage('SonarQube Analysis') {
-    //     withSonarQubeEnv('My SonarQube Server') {
-    //         sh '''
-    //         mvn clean verify sonar:sonar \
-    //         -pl sampledata \
-    //         -am \
-    //         -Dsonar.host.url=http://sonarqube:9000 \
-    //         -DskipITs=true
-    //         '''
-    //     }
-    //     timeout(time: 1, unit: 'HOURS') {
-    //         waitForQualityGate abortPipeline: true
-    //     }
-    // }
+    stage('SonarQube Analysis') {
+        withSonarQubeEnv('My SonarQube Server') {
+            sh '''
+            mvn clean verify sonar:sonar \
+            -pl sampledata \
+            -am \
+            -Dsonar.host.url=http://sonarqube:9000 \
+            -DskipITs=true
+            '''
+        }
+        timeout(time: 1, unit: 'HOURS') {
+            waitForQualityGate abortPipeline: true
+        }
+    }
 
-    // stage('Snyk Scan') {
-    //     sh '''
-    //     snyk auth $SNYK_TOKEN
+    stage('Snyk Scan') {
+        sh '''
+        snyk auth $SNYK_TOKEN
 
-    //     find . -name "mvnw" -exec chmod +x {} \\;
+        find . -name "mvnw" -exec chmod +x {} \\;
 
-    //     snyk test --file=pom.xml --package-manager=maven -d --json > sampledata-snyk-report.json || true
-    //     '''
+        snyk test --file=pom.xml --package-manager=maven -d --json > reports/snyk/sampledata-snyk-report.json || true
+        '''
 
-    //     def snykUtils = load '.pipelines/utils/snyk-utils.groovy'
-    //     snykUtils.jsonToHtml(
-    //         'sampledata-snyk-report.json',
-    //         'sampledata-snyk-report.html'
-    //     )
+        def snykUtils = load '.pipelines/utils/snyk-utils.groovy'
+        snykUtils.jsonToHtml(
+            'reports/snyk/sampledata-snyk-report.json',
+            'reports/snyk/sampledata-snyk-report.html'
+        )
 
-    //     publishHTML([
-    //         reportDir: '.',
-    //         reportFiles: 'sampledata-snyk-report.html',
-    //         reportName: 'Snyk Report',
-    //         allowMissing: true,
-    //         alwaysLinkToLastBuild: true,
-    //         keepAll: true
-    //     ])        
-    // }
+        publishHTML([
+            reportDir: '.',
+            reportFiles: 'reports/snyk/sampledata-snyk-report.html',
+            reportName: 'Snyk Report',
+            allowMissing: true,
+            alwaysLinkToLastBuild: true,
+            keepAll: true
+        ])        
+    }
 }
 
 return this
