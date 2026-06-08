@@ -105,7 +105,7 @@ def call(Map params) {
 
     stage('Dockerhub Login') {
         withCredentials([usernamePassword(
-            credentialsId: 'dockerhub-cred',
+            credentialsId: 'dockerhub_cred',
             usernameVariable: 'DOCKER_USER',
             passwordVariable: 'DOCKER_PASS'
         )]) {
