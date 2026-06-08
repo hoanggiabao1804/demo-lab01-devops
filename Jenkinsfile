@@ -3,12 +3,13 @@ def servicesToBuild = []
 pipeline {
     agent {
         docker {
-            image '23120022/zakirepo:maven-3.9.14-eclipse-temurin-25-v3.0'
+            image '23120022/zakirepo:maven-3.9.14-eclipse-temurin-25-v4.0'
             registryUrl 'https://index.docker.io/v1/'
             registryCredentialsId 'dockerhub_cred'
             args '''
             --network sonar-network 
             -u root 
+            -v /var/run/docker.sock:/var/run/docker.sock
             -v $HOME/.sonar:/root/.sonar 
             -v $HOME/.owasp:/owasp
             -v $HOME/.npm:/root/.npm
