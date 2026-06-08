@@ -103,35 +103,35 @@ def call(Map params) {
         )
     }
 
-    // stage('Dockerhub Login') {
-    //     withCredentials([usernamePassword(
-    //         credentialsId: 'dockerhub_cred',
-    //         usernameVariable: 'DOCKER_USER',
-    //         passwordVariable: 'DOCKER_PASS'
-    //     )]) {
-    //         sh '''
-    //         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-    //         '''
-    //     }
-    // }
+    stage('Dockerhub Login') {
+        withCredentials([usernamePassword(
+            credentialsId: 'dockerhub_cred',
+            usernameVariable: 'DOCKER_USER',
+            passwordVariable: 'DOCKER_PASS'
+        )]) {
+            sh '''
+            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+            '''
+        }
+    }
 
-    // stage('Build and Push Docker Image') {
-    //     sh '''
-    //     COMMIT_ID=$(git rev-parse --short HEAD)
+    stage('Build and Push Docker Image') {
+        sh '''
+        COMMIT_ID=$(git rev-parse --short HEAD)
 
-    //     if [ "$BRANCH_NAME" = "main" ]; then
-    //         IMAGE_TAG=main
-    //     else
-    //         IMAGE_TAG=$COMMIT_ID
-    //     fi
+        if [ "$BRANCH_NAME" = "main" ]; then
+            IMAGE_TAG=main
+        else
+            IMAGE_TAG=$COMMIT_ID
+        fi
 
-    //     echo "Branch name is: '$IMAGE_TAG'"
+        echo "Branch name is: '$IMAGE_TAG'"
 
-    //     docker build -t 23120022/yas-backoffice-bff:$IMAGE_TAG ./backoffice-bff
+        docker build -t 23120022/yas-backoffice-bff:$IMAGE_TAG ./backoffice-bff
 
-    //     docker push 23120022/yas-backoffice-bff:$IMAGE_TAG
-    //     '''
-    // }
+        docker push 23120022/yas-backoffice-bff:$IMAGE_TAG
+        '''
+    }
 }
 
 return this
