@@ -10,8 +10,7 @@ RUN apt-get update -qq && \
 
 # Install Node.js 20
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get install -y -qq --no-install-recommends nodejs && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y -qq --no-install-recommends nodejs
 
 # Install Sonar Scanner
 RUN curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip && \
@@ -31,8 +30,14 @@ RUN curl -fL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitl
 RUN curl -Lo /usr/local/bin/snyk https://static.snyk.io/cli/latest/snyk-linux && \
     chmod +x /usr/local/bin/snyk
 
+# Install Docker CLI
+RUN apt-get update -qq && \
+    apt-get install -y -qq --no-install-recommends docker.io && \
+    rm -rf /var/lib/apt/lists/*
+
 # Verify tools
 RUN node -v && npm -v && \
     jq --version && \
     gitleaks version && \
-    snyk --version
+    snyk --version && \
+    docker --version
