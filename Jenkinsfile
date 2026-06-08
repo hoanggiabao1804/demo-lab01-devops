@@ -575,6 +575,12 @@ pipeline {
         }
 
         stage('Publish Gitleaks Reports') {
+            when {
+                expression {
+                    return fileExists('reports/gitleaks') &&
+                        sh(script: "find reports/gitleaks -maxdepth 1 -name '*gitleaks-report.html' | grep -q .", returnStatus: true) == 0
+                }
+            }
             steps {
                 sh 'echo "Publish Gitleaks reports..."'
 
@@ -604,6 +610,12 @@ pipeline {
         }
 
         stage('Publish Snyk Reports') {
+            when {
+                expression {
+                    return fileExists('reports/snyk') &&
+                        sh(script: "find reports/snyk -maxdepth 1 -name '*snyk-report.html' | grep -q .", returnStatus: true) == 0
+                }
+            }
             steps {
                 sh 'echo "Publish Snyk reports..."'
 
