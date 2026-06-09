@@ -124,6 +124,18 @@ def call(Map params) {
 
     stage('Build and Push Docker Image') {
         sh '''
+        echo "Debugging..."
+        whoami
+        echo "HOME=$HOME"
+        echo "DOCKER_CONFIG=$DOCKER_CONFIG"
+        docker info
+        docker images | grep your-image
+        docker image inspect your-image:tag --format 'ID={{.Id}} Size={{.Size}}'
+        cat ~/.docker/config.json || true
+        echo "End debugging..."
+        '''
+
+        sh '''
         COMMIT_ID=$(git rev-parse --short HEAD)
 
         if [ "$BRANCH_NAME" = "main" ]; then
