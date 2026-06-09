@@ -82,11 +82,11 @@ def call(Map params) {
     stage('SonarQube Analysis') {
         withSonarQubeEnv('My SonarQube Server') {
             sh '''
-            mvn clean test jacoco:report sonar:sonar \
+            mvn clean verify sonar:sonar \
             -pl tax \
             -am \
-            -Djacoco.skip.check=true \
             -Dsonar.host.url=http://sonarqube:9000 \
+            -DskipITs=true
             '''
         }
         timeout(time: 1, unit: 'HOURS') {
@@ -108,6 +108,36 @@ def call(Map params) {
             'reports/snyk/tax-snyk-report.json',
             'reports/snyk/tax-snyk-report.html'
         )
+    }
+
+    stage('Dockerhub Login') {
+        withCredentials([usernamePassword(
+            credentialsId: 'dockerhub_cred',
+            usernameVariable: 'DOCKER_USER',
+            passwordVariable: 'DOCKER_PASS'
+        )]) {
+            sh '''
+            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+            '''
+        }
+    }
+
+    stage('Build and Push Docker Image') {
+        sh '''
+        COMMIT_ID=$(git rev-parse --short HEAD)
+
+        if [ "$BRANCH_NAME" = "main" ]; then
+            IMAGE_TAG=main
+        else
+            IMAGE_TAG=$COMMIT_ID
+        fi
+
+        echo "Branch name is: '$IMAGE_TAG'"
+
+        docker build -t 23120022/yas-tax:$IMAGE_TAG ./tax
+
+        docker push 23120022/yas-tax:$IMAGE_TAG
+        '''
     }
 }
 
