@@ -81,12 +81,19 @@ def call(Map params) {
 
     stage('SonarQube Analysis') {
         withSonarQubeEnv('My SonarQube Server') {
+            // sh '''
+            // mvn clean test jacoco:report sonar:sonar \
+            // -pl tax \
+            // -am \
+            // -Djacoco.skip.check=true \
+            // -Dsonar.host.url=http://sonarqube:9000 \
+            // '''
             sh '''
-            mvn clean test jacoco:report sonar:sonar \
+            mvn clean verify sonar:sonar \
             -pl tax \
             -am \
-            -Djacoco.skip.check=true \
             -Dsonar.host.url=http://sonarqube:9000 \
+            -DskipITs=true
             '''
         }
         timeout(time: 1, unit: 'HOURS') {
