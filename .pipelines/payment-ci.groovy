@@ -109,6 +109,36 @@ def call(Map params) {
             'reports/snyk/payment-snyk-report.html'
         )
     }
+
+    stage('Dockerhub Login') {
+        withCredentials([usernamePassword(
+            credentialsId: 'dockerhub_cred',
+            usernameVariable: 'DOCKER_USER',
+            passwordVariable: 'DOCKER_PASS'
+        )]) {
+            sh '''
+            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+            '''
+        }
+    }
+
+    stage('Build and Push Docker Image') {
+        sh '''
+        COMMIT_ID=$(git rev-parse --short HEAD)
+
+        if [ "$BRANCH_NAME" = "main" ]; then
+            IMAGE_TAG=main
+        else
+            IMAGE_TAG=$COMMIT_ID
+        fi
+
+        echo "Branch name is: '$IMAGE_TAG'"
+
+        docker build -t 23120022/yas-payment:$IMAGE_TAG ./payment
+
+        docker push 23120022/yas-payment:$IMAGE_TAG
+        '''
+    }
 }
 
 return this
