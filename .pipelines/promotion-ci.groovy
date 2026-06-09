@@ -136,15 +136,6 @@ def call(Map params) {
 
         docker build -t 23120022/yas-promotion:$IMAGE_TAG ./promotion
 
-        echo "Debugging..."
-        whoami
-        echo "HOME=$HOME"
-        echo "DOCKER_CONFIG=$DOCKER_CONFIG"
-        docker info
-        docker images | grep 23120022/yas-promotion || true
-        cat "$DOCKER_CONFIG/config.json" || true
-        echo "End debugging..."
-
         docker push 23120022/yas-promotion:$IMAGE_TAG
         '''
     }
