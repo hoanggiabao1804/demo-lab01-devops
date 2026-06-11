@@ -46,11 +46,11 @@ pipeline {
                     kubectl get pods -n elasticsearch
         
                     echo "===== Wait pods ready ====="
-                    kubectl wait --for=condition=Ready pod --all -n keycloak --timeout=600s
-                    kubectl wait --for=condition=Ready pod --all -n redis --timeout=300s
-                    kubectl wait --for=condition=Ready pod --all -n postgres --timeout=600s
-                    kubectl wait --for=condition=Ready pod --all -n kafka --timeout=900s
-                    kubectl wait --for=condition=Ready pod --all -n elasticsearch --timeout=900s
+                    kubectl wait --for=condition=Ready pod --all -n keycloak --field-selector=status.phase!=Completed --timeout=600s
+                    kubectl wait --for=condition=Ready pod --all -n redis --field-selector=status.phase!=Completed --timeout=300s
+                    kubectl wait --for=condition=Ready pod --all -n postgres --field-selector=status.phase!=Completed --timeout=600s
+                    kubectl wait --for=condition=Ready pod --all -n kafka --field-selector=status.phase!=Completed --timeout=900s
+                    kubectl wait --for=condition=Ready pod --all -n elasticsearch --field-selector=status.phase!=Completed --timeout=900s
         
                     echo "Infrastructure looks ready."
                 '''
