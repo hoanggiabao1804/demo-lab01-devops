@@ -80,8 +80,8 @@ pipeline {
                                     ;;
                                 esac
                             done <<EOF
-                            $pod_lines
-                            EOF
+$pod_lines
+EOF
 
                             if [ -n "$failed_pods" ]; then
                                 echo "Failed pods:$failed_pods"
