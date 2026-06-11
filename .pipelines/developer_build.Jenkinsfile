@@ -158,7 +158,97 @@ EOF
         
         stage('Resolve Image Tags') {
             steps {
-                echo 'Resolve branch -> commit id'
+                script {
+                    echo 'Resolve branch -> commit id'
+                    def DEFAULT_IMAGE_TAG = 'main'
+                    def COMMIT_TAG_LENGTH = 7
+
+                    def services = [
+                        [key: 'BACKOFFICE_BFF',    chart: 'backoffice-bff',    branchParam: 'BACKOFFICE_BFF_BRANCH'],
+                        [key: 'BACKOFFICE_UI',     chart: 'backoffice-ui',     branchParam: 'BACKOFFICE_UI_BRANCH'],
+                        [key: 'STOREFRONT_BFF',    chart: 'storefront-bff',    branchParam: 'STOREFRONT_BFF_BRANCH'],
+                        [key: 'STOREFRONT_UI',     chart: 'storefront-ui',     branchParam: 'STOREFRONT_UI_BRANCH'],
+
+                        [key: 'CART',              chart: 'cart',              branchParam: 'CART_BRANCH'],
+                        [key: 'CUSTOMER',          chart: 'customer',          branchParam: 'CUSTOMER_BRANCH'],
+                        [key: 'INVENTORY',         chart: 'inventory',         branchParam: 'INVENTORY_BRANCH'],
+                        [key: 'LOCATION',          chart: 'location',          branchParam: 'LOCATION_BRANCH'],
+                        [key: 'MEDIA',             chart: 'media',             branchParam: 'MEDIA_BRANCH'],
+                        [key: 'ORDER',             chart: 'order',             branchParam: 'ORDER_BRANCH'],
+                        [key: 'PAYMENT',           chart: 'payment',           branchParam: 'PAYMENT_BRANCH'],
+                        [key: 'PAYMENT_PAYPAL',    chart: 'payment-paypal',    branchParam: 'PAYMENT_PAYPAL_BRANCH'],
+                        [key: 'PRODUCT',           chart: 'product',           branchParam: 'PRODUCT_BRANCH'],
+                        [key: 'PROMOTION',         chart: 'promotion',         branchParam: 'PROMOTION_BRANCH'],
+                        [key: 'RATING',            chart: 'rating',            branchParam: 'RATING_BRANCH'],
+                        [key: 'RECOMMENDATION',    chart: 'recommendation',    branchParam: 'RECOMMENDATION_BRANCH'],
+                        [key: 'SEARCH',            chart: 'search',            branchParam: 'SEARCH_BRANCH'],
+                        [key: 'TAX',               chart: 'tax',               branchParam: 'TAX_BRANCH'],
+                        [key: 'WEBHOOK',           chart: 'webhook',           branchParam: 'WEBHOOK_BRANCH'],
+                        [key: 'SAMPLEDATA',        chart: 'sampledata',        branchParam: 'SAMPLEDATA_BRANCH']
+                    ]
+
+                    def normalizeBranch = { rawBranch -> 
+                        def branch = rawBranch == null ? '' : rawBranch.trim();
+
+                        if (branch == '') {
+                            return 'main'
+                        }
+
+                        branch = branch.replaceFirst(/^origin\\//, '')
+                        branch = branch.replaceFirst(/^refs\\/heads\\//, '')
+
+                        return branch
+                    }
+
+                    def validateBranch = { branch -> 
+                        if (!(branch ==~ /^[A-Za-z0-9._\\/-]+$/)) {
+                            error "Invalid branch name: ${branch}"
+                        }
+                    }
+
+                    def resolveImageTag = { branch ->
+                        branch = normalizeBranch(branch)
+                        validateBranch(branch)
+
+                        if (branch == 'main') {
+                            return DEFAULT_IMAGE_TAG
+                        }
+
+                        def sha = sh(
+                            script: "git ls-remote --heads origin refs/heads/${branch} | awk '{print \\$1}'",
+                            returnStdout: true
+                        ).trim()
+
+                        if (sha == '') {
+                            error "Branch not found on remote origin: ${branch}"
+                        }
+
+                        return sha.take(COMMIT_TAG_LENGT)
+                    }
+
+                    def summaryLines = []
+
+                    services.each { svc ->
+                        def branch = normalizeBranch(params[svc.branchParam])
+                        def tag = resolveImageTag(branch)
+
+                        env["${svc.key}_BRANCH_RESOLVED"] = branch
+                        env["${svc.keu}_IMAGE_TAG"] = tag
+
+                        summaryLines << "${svc.chart.padRight(18)} branch=${branch.padRight(25)} tag=${tag}"
+                    }
+
+                    def summary = summaryLines.join('\n')
+
+                    echo "===== Resolved Image Tags =====\n${summary}"
+
+                    writeFile(
+                        file: 'resolved-image-tags.txt'
+                        text: summary + '\n'
+                    )
+
+                    archiveArtifacts artifacts: 'resolved-image-tags.txt', fingerprint: true
+                }
             }
         }
         
