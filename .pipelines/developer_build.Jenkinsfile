@@ -215,7 +215,7 @@ EOF
                         }
 
                         def sha = sh(
-                            script: "git ls-remote --heads origin refs/heads/${branch} | awk '{print \\$1}'",
+                            script: "git ls-remote --heads origin refs/heads/${branch} | cut -f1",
                             returnStdout: true
                         ).trim()
 
@@ -223,7 +223,7 @@ EOF
                             error "Branch not found on remote origin: ${branch}"
                         }
 
-                        return sha.take(COMMIT_TAG_LENGT)
+                        return sha.take(COMMIT_TAG_LENGTH)
                     }
 
                     def summaryLines = []
@@ -233,7 +233,7 @@ EOF
                         def tag = resolveImageTag(branch)
 
                         env["${svc.key}_BRANCH_RESOLVED"] = branch
-                        env["${svc.keu}_IMAGE_TAG"] = tag
+                        env["${svc.key}_IMAGE_TAG"] = tag
 
                         summaryLines << "${svc.chart.padRight(18)} branch=${branch.padRight(25)} tag=${tag}"
                     }
@@ -243,7 +243,7 @@ EOF
                     echo "===== Resolved Image Tags =====\n${summary}"
 
                     writeFile(
-                        file: 'resolved-image-tags.txt'
+                        file: 'resolved-image-tags.txt',
                         text: summary + '\n'
                     )
 
