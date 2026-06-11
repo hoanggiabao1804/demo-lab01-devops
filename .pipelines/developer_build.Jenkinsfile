@@ -227,18 +227,20 @@ EOF
                     }
 
                     def summaryLines = []
+                    def envLines = []
 
                     services.each { svc ->
                         def branch = normalizeBranch(params[svc.branchParam])
                         def tag = resolveImageTag(branch)
 
-                        env["${svc.key}_BRANCH_RESOLVED"] = branch
-                        env["${svc.key}_IMAGE_TAG"] = tag
-
                         summaryLines << "${svc.chart.padRight(18)} branch=${branch.padRight(25)} tag=${tag}"
+
+                        envLines << "${svc.key}_BRANCH_RESOLVED=${branch}"
+                        envLines << "${svc.key}_IMAGE_TAG=${tag}"
                     }
 
                     def summary = summaryLines.join('\n')
+                    def envContent = envLines.join('\n') + '\n'
 
                     echo "===== Resolved Image Tags =====\n${summary}"
 
@@ -247,7 +249,12 @@ EOF
                         text: summary + '\n'
                     )
 
-                    archiveArtifacts artifacts: 'resolved-image-tags.txt', fingerprint: true
+                    writeFile(
+                        file: 'resolved-image-tags.env',
+                        text: envContent
+                    )
+
+                    archiveArtifacts artifacts: 'resolved-image-tags.txt,resolved-image-tags.env', fingerprint: true
                 }
             }
         }
