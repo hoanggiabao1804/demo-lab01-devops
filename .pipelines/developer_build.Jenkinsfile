@@ -303,7 +303,7 @@ EOF
         stage('Show NodePort URLs') {
             steps {
                 dir('k8s/deploy') {
-                    sh '''
+                    sh '''#!/usr/bin/env bash
                         set -euo pipefail
 
                         NAMESPACE="${NAMESPACE:-yas}"
