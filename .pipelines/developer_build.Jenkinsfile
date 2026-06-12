@@ -144,15 +144,15 @@ EOF
         
         stage('Deploy YAS Configuration') {
             steps {
-                echo 'Deploy YAS Configuration...'
-                
-                // sh '''
-                //     helm upgrade --install yas-configuration ./k8s/charts/yas-configuration \
-                //       --namespace yas-dev \
-                //       --create-namespace \
-                //       --wait \
-                //       --timeout 5m
-                // '''
+                dir('k8s/deploy') {
+                    sh '''
+                        echo 'Deploy YAS Configuration...'
+                        
+                        chmod a+x ./deploy-yas-configuration.sh
+
+                        ./deploy-yas-configuration.sh
+                    '''
+                }
             }
         }
         
@@ -261,13 +261,129 @@ EOF
         
         stage('Deploy YAS Applications') {
             steps {
-                echo 'helm upgrade --install for each service...'
+                dir('k8s/deploy') {
+                    sh '''
+                        #!/usr/bin/env bash
+                        set -euxo pipefail
+
+                        NAMESPACE="yas"
+
+                        echo "Deploy YAS Applications..."
+
+                        echo "Deploy storefront-bff..."
+                        helm dependency build ../charts/storefront-bff
+                        helm upgrade --install storefront-bff ../charts/storefront-bff \
+                        --namespace "$NAMESPACE" --create-namespace \
+                        --set backend.ingress.enabled=false \
+                        --set backend.service.type=NodePort \
+                        --wait \
+                        --timeout 5m
+
+                        BFF_NODE_PORT=$(kubectl get svc storefront-bff \ 
+                            -n "$NAMESPACE" \
+                            -o jsonpath='{.spec.ports[0].nodePort}')
+
+                        echo "BFF NodePort: $BFF_NODE_PORT"
+                        echo "BFF API URL: http://storefront.yas.local.com:$BFF_NODE_PORT/api"
+
+                        echo "Deploy storefront-ui..."
+                        helm dependency build ../charts/storefront-ui
+                        helm upgrade --install storefront-ui ../charts/storefront-ui \
+                        --namespace "$NAMESPACE" \
+                        --create-namespace \
+                        --set ui.service.type=NodePort \
+                        --set-string 'ui.extraEnvs[0].name=API_BASE_PATH' \
+                        --set-string "ui.extraEnvs[0].value=http://storefront.yas.local.com:$BFF_NODE_PORT/api"
+                        --wait \
+                        --timeout 5m
+                    '''
+                }
             }
         }
         
         stage('Show NodePort URLs') {
             steps {
-                echo 'kubectl get svc -n yas'
+                dir('k8s/deploy') {
+                    sh '''
+                        set -euo pipefail
+
+                        NAMESPACE="${NAMESPACE:-yas}"
+                        DOMAIN=$(yq -r '.domain' ./cluster-config.yaml)
+                        APP_HOST="storefront.$DOMAIN"
+
+                        NODE_IP=$(kubectl get nodes \
+                            -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+
+                        UI_NODE_PORT=$(kubectl get svc storefront-ui \
+                            -n "$NAMESPACE" \
+                            -o jsonpath='{.spec.ports[?(@.port==3000)].nodePort}')
+
+                        BFF_NODE_PORT=$(kubectl get svc storefront-bff \
+                            -n "$NAMESPACE" \
+                            -o jsonpath='{.spec.ports[?(@.port==80)].nodePort}')
+
+                        BFF_HEALTH_NODE_PORT=$(kubectl get svc storefront-bff \
+                            -n "$NAMESPACE" \
+                            -o jsonpath='{.spec.ports[?(@.port==8090)].nodePort}')
+                            
+                        if [ -z "$UI_NODE_PORT" ]; then
+                            echo "ERROR: Cannot find NodePort for storefront-ui port 3000"
+                            exit 1
+                        fi
+
+                        if [ -z "$BFF_NODE_PORT" ]; then
+                            echo "ERROR: Cannot find NodePort for storefront-bff port 80"
+                            exit 1
+                        fi
+
+                        if [ -z "$BFF_HEALTH_NODE_PORT" ]; then
+                            echo "ERROR: Cannot find NodePort for storefront-bff actuator port 8090"
+                            exit 1
+                        fi
+
+                        UI_URL="http://$APP_HOST:$UI_NODE_PORT"
+                        BFF_API_BASE_URL="http://$APP_HOST:$BFF_NODE_PORT/api"
+                        BFF_HEALTH_URL="http://$APP_HOST:$BFF_HEALTH_NODE_PORT/actuator/health"
+
+                        cat > "$WORKSPACE/nodeport-urls.txt" <<EOF
+===== Developer Access Information =====
+
+Namespace:
+$NAMESPACE
+
+Worker/Minikube Node IP:
+$NODE_IP
+
+Add this line to /etc/hosts if not exists:
+$NODE_IP $APP_HOST
+
+Storefront UI:
+$UI_URL
+
+Storefront BFF API base:
+$BFF_API_BASE_URL
+
+Storefront BFF health:
+$BFF_HEALTH_URL
+
+Kubernetes services:
+EOF
+
+                        kubectl get svc -n "$NAMESPACE" storefront-ui storefront-bff >> "$WORKSPACE/nodeport-urls.txt"
+
+                        cat "\n$WORKSPACE/nodeport-urls.txt\n"
+
+                        echo "Verify BFF health endpoint..."
+                        curl -fsS "$BFF_HEALTH_URL" || {
+                            echo ""
+                            echo "WARNING: BFF health check failed. Check logs:"
+                            echo "kubectl logs -n $NAMESPACE deploy/storefront-bff --tail=200"
+                            exit 1
+                        }
+                    '''
+                }
+
+                archiveArtifacts artifacts: 'nodeport-urls.txt', fingerprint: true
             }
         }
     }
