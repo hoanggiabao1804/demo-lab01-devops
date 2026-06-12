@@ -1,3 +1,27 @@
+def services = [
+    [key: 'BACKOFFICE_BFF',    repository: 'yas-backoffice-bff',    chart: 'backoffice-bff',    branchParam: 'BACKOFFICE_BFF_BRANCH'],
+    [key: 'BACKOFFICE_UI',     repository: 'yas-backoffice',        chart: 'backoffice-ui',     branchParam: 'BACKOFFICE_UI_BRANCH'],
+    [key: 'STOREFRONT_BFF',    repository: 'yas-storefront-bff',    chart: 'storefront-bff',    branchParam: 'STOREFRONT_BFF_BRANCH'],
+    [key: 'STOREFRONT_UI',     repository: 'yas-storefront',        chart: 'storefront-ui',     branchParam: 'STOREFRONT_UI_BRANCH'],
+
+    [key: 'CART',              repository: 'yas-cart',              chart: 'cart',              branchParam: 'CART_BRANCH'],
+    [key: 'CUSTOMER',          repository: 'yas-customer',          chart: 'customer',          branchParam: 'CUSTOMER_BRANCH'],
+    [key: 'INVENTORY',         repository: 'yas-inventory',         chart: 'inventory',         branchParam: 'INVENTORY_BRANCH'],
+    [key: 'LOCATION',          repository: 'yas-location',          chart: 'location',          branchParam: 'LOCATION_BRANCH'],
+    [key: 'MEDIA',             repository: 'yas-media',             chart: 'media',             branchParam: 'MEDIA_BRANCH'],
+    [key: 'ORDER',             repository: 'yas-order',             chart: 'order',             branchParam: 'ORDER_BRANCH'],
+    [key: 'PAYMENT',           repository: 'yas-payment',           chart: 'payment',           branchParam: 'PAYMENT_BRANCH'],
+    [key: 'PAYMENT_PAYPAL',    repository: 'yas-payment-paypal',    chart: 'payment-paypal',    branchParam: 'PAYMENT_PAYPAL_BRANCH'],
+    [key: 'PRODUCT',           repository: 'yas-product',           chart: 'product',           branchParam: 'PRODUCT_BRANCH'],
+    [key: 'PROMOTION',         repository: 'yas-promotion',         chart: 'promotion',         branchParam: 'PROMOTION_BRANCH'],
+    [key: 'RATING',            repository: 'yas-rating',            chart: 'rating',            branchParam: 'RATING_BRANCH'],
+    [key: 'RECOMMENDATION',    repository: 'yas-recommendation',    chart: 'recommendation',    branchParam: 'RECOMMENDATION_BRANCH'],
+    [key: 'SEARCH',            repository: 'yas-search',            chart: 'search',            branchParam: 'SEARCH_BRANCH'],
+    [key: 'TAX',               repository: 'yas-tax',               chart: 'tax',               branchParam: 'TAX_BRANCH'],
+    [key: 'WEBHOOK',           repository: 'yas-webhook',           chart: 'webhook',           branchParam: 'WEBHOOK_BRANCH'],
+    [key: 'SAMPLEDATA',        repository: 'yas-sampledata',        chart: 'sampledata',        branchParam: 'SAMPLEDATA_BRANCH']
+]
+
 pipeline {
     agent any
 
@@ -163,30 +187,6 @@ EOF
                     def DEFAULT_IMAGE_TAG = 'main'
                     def COMMIT_TAG_LENGTH = 7
 
-                    def services = [
-                        [key: 'BACKOFFICE_BFF',    chart: 'backoffice-bff',    branchParam: 'BACKOFFICE_BFF_BRANCH'],
-                        [key: 'BACKOFFICE_UI',     chart: 'backoffice-ui',     branchParam: 'BACKOFFICE_UI_BRANCH'],
-                        [key: 'STOREFRONT_BFF',    chart: 'storefront-bff',    branchParam: 'STOREFRONT_BFF_BRANCH'],
-                        [key: 'STOREFRONT_UI',     chart: 'storefront-ui',     branchParam: 'STOREFRONT_UI_BRANCH'],
-
-                        [key: 'CART',              chart: 'cart',              branchParam: 'CART_BRANCH'],
-                        [key: 'CUSTOMER',          chart: 'customer',          branchParam: 'CUSTOMER_BRANCH'],
-                        [key: 'INVENTORY',         chart: 'inventory',         branchParam: 'INVENTORY_BRANCH'],
-                        [key: 'LOCATION',          chart: 'location',          branchParam: 'LOCATION_BRANCH'],
-                        [key: 'MEDIA',             chart: 'media',             branchParam: 'MEDIA_BRANCH'],
-                        [key: 'ORDER',             chart: 'order',             branchParam: 'ORDER_BRANCH'],
-                        [key: 'PAYMENT',           chart: 'payment',           branchParam: 'PAYMENT_BRANCH'],
-                        [key: 'PAYMENT_PAYPAL',    chart: 'payment-paypal',    branchParam: 'PAYMENT_PAYPAL_BRANCH'],
-                        [key: 'PRODUCT',           chart: 'product',           branchParam: 'PRODUCT_BRANCH'],
-                        [key: 'PROMOTION',         chart: 'promotion',         branchParam: 'PROMOTION_BRANCH'],
-                        [key: 'RATING',            chart: 'rating',            branchParam: 'RATING_BRANCH'],
-                        [key: 'RECOMMENDATION',    chart: 'recommendation',    branchParam: 'RECOMMENDATION_BRANCH'],
-                        [key: 'SEARCH',            chart: 'search',            branchParam: 'SEARCH_BRANCH'],
-                        [key: 'TAX',               chart: 'tax',               branchParam: 'TAX_BRANCH'],
-                        [key: 'WEBHOOK',           chart: 'webhook',           branchParam: 'WEBHOOK_BRANCH'],
-                        [key: 'SAMPLEDATA',        chart: 'sampledata',        branchParam: 'SAMPLEDATA_BRANCH']
-                    ]
-
                     def normalizeBranch = { rawBranch -> 
                         def branch = rawBranch == null ? '' : rawBranch.trim();
 
@@ -236,7 +236,9 @@ EOF
                         summaryLines << "${svc.chart.padRight(18)} branch=${branch.padRight(25)} tag=${tag}"
 
                         envLines << "${svc.key}_BRANCH_RESOLVED=${branch}"
+                        envLines << "${svc.key}_REPOSITORY=${svc.repository}"
                         envLines << "${svc.key}_IMAGE_TAG=${tag}"
+
                     }
 
                     def summary = summaryLines.join('\n')
@@ -265,14 +267,21 @@ EOF
                     sh '''#!/usr/bin/env bash
                         set -euxo pipefail
 
+
+                        . "$WORKSPACE/resolved-image-tags.env"
+
+                        DOCKERHUB_ORG="23120022"
                         NAMESPACE="yas"
 
                         echo "Deploy YAS Applications..."
 
                         echo "Deploy storefront-bff..."
+                        echo "Pull storefront-bff image from: $DOCKERHUB_ORG/${STOREFRONT_BFF_REPOSITORY}:${STOREFRONT_BFF_IMAGE_TAG}"
                         helm dependency build ../charts/storefront-bff
                         helm upgrade --install storefront-bff ../charts/storefront-bff \
                         --namespace "$NAMESPACE" --create-namespace \
+                        --set backend.image.repository="$DOCKERHUB_ORG/${STOREFRONT_BFF_REPOSITORY}" \
+                        --set backend.image.tag="${STOREFRONT_BFF_IMAGE_TAG}" \
                         --set backend.ingress.enabled=false \
                         --set backend.service.type=NodePort \
                         --wait \
@@ -286,15 +295,26 @@ EOF
                         echo "BFF API URL: http://storefront.yas.local.com:$BFF_NODE_PORT/api"
 
                         echo "Deploy storefront-ui..."
+                        echo "Pull storefront-ui image from: $DOCKERHUB_ORG/${STOREFRONT_UI_REPOSITORY}:${STOREFRONT_UI_IMAGE_TAG}"
                         helm dependency build ../charts/storefront-ui
                         helm upgrade --install storefront-ui ../charts/storefront-ui \
                         --namespace "$NAMESPACE" \
                         --create-namespace \
+                        --set ui.image.repository="$DOCKERHUB_ORG/${STOREFRONT_UI_REPOSITORY}" \
+                        --set ui.image.tag="${STOREFRONT_UI_IMAGE_TAG}" \
                         --set ui.service.type=NodePort \
                         --set-string 'ui.extraEnvs[0].name=API_BASE_PATH' \
                         --set-string "ui.extraEnvs[0].value=http://storefront.yas.local.com:$BFF_NODE_PORT/api" \
                         --wait \
                         --timeout 5m
+
+                        echo "Verify deployed images..."
+
+                        kubectl get deploy storefront-bff -n "$NAMESPACE" \
+                        -o jsonpath='{.spec.template.spec.containers[0].image}{"\n"}'
+
+                        kubectl get deploy storefront-ui -n "$NAMESPACE" \
+                        -o jsonpath='{.spec.template.spec.containers[0].image}{"\n"}'
                     '''
                 }
             }
