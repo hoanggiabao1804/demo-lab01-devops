@@ -60,12 +60,11 @@ pipeline {
                         kubectl delete pvc --all -n $NAMESPACE --ignore-not-found
                     """
 
+                    echo "Waiting resources to be deleted..."
                     services.each { svc ->
                         sh """
-                            echo "Waiting resources to be deleted..."
-
                             kubectl wait --for=delete deployment/${svc.chart} \
-                                -n $NAMESPACE --timeout=180s || true
+                                -n $NAMESPACE --timeout=180s --ignore-not-found
                         """
                     }
                 }
