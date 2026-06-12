@@ -262,8 +262,7 @@ EOF
         stage('Deploy YAS Applications') {
             steps {
                 dir('k8s/deploy') {
-                    sh '''
-                        #!/usr/bin/env bash
+                    sh '''#!/usr/bin/env bash
                         set -euxo pipefail
 
                         NAMESPACE="yas"
@@ -279,9 +278,9 @@ EOF
                         --wait \
                         --timeout 5m
 
-                        BFF_NODE_PORT=$(kubectl get svc storefront-bff \ 
-                            -n "$NAMESPACE" \
-                            -o jsonpath='{.spec.ports[0].nodePort}')
+                        BFF_NODE_PORT=$(kubectl get svc storefront-bff \
+                        -n "$NAMESPACE" \
+                        -o jsonpath='{.spec.ports[0].nodePort}')
 
                         echo "BFF NodePort: $BFF_NODE_PORT"
                         echo "BFF API URL: http://storefront.yas.local.com:$BFF_NODE_PORT/api"
@@ -293,7 +292,7 @@ EOF
                         --create-namespace \
                         --set ui.service.type=NodePort \
                         --set-string 'ui.extraEnvs[0].name=API_BASE_PATH' \
-                        --set-string "ui.extraEnvs[0].value=http://storefront.yas.local.com:$BFF_NODE_PORT/api"
+                        --set-string "ui.extraEnvs[0].value=http://storefront.yas.local.com:$BFF_NODE_PORT/api" \
                         --wait \
                         --timeout 5m
                     '''
@@ -312,19 +311,18 @@ EOF
                         APP_HOST="storefront.$DOMAIN"
 
                         NODE_IP=$(kubectl get nodes \
-                            -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+                        -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
 
                         UI_NODE_PORT=$(kubectl get svc storefront-ui \
-                            -n "$NAMESPACE" \
-                            -o jsonpath='{.spec.ports[?(@.port==3000)].nodePort}')
+                        -o jsonpath='{.spec.ports[?(@.port==3000)].nodePort}')
 
                         BFF_NODE_PORT=$(kubectl get svc storefront-bff \
-                            -n "$NAMESPACE" \
-                            -o jsonpath='{.spec.ports[?(@.port==80)].nodePort}')
+                        -n "$NAMESPACE" \
+                        -o jsonpath='{.spec.ports[?(@.port==80)].nodePort}')
 
                         BFF_HEALTH_NODE_PORT=$(kubectl get svc storefront-bff \
-                            -n "$NAMESPACE" \
-                            -o jsonpath='{.spec.ports[?(@.port==8090)].nodePort}')
+                        -n "$NAMESPACE" \
+                        -o jsonpath='{.spec.ports[?(@.port==8090)].nodePort}')
                             
                         if [ -z "$UI_NODE_PORT" ]; then
                             echo "ERROR: Cannot find NodePort for storefront-ui port 3000"
@@ -371,7 +369,9 @@ EOF
 
                         kubectl get svc -n "$NAMESPACE" storefront-ui storefront-bff >> "$WORKSPACE/nodeport-urls.txt"
 
-                        cat "\n$WORKSPACE/nodeport-urls.txt\n"
+                        echo ""
+                        cat "$WORKSPACE/nodeport-urls.txt"
+                        echo ""
 
                         echo "Verify BFF health endpoint..."
                         curl -fsS "$BFF_HEALTH_URL" || {
