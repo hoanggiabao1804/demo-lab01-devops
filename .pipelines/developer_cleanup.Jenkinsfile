@@ -60,13 +60,14 @@ pipeline {
                         kubectl delete pvc --all -n $NAMESPACE --ignore-not-found
                     """
 
+                    def podPattern = services.collect { it.chart }.join('|')
+
                     echo "Waiting resources to be deleted..."
-                    services.each { svc ->
-                        sh """
-                            kubectl wait --for=delete deployment/${svc.chart} \
-                                -n $NAMESPACE --timeout=180s --ignore-not-found
-                        """
-                    }
+                    while kubectl get pods -n yas --no-headers 2>/dev/null | grep -E '${podPattern}' >/dev/null
+                    do
+                        kubectl get pods -n yas
+                        sleep 5
+                    done
                 }
             }
         }
