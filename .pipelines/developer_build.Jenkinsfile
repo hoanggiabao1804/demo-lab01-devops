@@ -314,6 +314,7 @@ EOF
                         -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
 
                         UI_NODE_PORT=$(kubectl get svc storefront-ui \
+                        -n "$NAMESPACE" \
                         -o jsonpath='{.spec.ports[?(@.port==3000)].nodePort}')
 
                         BFF_NODE_PORT=$(kubectl get svc storefront-bff \
