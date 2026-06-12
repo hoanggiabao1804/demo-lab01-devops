@@ -61,19 +61,22 @@ pipeline {
                     """
 
                     def podPattern = services.collect { it.chart }.join('|')
+                    
+                    sh """
+                        echo "Waiting resources to be deleted..."
 
-                    echo "Waiting resources to be deleted..."
-                    while true
-                    do
-                        PODS=\$(kubectl get pods -n yas --no-headers 2>/dev/null | grep -E '${podPattern}' || true)
+                        while true
+                        do
+                            PODS=\$(kubectl get pods -n yas --no-headers 2>/dev/null | grep -E '${podPattern}' || true)
 
-                        [ -z "\$PODS" ] && break
+                            [ -z "\$PODS" ] && break
 
-                        echo "Still terminating:"
-                        echo "\$PODS"
+                            echo "Still terminating:"
+                            echo "\$PODS"
 
-                        sleep 5
-                    done
+                            sleep 5
+                        done
+                    """
                 }
             }
         }
