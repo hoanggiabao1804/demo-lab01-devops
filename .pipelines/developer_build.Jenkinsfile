@@ -310,11 +310,16 @@ EOF
 
                         echo "Verify deployed images..."
 
-                        kubectl get deploy storefront-bff -n "$NAMESPACE" \
-                        -o jsonpath='{.spec.template.spec.containers[0].image}{"\n"}'
+                        BFF_IMAGE=$(kubectl get deploy storefront-bff \
+                        -n "$NAMESPACE" \
+                        -o jsonpath='{.spec.template.spec.containers[0].image}')
 
-                        kubectl get deploy storefront-ui -n "$NAMESPACE" \
-                        -o jsonpath='{.spec.template.spec.containers[0].image}{"\n"}'
+                        UI_IMAGE=$(kubectl get deploy storefront-ui \
+                        -n "$NAMESPACE" \
+                        -o jsonpath='{.spec.template.spec.containers[0].image}')
+
+                        echo "storefront-bff image: $BFF_IMAGE"
+                        echo "storefront-ui image: $UI_IMAGE"
                     '''
                 }
             }
