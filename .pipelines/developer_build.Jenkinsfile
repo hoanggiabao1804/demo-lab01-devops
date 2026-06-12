@@ -279,7 +279,9 @@ EOF
                         echo "Pull storefront-bff image from: $DOCKERHUB_ORG/${STOREFRONT_BFF_REPOSITORY}:${STOREFRONT_BFF_IMAGE_TAG}"
                         helm dependency build ../charts/storefront-bff
                         helm upgrade --install storefront-bff ../charts/storefront-bff \
-                        --namespace "$NAMESPACE" --create-namespace \
+                        --namespace "$NAMESPACE"\
+                        --create-namespace \
+                        --reset-values \
                         --set backend.image.repository="$DOCKERHUB_ORG/${STOREFRONT_BFF_REPOSITORY}" \
                         --set backend.image.tag="${STOREFRONT_BFF_IMAGE_TAG}" \
                         --set backend.ingress.enabled=false \
@@ -300,6 +302,7 @@ EOF
                         helm upgrade --install storefront-ui ../charts/storefront-ui \
                         --namespace "$NAMESPACE" \
                         --create-namespace \
+                        --reset-values \
                         --set ui.image.repository="$DOCKERHUB_ORG/${STOREFRONT_UI_REPOSITORY}" \
                         --set ui.image.tag="${STOREFRONT_UI_IMAGE_TAG}" \
                         --set ui.service.type=NodePort \
