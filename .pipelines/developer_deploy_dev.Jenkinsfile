@@ -193,12 +193,12 @@ EOF
         }
 
         stage('Dockerhub Login') {
-            withCredentials([usernamePassword(
-                credentialsId: 'dockerhub_cred',
-                usernameVariable: 'DOCKER_USER',
-                passwordVariable: 'DOCKER_PASS'
-            )]) {
-                steps {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub_cred',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
                     sh '''
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                     '''
@@ -207,28 +207,28 @@ EOF
         }
 
         stage('Build and Push Docker Image') {
-            withCredentials([usernamePassword(
-                credentialsId: 'dockerhub_cred',
-                usernameVariable: 'DOCKER_USER',
-                passwordVariable: 'DOCKER_PASS'
-            )]) {
-                steps {
-                    sh '''
-                        COMMIT_ID=$(git rev-parse --short HEAD)
-                        IMAGE_TAG=$COMMIT_ID
-                    '''
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub_cred',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                        sh '''
+                            COMMIT_ID=$(git rev-parse --short HEAD)
+                            IMAGE_TAG=$COMMIT_ID
+                        '''
 
-                    echo "Current commit id is: '$IMAGE_TAG'"
+                        echo "Current commit id is: '$IMAGE_TAG'"
 
-                    // serviceToDeploy.each { svc -> 
-                    //     sh """
-                    //         docker build -t $DOCKER_USER/yas-$svc:$IMAGE_TAG ./$svc
-                    //         docker tag $DOCKER_USER/yas-$svc:$IMAGE_TAG $DOCKER_USER/yas-$svc:main
+                        // serviceToDeploy.each { svc -> 
+                        //     sh """
+                        //         docker build -t $DOCKER_USER/yas-$svc:$IMAGE_TAG ./$svc
+                        //         docker tag $DOCKER_USER/yas-$svc:$IMAGE_TAG $DOCKER_USER/yas-$svc:main
 
-                    //         docker push $DOCKER_USER/yas-$svc:$IMAGE_TAG
-                    //         docker push $DOCKER_USER/yas-$svc:main
-                    //     """
-                    // }
+                        //         docker push $DOCKER_USER/yas-$svc:$IMAGE_TAG
+                        //         docker push $DOCKER_USER/yas-$svc:main
+                        //     """
+                        // }
                 }
             }
         }
