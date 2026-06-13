@@ -1,3 +1,26 @@
+def services = [
+    [name: 'backoffice-bff',    path: 'backoffice-bff/'],
+    [name: 'backoffice',        path: 'backoffice/'],
+    [name: 'storefront-bff',    path: 'storefront-bff/'],
+    [name: 'storefront',        path: 'storefront/'],
+    [name: 'cart',              path: 'cart/'],
+    [name: 'customer',          path: 'customer/'],
+    [name: 'inventory',         path: 'inventory/'],
+    [name: 'location',          path: 'location/'],
+    [name: 'media',             path: 'media/'],
+    [name: 'order',             path: 'order/'],
+    [name: 'payment',           path: 'payment/'],
+    [name: 'payment-paypal',    path: 'payment-paypal/'],
+    [name: 'product',           path: 'product/'],
+    [name: 'promotion',         path: 'promotion/'],
+    [name: 'rating',            path: 'rating/'],
+    [name: 'recommendation',    path: 'recommendation/'],
+    [name: 'search',            path: 'search/'],
+    [name: 'tax',               path: 'tax/'],
+    [name: 'webhook',           path: 'webhook/'],
+    [name: 'sampledata',        path: 'sampledata/']
+]
+
 def servicesToDeploy = []
 
 pipeline {
@@ -148,131 +171,17 @@ EOF
             steps {
                 script {
                     def changedFiles = sh(
-                        script: "git diff --name-only HEAD~1 HEAD",
+                        script: "git diff --name-only ${env.GIT_PREVIOUS_SUCCESSFUL_COMMIT} ${env.GIT_COMMIT}",
                         returnStdout: true
                     ).trim().split("\n")
 
-                    for (file in changedFiles) {
-                        if (
-							file.startsWith("backoffice-bff/") 
-							|| file == ".github/workflows/backoffice-bff-ci.yaml"
-							|| file == ".pipelines/backoffice-bff-ci.groovy"
-						) {
-                            serviceToDeploy << "backoffice-bff"
-                        } else if (file.startsWith("backoffice/") 
-                            || file == ".github/workflows/backoffice-ci.yaml"
-                            || file == ".pipelines/backoffice-ci.groovy"
-                        ) {
-                            serviceToDeploy << "backoffice"
-                        } else if (file.startsWith("cart/") 
-                            || file == ".github/workflows/cart-ci.yaml"
-                            || file == ".pipelines/cart-ci.groovy"
-                        ) {
-                            serviceToDeploy << "cart"
-                        } else if (
-                            file.startsWith("customer/") 
-                            || file == ".github/workflows/customer-ci.yaml"
-                            || file == ".pipelines/customer-ci.groovy"
-                        ) {
-                            serviceToDeploy << "customer"
-                        } else if (file.startsWith("delivery/")) {
-                            serviceToDeploy << "delivery"
-                        } else if (
-                            file.startsWith("inventory/") 
-                            || file == ".github/workflows/inventory-ci.yaml"
-                            || file == ".pipelines/inventory-ci.groovy"
-                        ) {
-                            serviceToDeploy << "inventory"
-                        } else if (
-                            file.startsWith("location/") 
-                            || file == ".github/workflows/location-ci.yaml"
-                            || file == ".pipelines/location-ci.groovy"                        
-                        ) {
-                            serviceToDeploy << "location"
-                        } else if (
-                            file.startsWith("media/") 
-                            || file == ".github/workflows/media-ci.yaml"
-                            || file == ".pipelines/media-ci.groovy"    
-                        ) {
-                            serviceToDeploy << "media"
-                        } else if (
-                            file.startsWith("order/") 
-                            || file == ".github/workflows/order-ci.yaml"
-                            || file == ".pipelines/order-ci.groovy"    
-                        ) {
-                            serviceToDeploy << "order"
-                        } else if (
-                            file.startsWith("payment/") 
-                            || file == ".github/workflows/payment-ci.yaml"
-                            || file == ".pipelines/payment-ci.groovy"    
-                        ) {
-                            serviceToDeploy << "payment"
-                        } else if (
-                            file.startsWith("payment-paypal/") 
-                            || file == ".github/workflows/payment-paypal-ci.yaml"
-                            || file == ".pipelines/payment-paypal-ci.groovy"    
-                        ) {
-                            serviceToDeploy << "payment-paypal"
-                        } else if (
-                            file.startsWith("product/") 
-                            || file == ".github/workflows/product-ci.yaml"
-                            || file == ".pipelines/product-ci.groovy"    
-                        ) {
-                            serviceToDeploy << "product"
-                        } else if (
-                            file.startsWith("promotion/") 
-                            || file == ".github/workflows/promotion-ci.yaml"
-                            || file == ".pipelines/promotion-ci.groovy"
-                        ) {
-                            serviceToDeploy << "promotion"
-                        } else if (
-                            file.startsWith("rating/") 
-                            || file == ".github/workflows/rating-ci.yaml"
-                            || file == ".pipelines/rating-ci.groovy"    
-                        ) {
-                            serviceToDeploy << "rating"
-                        } else if (
-                            file.startsWith("recommendation/") 
-                            || file == ".github/workflows/recommendation-ci.yaml"
-                            || file == ".pipelines/recommendation-ci.groovy"    
-                        ) {
-                            serviceToDeploy << "recommendation"
-                        } else if (
-                            file.startsWith("sampledata/") 
-                            || file == ".github/workflows/sampledata-ci.yaml"
-                            || file == ".pipelines/sampledata-ci.groovy"    
-                        ) {
-                            serviceToDeploy << "sampledata"
-                        } else if (
-                            file.startsWith("search/") 
-                            || file == ".github/workflows/search-ci.yaml"
-                            || file == ".pipelines/search-ci.groovy"    
-                        ) {
-                            serviceToDeploy << "search"
-                        } else if (
-                            file.startsWith("storefront/") 
-                            || file == ".github/workflows/storefront-ci.yaml"
-                            || file == ".pipelines/storefront-ci.groovy"    
-                        ) {
-                            serviceToDeploy << "storefront"
-                        } else if (
-                            file.startsWith("storefront-bff/") 
-                            || file == ".github/workflows/storefront-bff-ci.yaml"
-                            || file == ".pipelines/storefront-bff-ci.groovy"    
-                        ) {
-                            serviceToDeploy << "storefront-bff"
-                        } else if (
-                            file.startsWith("tax/") 
-                            || file == ".github/workflows/tax-ci.yaml"
-                            || file == ".pipelines/tax-ci.groovy"    
-                        ) {
-                            serviceToDeploy << "tax"
-                        } else if (
-                            file.startsWith("webhook/") 
-                            || file == ".github/workflows/webhook-ci.yaml"
-                            || file == ".pipelines/webhook-ci.groovy"
-                        ) {
-                            serviceToDeploy << "webhook"
+                    if (changedFiles.any { it.startsWith('common-library') }) {
+                        serviceToDeploy = services*.name
+                    } else {
+                        services.each { svc -> 
+                            if (changedFiles.any { it.startsWith(svc.path) }) {
+                                serviceToDeploy << svc.name
+                            }
                         }
                     }
 
@@ -289,9 +198,11 @@ EOF
                 usernameVariable: 'DOCKER_USER',
                 passwordVariable: 'DOCKER_PASS'
             )]) {
-                sh '''
-                echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                '''
+                steps {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    '''
+                }
             }
         }
 
@@ -301,37 +212,43 @@ EOF
                 usernameVariable: 'DOCKER_USER',
                 passwordVariable: 'DOCKER_PASS'
             )]) {
-                sh '''
-                    COMMIT_ID=$(git rev-parse --short HEAD)
-                    IMAGE_TAG=$COMMIT_ID
-                '''
+                steps {
+                    sh '''
+                        COMMIT_ID=$(git rev-parse --short HEAD)
+                        IMAGE_TAG=$COMMIT_ID
+                    '''
 
-                echo "Current commit id is: '$IMAGE_TAG'"
+                    echo "Current commit id is: '$IMAGE_TAG'"
 
-                serviceToDeploy.each { svc -> 
-                    sh """
-                        docker build -t $DOCKER_USER/yas-$svc:$IMAGE_TAG ./$svc
-                        docker tag $DOCKER_USER/yas-$svc:$IMAGE_TAG $DOCKER_USER/yas-$svc:main
+                    // serviceToDeploy.each { svc -> 
+                    //     sh """
+                    //         docker build -t $DOCKER_USER/yas-$svc:$IMAGE_TAG ./$svc
+                    //         docker tag $DOCKER_USER/yas-$svc:$IMAGE_TAG $DOCKER_USER/yas-$svc:main
 
-                        docker push $DOCKER_USER/yas-$svc:$IMAGE_TAG
-                        docker push $DOCKER_USER/yas-$svc:main
-                    """
+                    //         docker push $DOCKER_USER/yas-$svc:$IMAGE_TAG
+                    //         docker push $DOCKER_USER/yas-$svc:main
+                    //     """
+                    // }
                 }
             }
         }
 
         stage('Checkout to YAS manifest repository') {
-            sh """
-                git clone https://github.com/hoanggiabao1804/yas-helmchart-k8s.git
-                
-                cd yas-helmchart-k8s/
+            steps {
+                sh """
+                    git clone https://github.com/hoanggiabao1804/yas-helmchart-k8s.git
+                    
+                    cd yas-helmchart-k8s/
 
-                git checkout main
-            """
+                    git checkout main
+                """
+            }
         }
 
         stage('Update Deployment') {
-            echo "Updating Deployment..."
+            steps {
+                echo "Updating Deployment..."
+            }
         }
     }
 }
