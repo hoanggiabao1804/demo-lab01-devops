@@ -1,24 +1,24 @@
 def services = [
-    [name: 'backoffice-bff',    path: 'backoffice-bff/'],
-    [name: 'backoffice',        path: 'backoffice/'],
-    [name: 'storefront-bff',    path: 'storefront-bff/'],
-    [name: 'storefront',        path: 'storefront/'],
-    [name: 'cart',              path: 'cart/'],
-    [name: 'customer',          path: 'customer/'],
-    [name: 'inventory',         path: 'inventory/'],
-    [name: 'location',          path: 'location/'],
-    [name: 'media',             path: 'media/'],
-    [name: 'order',             path: 'order/'],
-    [name: 'payment',           path: 'payment/'],
-    [name: 'payment-paypal',    path: 'payment-paypal/'],
-    [name: 'product',           path: 'product/'],
-    [name: 'promotion',         path: 'promotion/'],
-    [name: 'rating',            path: 'rating/'],
-    [name: 'recommendation',    path: 'recommendation/'],
-    [name: 'search',            path: 'search/'],
-    [name: 'tax',               path: 'tax/'],
-    [name: 'webhook',           path: 'webhook/'],
-    [name: 'sampledata',        path: 'sampledata/']
+    [name: 'backoffice-bff',    path: 'backoffice-bff/',    chart: 'backoffice-bff'],
+    [name: 'backoffice',        path: 'backoffice/',        chart: 'backoffice-ui'],
+    [name: 'storefront-bff',    path: 'storefront-bff/',    chart: 'storefront-bff'],
+    [name: 'storefront',        path: 'storefront/',        chart: 'storefront-ui'],
+    [name: 'cart',              path: 'cart/',              chart: 'cart'],
+    [name: 'customer',          path: 'customer/',          chart: 'customer'],
+    [name: 'inventory',         path: 'inventory/',         chart: 'inventory'],
+    [name: 'location',          path: 'location/',          chart: 'location'],
+    [name: 'media',             path: 'media/',             chart: 'media'],
+    [name: 'order',             path: 'order/',             chart: 'order'],
+    [name: 'payment',           path: 'payment/',           chart: 'payment'],
+    [name: 'payment-paypal',    path: 'payment-paypal/',    chart: 'payment-paypal'],   
+    [name: 'product',           path: 'product/',           chart: 'product'],
+    [name: 'promotion',         path: 'promotion/',         chart: 'promotion'],
+    [name: 'rating',            path: 'rating/',            chart: 'rating'],
+    [name: 'recommendation',    path: 'recommendation/',    chart: 'recommendation'],
+    [name: 'search',            path: 'search/',            chart: 'search'],
+    [name: 'tax',               path: 'tax/',               chart: 'tax'],
+    [name: 'webhook',           path: 'webhook/',           chart: 'webhook'],
+    [name: 'sampledata',        path: 'sampledata/',        chart: 'sampledata']
 ]
 
 def servicesToDeploy = []
@@ -193,11 +193,18 @@ EOF
                     def changedServices = servicesToDeploy.collect().join("\n");
                     
                     echo "Changed service: $changedServices\n"
+
+                    if (servicesToDeploy.isEmpty()) {
+                        echo "No services changed"
+                    }
                 }
             }
         }
 
         stage('Dockerhub Login') {
+            when {
+                expression { !servicesToDeploy.isEmpty() }
+            }
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub_cred',
@@ -212,6 +219,9 @@ EOF
         }
 
         stage('Build and Push Docker Image') {
+            when {
+                expression { !servicesToDeploy.isEmpty() }
+            }
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub_cred',
@@ -226,21 +236,26 @@ EOF
 
                         echo "Current commit id is: '$IMAGE_TAG'"
 
-                        // servicesToDeploy.each { svc -> 
-                        //     sh """
-                        //         docker build -t $DOCKER_USER/yas-$svc:$IMAGE_TAG ./$svc
-                        //         docker tag $DOCKER_USER/yas-$svc:$IMAGE_TAG $DOCKER_USER/yas-$svc:main
+                        servicesToDeploy.each { svc -> 
+                            def repository = "$DOCKER_USER/yas-$svc.name"
 
-                        //         docker push $DOCKER_USER/yas-$svc:$IMAGE_TAG
-                        //         docker push $DOCKER_USER/yas-$svc:main
-                        //     """
-                        // }
+                            sh """
+                                docker build -t $repository:$IMAGE_TAG ./$svc.path
+                                docker tag $repository:$IMAGE_TAG $repository:main
+
+                                docker push $repository:$IMAGE_TAG
+                                docker push $repository:main
+                            """
+                        }
                     }
                 }
             }
         }
 
         stage('Checkout to YAS manifest repository') {
+            when {
+                expression { !servicesToDeploy.isEmpty() }
+            }
             steps {
                 sh """
                     git clone https://github.com/hoanggiabao1804/yas-helmchart-k8s.git
@@ -253,8 +268,29 @@ EOF
         }
 
         stage('Update Deployment') {
+            when {
+                expression { !servicesToDeploy.isEmpty() }
+            }
             steps {
-                echo "Updating Deployment..."
+                script {
+                    echo "Updating Deployment..."
+
+                    servicesToDeploy.each { svc -> 
+                        sh """
+                            yq -i '
+                            .image.repository = "$DOCKER_USER/yas-$svc.name" |
+                            .image.tag = $IMAGE_TAG"
+                            ' dev/$svc.chart-values.yaml
+
+                            git add dev/$svc.chart-values.yaml
+                        """
+                    }
+
+                    sh """
+                        git add .
+                        git commit -m "feat(manifest): Update manifest files of services: ${servicesToDeploy.collect().join("|")}."
+                    """
+                }
             }
         }
     }
