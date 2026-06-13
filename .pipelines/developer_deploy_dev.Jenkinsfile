@@ -170,8 +170,13 @@ EOF
         stage('Detect Changes') {
             steps {
                 script {
+                    def previousCommit = sh(
+                        script: "git rev-parse HEAD~1",
+                        returnStdout: true
+                    ).trim()
+
                     def changedFiles = sh(
-                        script: "git diff --name-only ${env.GIT_PREVIOUS_SUCCESSFUL_COMMIT} ${env.GIT_COMMIT}",
+                        script: "git diff --name-only ${previousCommit} ${env.GIT_COMMIT}",
                         returnStdout: true
                     ).trim().split("\n")
 
