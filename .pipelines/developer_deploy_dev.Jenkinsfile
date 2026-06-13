@@ -181,16 +181,16 @@ EOF
                     ).trim().split("\n")
 
                     if (changedFiles.any { it.startsWith('common-library') }) {
-                        serviceToDeploy = services*.name
+                        servicesToDeploy = services*.name
                     } else {
                         services.each { svc -> 
                             if (changedFiles.any { it.startsWith(svc.path) }) {
-                                serviceToDeploy << svc.name
+                                servicesToDeploy << svc.name
                             }
                         }
                     }
 
-                    def changedServices = serviceToDeploy.collect().join("\n");
+                    def changedServices = servicesToDeploy.collect().join("\n");
                     
                     echo "Changed service: $changedServices\n"
                 }
@@ -225,7 +225,7 @@ EOF
 
                         echo "Current commit id is: '$IMAGE_TAG'"
 
-                        // serviceToDeploy.each { svc -> 
+                        // servicesToDeploy.each { svc -> 
                         //     sh """
                         //         docker build -t $DOCKER_USER/yas-$svc:$IMAGE_TAG ./$svc
                         //         docker tag $DOCKER_USER/yas-$svc:$IMAGE_TAG $DOCKER_USER/yas-$svc:main
