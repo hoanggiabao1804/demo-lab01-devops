@@ -272,24 +272,30 @@ EOF
                 expression { !servicesToDeploy.isEmpty() }
             }
             steps {
-                script {
-                    echo "Updating Deployment..."
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub_cred',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    script {
+                        echo "Updating Deployment..."
 
-                    servicesToDeploy.each { svc -> 
+                        servicesToDeploy.each { svc -> 
+                            sh """
+                                yq -i '
+                                .image.repository = "$DOCKER_USER/yas-$svc.name" |
+                                .image.tag = $IMAGE_TAG"
+                                ' dev/$svc.chart-values.yaml
+
+                                git add dev/$svc.chart-values.yaml
+                            """
+                        }
+
                         sh """
-                            yq -i '
-                            .image.repository = "$DOCKER_USER/yas-$svc.name" |
-                            .image.tag = $IMAGE_TAG"
-                            ' dev/$svc.chart-values.yaml
-
-                            git add dev/$svc.chart-values.yaml
+                            git add .
+                            git commit -m "feat(manifest): Update manifest files of services: ${servicesToDeploy*.name.collect().join("|")}."
                         """
                     }
-
-                    sh """
-                        git add .
-                        git commit -m "feat(manifest): Update manifest files of services: ${servicesToDeploy*.name.collect().join("|")}."
-                    """
                 }
             }
         }
