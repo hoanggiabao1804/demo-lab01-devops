@@ -218,10 +218,10 @@ EOF
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
-                        sh '''
-                            COMMIT_ID=$(git rev-parse --short HEAD)
-                            IMAGE_TAG=$COMMIT_ID
-                        '''
+                        def IMAGE_TAG = sh(
+                            script: "git rev-parse --short HEAD",
+                            returnStdout: true
+                        ).trim()
 
                         echo "Current commit id is: '$IMAGE_TAG'"
 
