@@ -185,12 +185,12 @@ EOF
                     } else {
                         services.each { svc -> 
                             if (changedFiles.any { it.startsWith(svc.path) }) {
-                                servicesToDeploy << svc.name
+                                servicesToDeploy << svc
                             }
                         }
                     }
 
-                    def changedServices = servicesToDeploy.collect().join("\n");
+                    def changedServices = servicesToDeploy*.name.collect().join("\n");
                     
                     echo "Changed service: $changedServices\n"
 
@@ -288,7 +288,7 @@ EOF
 
                     sh """
                         git add .
-                        git commit -m "feat(manifest): Update manifest files of services: ${servicesToDeploy.collect().join("|")}."
+                        git commit -m "feat(manifest): Update manifest files of services: ${servicesToDeploy*.name.collect().join("|")}."
                     """
                 }
             }
