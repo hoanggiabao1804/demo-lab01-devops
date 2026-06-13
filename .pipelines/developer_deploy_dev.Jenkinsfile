@@ -218,6 +218,7 @@ EOF
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
+                    script {
                         def IMAGE_TAG = sh(
                             script: "git rev-parse --short HEAD",
                             returnStdout: true
@@ -234,6 +235,7 @@ EOF
                         //         docker push $DOCKER_USER/yas-$svc:main
                         //     """
                         // }
+                    }
                 }
             }
         }
