@@ -23,6 +23,8 @@ def services = [
 
 def servicesToDeploy = []
 
+def IMAGE_TAG = null
+
 pipeline {
     agent any
 
@@ -229,7 +231,7 @@ EOF
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     script {
-                        def IMAGE_TAG = sh(
+                        IMAGE_TAG = sh(
                             script: "git rev-parse --short HEAD",
                             returnStdout: true
                         ).trim()
