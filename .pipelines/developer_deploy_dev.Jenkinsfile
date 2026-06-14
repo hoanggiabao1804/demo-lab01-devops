@@ -37,7 +37,7 @@ pipeline {
                 checkout scm
             }
         }
-        
+
         stage('Init') {
             steps {
                 script {
@@ -52,6 +52,23 @@ pipeline {
                     ).trim()
 
                     echo "Current branch: '${env.CURRENT_BRANCH}'"
+                }
+            }
+        }
+
+        stage('Debug') {
+            steps {
+                script {
+                    def branch = sh(
+                        script: 'git rev-parse --abbrev-ref HEAD',
+                        returnStdout: true
+                    )
+
+                    echo "Raw output = '${branch}'"
+
+                    env.CURRENT_BRANCH = branch.trim()
+
+                    echo "Current branch = '${env.CURRENT_BRANCH}'"
                 }
             }
         }
