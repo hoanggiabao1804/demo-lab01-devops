@@ -73,9 +73,12 @@ pipeline {
                     echo "BRANCH_NAME = '${env.BRANCH_NAME}'"
                     echo "GIT_BRANCH = '${env.GIT_BRANCH}'"
 
-                    sh '''
-                        git branch --show-current
-                    '''
+                    def current = sh(
+                        script: 'git branch --show-current',
+                        returnStdout: true
+                    ).trim()
+
+                    echo "current = '${current}'"
                 }
             }
         }
