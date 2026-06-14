@@ -305,13 +305,6 @@ EOF
                         [ -d "yas-helmchart-k8s" ] && rm -rf yas-helmchart-k8s/
                         
                         git clone https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/hoanggiabao1804/yas-helmchart-k8s.git
-                        
-                        git config user.name "Jenkins CI"
-                        git config user.email "jenkins@example.com"
-
-                        cd yas-helmchart-k8s/
-
-                        git checkout main
                     """
                 }
 
@@ -330,6 +323,12 @@ EOF
                 )]) {
                     script {
                         dir('yas-helmchart-k8s') {
+                            sh """
+                                git config --global user.name "Jenkins CI"
+                                git config --global user.email "jenkins@example.com"
+                                git checkout main
+                            """
+
                             echo "Updating Deployment..."
 
                             servicesToDeploy.each { svc -> 
