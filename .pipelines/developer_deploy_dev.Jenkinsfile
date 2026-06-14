@@ -26,7 +26,28 @@ def servicesToDeploy = []
 pipeline {
     agent any
 
+    environment {
+        CURRENT_BRANCH = ''
+        IMAGE_TAG = ''
+    }
+
     stages {
+        stage('Init') {
+            steps {
+                script {
+                    env.CURRENT_BRANCH = sh(
+                        script: 'git rev-parse --abbrev-ref HEAD',
+                        returnStdout: true
+                    ).trim()
+
+                    env.IMAGE_TAG = sh(
+                        script: "git rev-parse --short HEAD",
+                        returnStdout: true
+                    ).trim()
+                }
+            }
+        }
+
         stage('Checkout') {
             steps {
                 checkout scm
@@ -203,7 +224,7 @@ EOF
 
         stage('Dockerhub Login') {
             when {
-                expression { !servicesToDeploy.isEmpty() }
+                expression { env.CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty() }
             }
             steps {
                 withCredentials([usernamePassword(
@@ -220,7 +241,7 @@ EOF
 
         stage('Build and Push Docker Image') {
             when {
-                expression { !servicesToDeploy.isEmpty() }
+                expression { env.CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty() }
             }
             steps {
                 withCredentials([usernamePassword(
@@ -229,21 +250,16 @@ EOF
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     script {
-                        def IMAGE_TAG = sh(
-                            script: "git rev-parse --short HEAD",
-                            returnStdout: true
-                        ).trim()
-
-                        echo "Current commit id is: '$IMAGE_TAG'"
+                        echo "Current commit id is: '$env.IMAGE_TAG'"
 
                         servicesToDeploy.each { svc -> 
                             def repository = "$DOCKER_USER/yas-$svc.name"
 
                             sh """
-                                docker build -t $repository:$IMAGE_TAG ./$svc.path
-                                docker tag $repository:$IMAGE_TAG $repository:main
+                                docker build -t $repository:$env.IMAGE_TAG ./$svc.path
+                                docker tag $repository:$env.IMAGE_TAG $repository:main
 
-                                docker push $repository:$IMAGE_TAG
+                                docker push $repository:$env.IMAGE_TAG
                                 docker push $repository:main
                             """
                         }
@@ -254,7 +270,7 @@ EOF
 
         stage('Checkout to YAS manifest repository') {
             when {
-                expression { !servicesToDeploy.isEmpty() }
+                expression { env.CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty() }
             }
             steps {
                 sh """
@@ -269,7 +285,7 @@ EOF
 
         stage('Update Deployment') {
             when {
-                expression { !servicesToDeploy.isEmpty() }
+                expression { env.CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty() }
             }
             steps {
                 withCredentials([usernamePassword(
@@ -284,7 +300,7 @@ EOF
                             sh """
                                 yq -i '
                                 .image.repository = "$DOCKER_USER/yas-$svc.name" |
-                                .image.tag = $IMAGE_TAG"
+                                .image.tag = $env.IMAGE_TAG"
                                 ' dev/$svc.chart-values.yaml
 
                                 git add dev/$svc.chart-values.yaml
