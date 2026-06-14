@@ -32,6 +32,12 @@ pipeline {
     }
 
     stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
         stage('Init') {
             steps {
                 script {
@@ -47,12 +53,6 @@ pipeline {
 
                     echo "Current branch: '${env.CURRENT_BRANCH}'"
                 }
-            }
-        }
-
-        stage('Checkout') {
-            steps {
-                checkout scm
             }
         }
         
