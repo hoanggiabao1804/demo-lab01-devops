@@ -302,6 +302,8 @@ EOF
                     passwordVariable: 'GITHUB_TOKEN'
                 )]) {
                     sh """
+                        [ -d "yas-helmchart-k8s" ] && rm -rf yas-helmchart-k8s/
+                        
                         git clone https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/hoanggiabao1804/yas-helmchart-k8s.git
                         
                         git config user.name "Jenkins CI"
