@@ -1,24 +1,24 @@
 def services = [
-    [name: 'backoffice-bff',    path: 'backoffice-bff/',    chart: 'backoffice-bff'],
-    [name: 'backoffice',        path: 'backoffice/',        chart: 'backoffice-ui'],
-    [name: 'storefront-bff',    path: 'storefront-bff/',    chart: 'storefront-bff'],
-    [name: 'storefront',        path: 'storefront/',        chart: 'storefront-ui'],
-    [name: 'cart',              path: 'cart/',              chart: 'cart'],
-    [name: 'customer',          path: 'customer/',          chart: 'customer'],
-    [name: 'inventory',         path: 'inventory/',         chart: 'inventory'],
-    [name: 'location',          path: 'location/',          chart: 'location'],
-    [name: 'media',             path: 'media/',             chart: 'media'],
-    [name: 'order',             path: 'order/',             chart: 'order'],
-    [name: 'payment',           path: 'payment/',           chart: 'payment'],
-    [name: 'payment-paypal',    path: 'payment-paypal/',    chart: 'payment-paypal'],   
-    [name: 'product',           path: 'product/',           chart: 'product'],
-    [name: 'promotion',         path: 'promotion/',         chart: 'promotion'],
-    [name: 'rating',            path: 'rating/',            chart: 'rating'],
-    [name: 'recommendation',    path: 'recommendation/',    chart: 'recommendation'],
-    [name: 'search',            path: 'search/',            chart: 'search'],
-    [name: 'tax',               path: 'tax/',               chart: 'tax'],
-    [name: 'webhook',           path: 'webhook/',           chart: 'webhook'],
-    [name: 'sampledata',        path: 'sampledata/',        chart: 'sampledata']
+    [name: 'backoffice-bff',    path: 'backoffice-bff/',    chart: 'backoffice-bff',    type: 'backend'],
+    [name: 'backoffice',        path: 'backoffice/',        chart: 'backoffice-ui',     type: 'ui'],
+    [name: 'storefront-bff',    path: 'storefront-bff/',    chart: 'storefront-bff',    type: 'backend'],
+    [name: 'storefront',        path: 'storefront/',        chart: 'storefront-ui',     type: 'ui'],
+    [name: 'cart',              path: 'cart/',              chart: 'cart',              type: 'backend'],
+    [name: 'customer',          path: 'customer/',          chart: 'customer',          type: 'backend'],
+    [name: 'inventory',         path: 'inventory/',         chart: 'inventory',         type: 'backend'],
+    [name: 'location',          path: 'location/',          chart: 'location',          type: 'backend'],
+    [name: 'media',             path: 'media/',             chart: 'media',             type: 'backend'],
+    [name: 'order',             path: 'order/',             chart: 'order',             type: 'backend'],
+    [name: 'payment',           path: 'payment/',           chart: 'payment',           type: 'backend'],
+    [name: 'payment-paypal',    path: 'payment-paypal/',    chart: 'payment-paypal',    type: 'backend'],   
+    [name: 'product',           path: 'product/',           chart: 'product',           type: 'backend'],
+    [name: 'promotion',         path: 'promotion/',         chart: 'promotion',         type: 'backend'],
+    [name: 'rating',            path: 'rating/',            chart: 'rating',            type: 'backend'],
+    [name: 'recommendation',    path: 'recommendation/',    chart: 'recommendation',    type: 'backend'],
+    [name: 'search',            path: 'search/',            chart: 'search',            type: 'backend'],
+    [name: 'tax',               path: 'tax/',               chart: 'tax',               type: 'backend'],
+    [name: 'webhook',           path: 'webhook/',           chart: 'webhook',           type: 'backend'],
+    [name: 'sampledata',        path: 'sampledata/',        chart: 'sampledata',        type: 'backend']
 ]
 
 def servicesToDeploy = []
@@ -317,23 +317,24 @@ EOF
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     script {
-                        echo "Updating Deployment..."
+                        dir('yas-helmchart-k8s') {
+                            echo "Updating Deployment..."
 
-                        servicesToDeploy.each { svc -> 
+                            servicesToDeploy.each { svc -> 
+                                sh """
+                                    yq -i '
+                                    .ui.image.repository = "$DOCKER_USER/yas-$svc.name" |
+                                    .ui.image.tag = "$IMAGE_TAG"
+                                    ' dev/$svc.chart-values.yaml
+
+                                    git add dev/$svc.chart-values.yaml
+                                """
+                            }
+
                             sh """
-                                yq -i '
-                                .image.repository = "$DOCKER_USER/yas-$svc.name" |
-                                .image.tag = $IMAGE_TAG"
-                                ' dev/$svc.chart-values.yaml
-
-                                git add dev/$svc.chart-values.yaml
-                            """
+                                git commit -m "feat(manifest): Update manifest files of services: ${servicesToDeploy*.name.collect().join("|")}."
+                            """    
                         }
-
-                        sh """
-                            git add .
-                            git commit -m "feat(manifest): Update manifest files of services: ${servicesToDeploy*.name.collect().join("|")}."
-                        """
                     }
                 }
             }
