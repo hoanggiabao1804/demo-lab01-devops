@@ -276,10 +276,10 @@ EOF
                 )]) {
                     script {
                         servicesToDeploy.each { svc -> 
-                            def repository = "$DOCKER_USER/yas-$svc.name"
+                            def repository = "$DOCKER_USER/yas-${svc.name}"
 
                             sh """
-                                docker build -t $repository:$IMAGE_TAG ./$svc.path
+                                docker build -t $repository:$IMAGE_TAG ./${svc.path}
                                 docker tag $repository:$IMAGE_TAG $repository:main
 
                                 docker push $repository:$IMAGE_TAG
@@ -296,13 +296,23 @@ EOF
                 expression { CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty() }
             }
             steps {
-                sh """
-                    git clone https://github.com/hoanggiabao1804/yas-helmchart-k8s.git
-                    
-                    cd yas-helmchart-k8s/
+                withCredentials([usernamePassword(
+                    credentialsId: 'github_cred',
+                    usernameVariable: 'GITHUB_USER',
+                    passwordVariable: 'GITHUB_TOKEN'
+                )]) {
+                    sh """
+                        git clone https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/hoanggiabao1804/yas-helmchart-k8s.git
+                        
+                        git config user.name "Jenkins CI"
+                        git config user.email "jenkins@example.com"
 
-                    git checkout main
-                """
+                        cd yas-helmchart-k8s/
+
+                        git checkout main
+                    """
+                }
+
             }
         }
 
@@ -323,16 +333,17 @@ EOF
                             servicesToDeploy.each { svc -> 
                                 sh """
                                     yq -i '
-                                    .ui.image.repository = "$DOCKER_USER/yas-$svc.name" |
-                                    .ui.image.tag = "$IMAGE_TAG"
-                                    ' dev/$svc.chart-values.yaml
+                                    .${svc.type}.image.repository = "$DOCKER_USER/yas-${svc.name}" |
+                                    .${svc.type}.image.tag = "$IMAGE_TAG"
+                                    ' dev/${svc.chart}-values.yaml
 
-                                    git add dev/$svc.chart-values.yaml
+                                    git add dev/${svc.chart}-values.yaml
                                 """
                             }
 
                             sh """
                                 git commit -m "feat(manifest): Update manifest files of services: ${servicesToDeploy*.name.collect().join("|")}."
+                                git push origin main
                             """    
                         }
                     }
