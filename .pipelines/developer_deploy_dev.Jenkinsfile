@@ -23,13 +23,11 @@ def services = [
 
 def servicesToDeploy = []
 
+def CURRENT_BRANCH = ''
+def IMAGE_TAG = ''
+
 pipeline {
     agent any
-
-    environment {
-        CURRENT_BRANCH = ''
-        IMAGE_TAG = ''
-    }
 
     stages {
         stage('Checkout') {
@@ -41,47 +39,45 @@ pipeline {
         stage('Init') {
             steps {
                 script {
-                    env.CURRENT_BRANCH = sh(
-                        script: 'git rev-parse --abbrev-ref HEAD',
-                        returnStdout: true
-                    ).trim()
+                    CURRENT_BRANCH = env.GIT_BRANCH.replaceFirst(/^origin\//, '')
 
-                    env.IMAGE_TAG = sh(
+                    IMAGE_TAG = sh(
                         script: "git rev-parse --short HEAD",
                         returnStdout: true
                     ).trim()
 
-                    echo "Current branch: '${env.CURRENT_BRANCH}'"
+                    echo "Current branch: '${CURRENT_BRANCH}'"
+                    echo "Current commit ID is: '$IMAGE_TAG'"
                 }
             }
         }
 
-        stage('Debug') {
-            steps {
-                script {
-                    def branch = sh(
-                        script: 'git rev-parse --abbrev-ref HEAD',
-                        returnStdout: true
-                    ).trim()
+        // stage('Debug') {
+        //     steps {
+        //         script {
+        //             def branch = sh(
+        //                 script: 'git rev-parse --abbrev-ref HEAD',
+        //                 returnStdout: true
+        //             ).trim()
 
-                    echo "branch = '${branch}'"
+        //             echo "branch = '${branch}'"
 
-                    env.CURRENT_BRANCH = branch
+        //             CURRENT_BRANCH = branch
 
-                    echo "env.CURRENT_BRANCH = '${env.CURRENT_BRANCH}'"
+        //             echo "CURRENT_BRANCH = '${CURRENT_BRANCH}'"
 
-                    echo "BRANCH_NAME = '${env.BRANCH_NAME}'"
-                    echo "GIT_BRANCH = '${env.GIT_BRANCH}'"
+        //             echo "BRANCH_NAME = '${env.BRANCH_NAME}'"
+        //             echo "GIT_BRANCH = '${env.GIT_BRANCH}'"
 
-                    def current = sh(
-                        script: 'git branch --show-current',
-                        returnStdout: true
-                    ).trim()
+        //             def current = sh(
+        //                 script: 'git branch --show-current',
+        //                 returnStdout: true
+        //             ).trim()
 
-                    echo "current = '${current}'"
-                }
-            }
-        }
+        //             echo "current = '${current}'"
+        //         }
+        //     }
+        // }
         
         stage('Check CD Agent') {
             steps {
@@ -253,7 +249,7 @@ EOF
 
         stage('Dockerhub Login') {
             when {
-                expression { env.CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty() }
+                expression { CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty() }
             }
             steps {
                 withCredentials([usernamePassword(
@@ -270,7 +266,7 @@ EOF
 
         stage('Build and Push Docker Image') {
             when {
-                expression { env.CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty() }
+                expression { CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty() }
             }
             steps {
                 withCredentials([usernamePassword(
@@ -279,16 +275,14 @@ EOF
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     script {
-                        echo "Current commit id is: '$env.IMAGE_TAG'"
-
                         servicesToDeploy.each { svc -> 
                             def repository = "$DOCKER_USER/yas-$svc.name"
 
                             sh """
-                                docker build -t $repository:$env.IMAGE_TAG ./$svc.path
-                                docker tag $repository:$env.IMAGE_TAG $repository:main
+                                docker build -t $repository:$IMAGE_TAG ./$svc.path
+                                docker tag $repository:$IMAGE_TAG $repository:main
 
-                                docker push $repository:$env.IMAGE_TAG
+                                docker push $repository:$IMAGE_TAG
                                 docker push $repository:main
                             """
                         }
@@ -299,7 +293,7 @@ EOF
 
         stage('Checkout to YAS manifest repository') {
             when {
-                expression { env.CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty() }
+                expression { CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty() }
             }
             steps {
                 sh """
@@ -314,7 +308,7 @@ EOF
 
         stage('Update Deployment') {
             when {
-                expression { env.CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty() }
+                expression { CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty() }
             }
             steps {
                 withCredentials([usernamePassword(
@@ -329,7 +323,7 @@ EOF
                             sh """
                                 yq -i '
                                 .image.repository = "$DOCKER_USER/yas-$svc.name" |
-                                .image.tag = $env.IMAGE_TAG"
+                                .image.tag = $IMAGE_TAG"
                                 ' dev/$svc.chart-values.yaml
 
                                 git add dev/$svc.chart-values.yaml
