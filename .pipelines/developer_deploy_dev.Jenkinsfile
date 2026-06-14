@@ -44,6 +44,8 @@ pipeline {
                         script: "git rev-parse --short HEAD",
                         returnStdout: true
                     ).trim()
+
+                    echo "Current branch: '${env.CURRENT_BRANCH}'"
                 }
             }
         }
