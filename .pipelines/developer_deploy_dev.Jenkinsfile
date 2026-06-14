@@ -62,13 +62,20 @@ pipeline {
                     def branch = sh(
                         script: 'git rev-parse --abbrev-ref HEAD',
                         returnStdout: true
-                    )
+                    ).trim()
 
-                    echo "Raw output = '${branch}'"
+                    echo "branch = '${branch}'"
 
-                    env.CURRENT_BRANCH = branch.trim()
+                    env.CURRENT_BRANCH = branch
 
-                    echo "Current branch = '${env.CURRENT_BRANCH}'"
+                    echo "env.CURRENT_BRANCH = '${env.CURRENT_BRANCH}'"
+
+                    echo "BRANCH_NAME = '${env.BRANCH_NAME}'"
+                    echo "GIT_BRANCH = '${env.GIT_BRANCH}'"
+
+                    sh '''
+                        git branch --show-current
+                    '''
                 }
             }
         }
