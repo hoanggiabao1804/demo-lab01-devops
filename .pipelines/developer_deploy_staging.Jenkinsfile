@@ -36,38 +36,11 @@ pipeline {
         stage('Init') {
             steps {
                 script {
-                    IMAGE_TAG = env.TAG_NAME
+                    IMAGE_TAG = ref.replace("refs/tags/", "")
                     echo "Current tag name is: '$IMAGE_TAG'"
                 }
             }
         }
-
-        // stage('Debug') {
-        //     steps {
-        //         script {
-        //             def branch = sh(
-        //                 script: 'git rev-parse --abbrev-ref HEAD',
-        //                 returnStdout: true
-        //             ).trim()
-
-        //             echo "branch = '${branch}'"
-
-        //             CURRENT_BRANCH = branch
-
-        //             echo "CURRENT_BRANCH = '${CURRENT_BRANCH}'"
-
-        //             echo "BRANCH_NAME = '${env.BRANCH_NAME}'"
-        //             echo "GIT_BRANCH = '${env.GIT_BRANCH}'"
-
-        //             def current = sh(
-        //                 script: 'git branch --show-current',
-        //                 returnStdout: true
-        //             ).trim()
-
-        //             echo "current = '${current}'"
-        //         }
-        //     }
-        // }
         
         stage('Check CD Agent') {
             steps {
@@ -204,9 +177,6 @@ EOF
         }
 
         stage('Dockerhub Login') {
-            when {
-                tag "v*"
-            }
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub_cred',
@@ -221,9 +191,6 @@ EOF
         }
 
         stage('Build and Push Docker Image') {
-            when {
-                tag "v*"
-            }
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub_cred',
@@ -246,9 +213,6 @@ EOF
         }
 
         stage('Checkout to YAS manifest repository') {
-            when {
-                tag "v*"
-            }
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'github_cred',
@@ -266,9 +230,6 @@ EOF
         }
 
         stage('Update Deployment') {
-            when {
-                tag "v*"
-            }
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub_cred',
