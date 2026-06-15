@@ -108,9 +108,6 @@ pipeline {
         }
 
         stage('Checkout to YAS manifest repository') {
-            agent {
-                label 'built-in'
-            }
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'github_cred',
@@ -128,9 +125,6 @@ pipeline {
         }
 
         stage('Update Deployment') {
-            agent {
-                label 'built-in'
-            }
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub_cred',
@@ -147,12 +141,27 @@ pipeline {
 
                             echo "Updating Deployment..."
 
-                            services.each { svc -> 
+                            // services.each { svc -> 
+                            //     sh """
+                            //         yq -i '
+                            //         .${svc.type}.image.repository = "$DOCKER_USER/yas-${svc.name}" |
+                            //         .${svc.type}.image.tag = "$IMAGE_TAG"
+                            //         ' staging/${svc.chart}-values.yaml
+
+                            //         git add staging/${svc.chart}-values.yaml
+                            //     """
+                            // }
+
+                            services.each { svc ->
                                 sh """
-                                    yq -i '
+                                    docker run --rm \
+                                    -v \$PWD:/workdir \
+                                    mikefarah/yq \
+                                    -i '
                                     .${svc.type}.image.repository = "$DOCKER_USER/yas-${svc.name}" |
                                     .${svc.type}.image.tag = "$IMAGE_TAG"
-                                    ' staging/${svc.chart}-values.yaml
+                                    ' \
+                                    /workdir/staging/${svc.chart}-values.yaml
 
                                     git add staging/${svc.chart}-values.yaml
                                 """
