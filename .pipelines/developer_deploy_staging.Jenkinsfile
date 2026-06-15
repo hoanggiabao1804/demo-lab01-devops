@@ -205,10 +205,7 @@ EOF
 
         stage('Dockerhub Login') {
             when {
-                allOf {
-                    branch 'main'
-                    tag "v*"
-                }
+                tag "v*"
             }
             steps {
                 withCredentials([usernamePassword(
@@ -225,10 +222,7 @@ EOF
 
         stage('Build and Push Docker Image') {
             when {
-                allOf {
-                    branch 'main'
-                    tag "v*"
-                }
+                tag "v*"
             }
             steps {
                 withCredentials([usernamePassword(
@@ -253,10 +247,7 @@ EOF
 
         stage('Checkout to YAS manifest repository') {
             when {
-                allOf {
-                    branch 'main'
-                    tag "v*"
-                }
+                tag "v*"
             }
             steps {
                 withCredentials([usernamePassword(
@@ -276,10 +267,7 @@ EOF
 
         stage('Update Deployment') {
             when {
-                allOf {
-                    branch 'main'
-                    tag "v*"
-                }
+                tag "v*"
             }
             steps {
                 withCredentials([usernamePassword(
