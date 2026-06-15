@@ -1,24 +1,24 @@
 def services = [
-    [name: 'backoffice-bff',    path: 'backoffice-bff/',    chart: 'backoffice-bff',    type: 'backend'],
-    [name: 'backoffice',        path: 'backoffice/',        chart: 'backoffice-ui',     type: 'ui'],
+    // [name: 'backoffice-bff',    path: 'backoffice-bff/',    chart: 'backoffice-bff',    type: 'backend'],
+    // [name: 'backoffice',        path: 'backoffice/',        chart: 'backoffice-ui',     type: 'ui'],
     [name: 'storefront-bff',    path: 'storefront-bff/',    chart: 'storefront-bff',    type: 'backend'],
-    [name: 'storefront',        path: 'storefront/',        chart: 'storefront-ui',     type: 'ui'],
-    [name: 'cart',              path: 'cart/',              chart: 'cart',              type: 'backend'],
-    [name: 'customer',          path: 'customer/',          chart: 'customer',          type: 'backend'],
-    [name: 'inventory',         path: 'inventory/',         chart: 'inventory',         type: 'backend'],
-    [name: 'location',          path: 'location/',          chart: 'location',          type: 'backend'],
-    [name: 'media',             path: 'media/',             chart: 'media',             type: 'backend'],
-    [name: 'order',             path: 'order/',             chart: 'order',             type: 'backend'],
-    [name: 'payment',           path: 'payment/',           chart: 'payment',           type: 'backend'],
-    [name: 'payment-paypal',    path: 'payment-paypal/',    chart: 'payment-paypal',    type: 'backend'],   
-    [name: 'product',           path: 'product/',           chart: 'product',           type: 'backend'],
-    [name: 'promotion',         path: 'promotion/',         chart: 'promotion',         type: 'backend'],
-    [name: 'rating',            path: 'rating/',            chart: 'rating',            type: 'backend'],
-    [name: 'recommendation',    path: 'recommendation/',    chart: 'recommendation',    type: 'backend'],
-    [name: 'search',            path: 'search/',            chart: 'search',            type: 'backend'],
-    [name: 'tax',               path: 'tax/',               chart: 'tax',               type: 'backend'],
-    [name: 'webhook',           path: 'webhook/',           chart: 'webhook',           type: 'backend'],
-    [name: 'sampledata',        path: 'sampledata/',        chart: 'sampledata',        type: 'backend']
+    [name: 'storefront',        path: 'storefront/',        chart: 'storefront-ui',     type: 'ui']
+    // [name: 'cart',              path: 'cart/',              chart: 'cart',              type: 'backend'],
+    // [name: 'customer',          path: 'customer/',          chart: 'customer',          type: 'backend'],
+    // [name: 'inventory',         path: 'inventory/',         chart: 'inventory',         type: 'backend'],
+    // [name: 'location',          path: 'location/',          chart: 'location',          type: 'backend'],
+    // [name: 'media',             path: 'media/',             chart: 'media',             type: 'backend'],
+    // [name: 'order',             path: 'order/',             chart: 'order',             type: 'backend'],
+    // [name: 'payment',           path: 'payment/',           chart: 'payment',           type: 'backend'],
+    // [name: 'payment-paypal',    path: 'payment-paypal/',    chart: 'payment-paypal',    type: 'backend'],   
+    // [name: 'product',           path: 'product/',           chart: 'product',           type: 'backend'],
+    // [name: 'promotion',         path: 'promotion/',         chart: 'promotion',         type: 'backend'],
+    // [name: 'rating',            path: 'rating/',            chart: 'rating',            type: 'backend'],
+    // [name: 'recommendation',    path: 'recommendation/',    chart: 'recommendation',    type: 'backend'],
+    // [name: 'search',            path: 'search/',            chart: 'search',            type: 'backend'],
+    // [name: 'tax',               path: 'tax/',               chart: 'tax',               type: 'backend'],
+    // [name: 'webhook',           path: 'webhook/',           chart: 'webhook',           type: 'backend'],
+    // [name: 'sampledata',        path: 'sampledata/',        chart: 'sampledata',        type: 'backend']
 ]
 
 def IMAGE_TAG = ''
