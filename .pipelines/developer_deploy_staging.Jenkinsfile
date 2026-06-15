@@ -108,6 +108,9 @@ pipeline {
         }
 
         stage('Checkout to YAS manifest repository') {
+            agent {
+                label 'built-in'
+            }
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'github_cred',
@@ -125,6 +128,9 @@ pipeline {
         }
 
         stage('Update Deployment') {
+            agent {
+                label 'built-in'
+            }
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub_cred',
