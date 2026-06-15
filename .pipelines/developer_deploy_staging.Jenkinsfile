@@ -1,24 +1,24 @@
 def services = [
-    // [name: 'backoffice-bff',    path: 'backoffice-bff/',    chart: 'backoffice-bff',    type: 'backend'],
-    // [name: 'backoffice',        path: 'backoffice/',        chart: 'backoffice-ui',     type: 'ui'],
-    [name: 'storefront-bff',    path: 'storefront-bff/',    chart: 'storefront-bff',    type: 'backend'],
-    [name: 'storefront',        path: 'storefront/',        chart: 'storefront-ui',     type: 'ui']
-    // [name: 'cart',              path: 'cart/',              chart: 'cart',              type: 'backend'],
-    // [name: 'customer',          path: 'customer/',          chart: 'customer',          type: 'backend'],
-    // [name: 'inventory',         path: 'inventory/',         chart: 'inventory',         type: 'backend'],
-    // [name: 'location',          path: 'location/',          chart: 'location',          type: 'backend'],
-    // [name: 'media',             path: 'media/',             chart: 'media',             type: 'backend'],
-    // [name: 'order',             path: 'order/',             chart: 'order',             type: 'backend'],
-    // [name: 'payment',           path: 'payment/',           chart: 'payment',           type: 'backend'],
-    // [name: 'payment-paypal',    path: 'payment-paypal/',    chart: 'payment-paypal',    type: 'backend'],   
-    // [name: 'product',           path: 'product/',           chart: 'product',           type: 'backend'],
-    // [name: 'promotion',         path: 'promotion/',         chart: 'promotion',         type: 'backend'],
-    // [name: 'rating',            path: 'rating/',            chart: 'rating',            type: 'backend'],
-    // [name: 'recommendation',    path: 'recommendation/',    chart: 'recommendation',    type: 'backend'],
-    // [name: 'search',            path: 'search/',            chart: 'search',            type: 'backend'],
-    // [name: 'tax',               path: 'tax/',               chart: 'tax',               type: 'backend'],
-    // [name: 'webhook',           path: 'webhook/',           chart: 'webhook',           type: 'backend'],
-    // [name: 'sampledata',        path: 'sampledata/',        chart: 'sampledata',        type: 'backend']
+    // [name: 'backoffice-bff',    path: 'backoffice-bff/',    chart: 'backoffice-bff',    type: 'backend',    build: 'mvn clean package -pl backoffice-bff -am -DskipTests'],
+    // [name: 'backoffice',        path: 'backoffice/',        chart: 'backoffice-ui',     type: 'ui',         build: 'npm ci && npm run build'],
+    [name: 'storefront-bff',    path: 'storefront-bff/',    chart: 'storefront-bff',    type: 'backend',    build: 'mvn clean package -pl storefront-bff -am -DskipTests'],
+    [name: 'storefront',        path: 'storefront/',        chart: 'storefront-ui',     type: 'ui',         build: 'npm ci && npm run build'],
+    // [name: 'cart',              path: 'cart/',              chart: 'cart',              type: 'backend',    build: 'mvn clean install -pl cart -am -DskipTests -Djacoco.skip=true'],
+    // [name: 'customer',          path: 'customer/',          chart: 'customer',          type: 'backend',    build: 'mvn clean install -pl customer -am -DskipTests -Djacoco.skip=true'],
+    // [name: 'inventory',         path: 'inventory/',         chart: 'inventory',         type: 'backend',    build: 'mvn clean install -pl inventory -am -DskipTests -Djacoco.skip=true'],
+    // [name: 'location',          path: 'location/',          chart: 'location',          type: 'backend',    build: 'mvn clean install -pl location -am -DskipTests -Djacoco.skip=true'],
+    // [name: 'media',             path: 'media/',             chart: 'media',             type: 'backend',    build: 'mvn clean install -pl media -am -DskipTests -Djacoco.skip=true'],
+    // [name: 'order',             path: 'order/',             chart: 'order',             type: 'backend',    build: 'mvn clean install -pl order -am -DskipTests -Djacoco.skip=true'],
+    // [name: 'payment',           path: 'payment/',           chart: 'payment',           type: 'backend',    build: 'mvn clean install -pl payment -am -DskipTests -Djacoco.skip=true'],
+    // [name: 'payment-paypal',    path: 'payment-paypal/',    chart: 'payment-paypal',    type: 'backend',    build: 'mvn clean install -pl payment-paypal -am -DskipTests -Djacoco.skip=true'],
+    // [name: 'product',           path: 'product/',           chart: 'product',           type: 'backend',    build: 'mvn clean install -pl product -am -DskipTests -Djacoco.skip=true'],
+    // [name: 'promotion',         path: 'promotion/',         chart: 'promotion',         type: 'backend',    build: 'mvn clean install -pl promotion -am -DskipTests -Djacoco.skip=true'],
+    // [name: 'rating',            path: 'rating/',            chart: 'rating',            type: 'backend',    build: 'mvn clean install -pl rating -am -DskipTests -Djacoco.skip=true'],
+    // [name: 'recommendation',    path: 'recommendation/',    chart: 'recommendation',    type: 'backend',    build: 'mvn clean install -pl recommendation -am -DskipTests -Djacoco.skip=true'],
+    // [name: 'search',            path: 'search/',            chart: 'search',            type: 'backend',    build: 'mvn clean install -pl search -am -DskipTests -Djacoco.skip=true'],
+    // [name: 'tax',               path: 'tax/',               chart: 'tax',               type: 'backend',    build: 'mvn clean install -pl tax -am -DskipTests -Djacoco.skip=true'],
+    // [name: 'webhook',           path: 'webhook/',           chart: 'webhook',           type: 'backend',    build: 'mvn clean install -pl webhook -am -DskipTests -Djacoco.skip=true'],
+    // [name: 'sampledata',        path: 'sampledata/',        chart: 'sampledata',        type: 'backend',    build: 'mvn clean install -pl sampledata -am -DskipTests -Djacoco.skip=true']
 ]
 
 def IMAGE_TAG = ''
@@ -200,6 +200,20 @@ EOF
                     script {
                         services.each { svc -> 
                             def repository = "$DOCKER_USER/yas-${svc.name}"
+
+                            if (svc.type == 'ui') {
+                                sh """
+                                    cd ./${svc.path}
+
+                                    eval "${svc.build}"
+
+                                    cd ..
+                                """
+                            } else if (svc.type == 'backend') {
+                                sh """
+                                    eval "${svc.build}"
+                                """
+                            }
 
                             sh """
                                 docker build -t $repository:$IMAGE_TAG ./${svc.path}
