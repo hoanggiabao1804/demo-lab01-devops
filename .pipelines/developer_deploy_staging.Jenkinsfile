@@ -21,9 +21,6 @@ def services = [
     [name: 'sampledata',        path: 'sampledata/',        chart: 'sampledata',        type: 'backend']
 ]
 
-def servicesToDeploy = []
-
-def CURRENT_BRANCH = ''
 def IMAGE_TAG = ''
 
 pipeline {
@@ -39,18 +36,38 @@ pipeline {
         stage('Init') {
             steps {
                 script {
-                    CURRENT_BRANCH = env.GIT_BRANCH.replaceFirst(/^origin\//, '')
-
-                    IMAGE_TAG = sh(
-                        script: "git rev-parse --short HEAD",
-                        returnStdout: true
-                    ).trim()
-
-                    echo "Current branch: '${CURRENT_BRANCH}'"
-                    echo "Current commit ID is: '$IMAGE_TAG'"
+                    IMAGE_TAG = env.TAG_NAME
+                    echo "Current tag name is: '$IMAGE_TAG'"
                 }
             }
         }
+
+        // stage('Debug') {
+        //     steps {
+        //         script {
+        //             def branch = sh(
+        //                 script: 'git rev-parse --abbrev-ref HEAD',
+        //                 returnStdout: true
+        //             ).trim()
+
+        //             echo "branch = '${branch}'"
+
+        //             CURRENT_BRANCH = branch
+
+        //             echo "CURRENT_BRANCH = '${CURRENT_BRANCH}'"
+
+        //             echo "BRANCH_NAME = '${env.BRANCH_NAME}'"
+        //             echo "GIT_BRANCH = '${env.GIT_BRANCH}'"
+
+        //             def current = sh(
+        //                 script: 'git branch --show-current',
+        //                 returnStdout: true
+        //             ).trim()
+
+        //             echo "current = '${current}'"
+        //         }
+        //     }
+        // }
         
         stage('Check CD Agent') {
             steps {
@@ -186,43 +203,12 @@ EOF
             }
         }
 
-        stage('Detect Changes') {
-            steps {
-                script {
-                    def previousCommit = sh(
-                        script: "git rev-parse HEAD~1",
-                        returnStdout: true
-                    ).trim()
-
-                    def changedFiles = sh(
-                        script: "git diff --name-only ${previousCommit} ${env.GIT_COMMIT}",
-                        returnStdout: true
-                    ).trim().split("\n")
-
-                    if (changedFiles.any { it.startsWith('common-library') }) {
-                        servicesToDeploy = services*.name
-                    } else {
-                        services.each { svc -> 
-                            if (changedFiles.any { it.startsWith(svc.path) }) {
-                                servicesToDeploy << svc
-                            }
-                        }
-                    }
-
-                    def changedServices = servicesToDeploy*.name.collect().join("\n");
-                    
-                    echo "Changed service: $changedServices\n"
-
-                    if (servicesToDeploy.isEmpty()) {
-                        echo "No services changed"
-                    }
-                }
-            }
-        }
-
         stage('Dockerhub Login') {
             when {
-                expression { CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty() }
+                allOf {
+                    branch 'main'
+                    tag "v*"
+                }
             }
             steps {
                 withCredentials([usernamePassword(
@@ -239,7 +225,10 @@ EOF
 
         stage('Build and Push Docker Image') {
             when {
-                expression { CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty() }
+                allOf {
+                    branch 'main'
+                    tag "v*"
+                }
             }
             steps {
                 withCredentials([usernamePassword(
@@ -248,15 +237,13 @@ EOF
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     script {
-                        servicesToDeploy.each { svc -> 
+                        services.each { svc -> 
                             def repository = "$DOCKER_USER/yas-${svc.name}"
 
                             sh """
                                 docker build -t $repository:$IMAGE_TAG ./${svc.path}
-                                docker tag $repository:$IMAGE_TAG $repository:main
 
                                 docker push $repository:$IMAGE_TAG
-                                docker push $repository:main
                             """
                         }
                     }
@@ -266,7 +253,10 @@ EOF
 
         stage('Checkout to YAS manifest repository') {
             when {
-                expression { CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty() }
+                allOf {
+                    branch 'main'
+                    tag "v*"
+                }
             }
             steps {
                 withCredentials([usernamePassword(
@@ -286,7 +276,10 @@ EOF
 
         stage('Update Deployment') {
             when {
-                expression { CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty() }
+                allOf {
+                    branch 'main'
+                    tag "v*"
+                }
             }
             steps {
                 withCredentials([usernamePassword(
@@ -304,19 +297,19 @@ EOF
 
                             echo "Updating Deployment..."
 
-                            servicesToDeploy.each { svc -> 
+                            services.each { svc -> 
                                 sh """
                                     yq -i '
                                     .${svc.type}.image.repository = "$DOCKER_USER/yas-${svc.name}" |
                                     .${svc.type}.image.tag = "$IMAGE_TAG"
-                                    ' dev/${svc.chart}-values.yaml
+                                    ' staging/${svc.chart}-values.yaml
 
-                                    git add dev/${svc.chart}-values.yaml
+                                    git add staging/${svc.chart}-values.yaml
                                 """
                             }
 
                             sh """
-                                git commit -m "feat(dev-manifest): Update dev manifest files of services: ${servicesToDeploy*.name.collect().join("|")}."
+                                git commit -m "release(${IMAGE_TAG}): Update staging manifest files of services: ${services*.name.collect().join("|")}."
                                 git push origin main
                             """    
                         }
