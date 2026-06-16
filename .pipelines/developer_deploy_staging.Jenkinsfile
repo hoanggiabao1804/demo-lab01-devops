@@ -26,15 +26,12 @@ def IMAGE_TAG = ''
 pipeline {
     agent {
         docker {
-            image '23120022/zakirepo:maven-3.9.14-eclipse-temurin-25-v4.0'
+            image '23120022/zakirepo:release-builder-v1.0'
             registryUrl 'https://index.docker.io/v1/'
             registryCredentialsId 'dockerhub_cred'
             args '''
-            --network sonar-network 
             -u root 
             -v /var/run/docker.sock:/var/run/docker.sock
-            -v $HOME/.sonar:/root/.sonar 
-            -v $HOME/.owasp:/owasp
             -v $HOME/.npm:/root/.npm
             -v $HOME/.m2:/root/.m2
             '''
@@ -141,27 +138,12 @@ pipeline {
 
                             echo "Updating Deployment..."
 
-                            // services.each { svc -> 
-                            //     sh """
-                            //         yq -i '
-                            //         .${svc.type}.image.repository = "$DOCKER_USER/yas-${svc.name}" |
-                            //         .${svc.type}.image.tag = "$IMAGE_TAG"
-                            //         ' staging/${svc.chart}-values.yaml
-
-                            //         git add staging/${svc.chart}-values.yaml
-                            //     """
-                            // }
-
-                            services.each { svc ->
+                            services.each { svc -> 
                                 sh """
-                                    docker run --rm \
-                                    -v \$PWD:/workdir \
-                                    mikefarah/yq \
-                                    -i '
+                                    yq -i '
                                     .${svc.type}.image.repository = "$DOCKER_USER/yas-${svc.name}" |
                                     .${svc.type}.image.tag = "$IMAGE_TAG"
-                                    ' \
-                                    /workdir/staging/${svc.chart}-values.yaml
+                                    ' staging/${svc.chart}-values.yaml
 
                                     git add staging/${svc.chart}-values.yaml
                                 """
