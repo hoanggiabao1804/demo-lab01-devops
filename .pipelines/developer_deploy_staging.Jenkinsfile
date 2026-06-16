@@ -79,15 +79,7 @@ pipeline {
                         services.each { svc -> 
                             def repository = "$DOCKER_USER/yas-${svc.name}"
 
-                            if (svc.type == 'ui') {
-                                sh """
-                                    cd ./${svc.path}
-
-                                    eval "${svc.build}"
-
-                                    cd ..
-                                """
-                            } else if (svc.type == 'backend') {
+                            if (svc.type == 'backend') {
                                 sh """
                                     eval "${svc.build}"
                                 """
