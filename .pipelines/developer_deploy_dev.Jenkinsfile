@@ -51,6 +51,10 @@ pipeline {
         stage('Init') {
             steps {
                 script {
+                    sh '''
+                        git config --global --add safe.directory '*'
+                    '''
+                    
                     CURRENT_BRANCH = env.GIT_BRANCH.replaceFirst(/^origin\//, '')
 
                     IMAGE_TAG = sh(
