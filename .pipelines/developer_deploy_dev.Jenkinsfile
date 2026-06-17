@@ -27,7 +27,19 @@ def CURRENT_BRANCH = ''
 def IMAGE_TAG = ''
 
 pipeline {
-    agent any
+    agent {
+        docker {
+            image '23120022/zakirepo:release-builder-v1.0'
+            registryUrl 'https://index.docker.io/v1/'
+            registryCredentialsId 'dockerhub_cred'
+            args '''
+            -u root 
+            -v /var/run/docker.sock:/var/run/docker.sock
+            -v $HOME/.npm:/root/.npm
+            -v $HOME/.m2:/root/.m2
+            '''
+        }
+    }
 
     stages {
         stage('Checkout') {
