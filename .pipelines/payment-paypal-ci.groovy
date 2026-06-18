@@ -134,6 +134,10 @@ def call(Map params) {
 
         echo "Branch name is: '$IMAGE_TAG'"
 
+        JAR_FILE=$(find payment-paypal/target -name "payment-paypal*-tests.jar")
+
+        rm $JAR_FILE
+
         docker build -t 23120022/yas-payment-paypal:$IMAGE_TAG ./payment-paypal
 
         docker push 23120022/yas-payment-paypal:$IMAGE_TAG
