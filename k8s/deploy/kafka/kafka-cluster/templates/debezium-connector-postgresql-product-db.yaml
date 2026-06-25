@@ -1,4 +1,4 @@
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaConnector
 metadata:
   name: debezium-connector-postgresql-product-db
@@ -7,12 +7,16 @@ metadata:
 spec:
   class: io.debezium.connector.postgresql.PostgresConnector
   config:
-    database.hostname: postgresql.postgres
+    database.hostname: postgresql.postgres.svc.cluster.local
     database.port: 5432
     database.user: ${secrets:postgresql.credentials:username}
     database.password: ${secrets:postgresql.credentials:password}
     topic.prefix: dbproduct
     database.dbname: product
+    plugin.name: pgoutput
+    slot.name: product_slot
+    publication.name: product_publication
+    publication.autocreate.mode: all_tables
     table.include.list: public.product
     schema.include.list: public
     key.converter.schemas.enable: false

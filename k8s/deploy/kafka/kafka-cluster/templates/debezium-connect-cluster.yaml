@@ -1,4 +1,4 @@
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaConnect
 metadata:
   name: debezium-connect-cluster
@@ -6,16 +6,18 @@ metadata:
     strimzi.io/use-connector-resources: "true"
 spec:
   replicas: 1
+  version: {{ .Values.debeziumConnect.version | quote }}
   bootstrapServers: kafka-cluster-kafka-bootstrap:9092
+  {{- if .Values.debeziumConnect.image }}
   image: {{ .Values.debeziumConnect.image }}
+  {{- end }}
+  groupId: connect-cluster
+  offsetStorageTopic: kafka_connect_offsets
+  configStorageTopic: kafka_connect_configs
+  statusStorageTopic: kafka_connect_status
   config:
     config.providers: secrets
     config.providers.secrets.class: io.strimzi.kafka.KubernetesSecretConfigProvider
-    group.id: connect-cluster
-    offset.storage.topic: kafka_connect_offsets
-    config.storage.topic: kafka_connect_configs
-    status.storage.topic: kafka_connect_status
-    # -1 means it will use the default replication factor configured in the broker
     config.storage.replication.factor: -1
     offset.storage.replication.factor: -1
     status.storage.replication.factor: -1
@@ -30,4 +32,11 @@ spec:
         artifacts:
           - type: tgz
             url: https://repo1.maven.org/maven2/io/debezium/debezium-connector-postgres/2.3.0.Final/debezium-connector-postgres-2.3.0.Final-plugin.tar.gz
+  {{- else if .Values.debeziumConnect.usePluginImage }}
+  plugins:
+    - name: debezium-postgresql-connector
+      artifacts:
+        - type: image
+          reference: {{ .Values.debeziumConnect.pluginImage }}
+          pullPolicy: {{ .Values.debeziumConnect.pluginPullPolicy }}
   {{- end }}

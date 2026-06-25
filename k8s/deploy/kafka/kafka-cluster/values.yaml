@@ -1,5 +1,6 @@
 kafka:
   replicas: 1
+  storeSize: 100Gi
 zookeeper:
   replicas: 1
   storeSize: 5Gi
@@ -7,5 +8,9 @@ postgresql:
   username: yasadminuser
   password: admin
 debeziumConnect:
-  image: ghcr.io/nashtech-garage/debezium-connect-postgresql:latest
-  buildImage: false #Enabled when build debezium-connect-postgresql image
+  version: 4.2.0
+  image: yas-debezium-connect-postgresql:1.0.1-kafka-4.2.0-debezium-3.3
+  usePluginImage: false
+  pluginImage: quay.io/debezium/connect:3.3
+  pluginPullPolicy: IfNotPresent
+  buildImage: false # Enabled only when pushing a custom Kafka Connect image to a registry.
