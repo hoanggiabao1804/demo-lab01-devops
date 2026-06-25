@@ -18,7 +18,6 @@ pipeline {
         }
     }
     parameters {
-        //Tham số BUILD_IMAGE, mặc định là zakirepo:maven
         string(name: 'BUILD_IMAGE', defaultValue: '23120022/zakirepo:maven-3.9.14-eclipse-temurin-25-v4.0', description: 'Docker Image dùng để build')
         string(name: 'BASE_BRANCH', defaultValue: 'main', description: 'Branch chính để build')
         choice(name: 'TARGET_SERVICE', choices: ['auto', 'all', 'backoffice', 'backoffice-bff', 'cart', 'customer', 'delivery', 'inventory', 'location', 'media', 'order', 'payment', 'payment-paypal', 'product', 'promotion', 'rating', 'recommendation', 'sampledata', 'search', 'storefront', 'storefront-bff', 'tax', 'webhook'], description: 'Chọn dịch vụ muốn build (auto = tự động phát hiện thay đổi)')
@@ -42,7 +41,6 @@ pipeline {
         stage('Detect Changes') {
             steps {
                 script {
-                    //Nếu người dùng chỉ chọn một cái, không quét git diff
                     if (params.TARGET_SERVICE != 'auto') {
                         servicesToBuild << params.TARGET_SERVICE
                         echo "Chạy dịch vụ: ${params.TARGET_SERVICE}"
@@ -52,18 +50,20 @@ pipeline {
                         '''
 
                         echo "env.CHANGE_TARGET: '${env.CHANGE_TARGET}'"
-                        //Thay thế main bằng branch đã chỉ định 
                         def base = env.CHANGE_TARGET ?: params.BASE_BRANCH
                         sh "git fetch origin ${base}:refs/remotes/origin/${base}"
 
-                        def changedFiles = sh(
+                        // Lấy stdout dưới dạng chuỗi và loại bỏ khoảng trắng thừa
+                        def stdout = sh(
                             script: "git diff refs/remotes/origin/${base}...HEAD --name-only",
                             returnStdout: true
-                        ).trim().split("\n")
+                        ).trim()
 
-                        if (changedFiles){
-                            def changedFilesList = changedFiles.tokenize('\n')
-                            changedFilesList.each{ file ->
+                        if (stdout) {
+                            // Tách chuỗi thành danh sách các dòng (an toàn hơn split)
+                            def changedFilesList = stdout.tokenize('\n')
+                            
+                            changedFilesList.each { file ->
                                 if (file == "pom.xml" || file == "Jenkinsfile" || file == ".github/workflows/actions/action.yaml") {
                                     servicesToBuild << "all"
                                 }
@@ -96,7 +96,7 @@ pipeline {
                                     file.startsWith("inventory/") 
                                     || file == ".github/workflows/inventory-ci.yaml"
                                     || file == ".pipelines/inventory-ci.groovy"
-                            ) {
+                                ) {
                                     servicesToBuild << "inventory"
                                 } else if (
                                     file.startsWith("location/") 
@@ -197,21 +197,16 @@ pipeline {
                 }
             }
         }
-                stage('Run backoffice pipeline') {
+
+        stage('Run backoffice pipeline') {
             when {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('backoffice') }
             }
             steps {
                 script {
-                    sh '''
-                    echo "Backoffice pipeline..."
-                    '''
-
+                    sh 'echo "Backoffice pipeline..."'
                     def backoffice = load '.pipelines/backoffice-ci.groovy'
-
-                    backoffice.call([
-                        isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
-                    ])
+                    backoffice.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
                 }
             }
         }
@@ -222,16 +217,10 @@ pipeline {
             }
             steps {
                 script {
-					sh '''
-					echo "Backoffice-bff pipeline..."
-					'''
-
-					def backoffice_bff = load '.pipelines/backoffice-bff-ci.groovy'
-
-					backoffice_bff.call([
-						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
-					])
-				}
+                    sh 'echo "Backoffice-bff pipeline..."'
+                    def backoffice_bff = load '.pipelines/backoffice-bff-ci.groovy'
+                    backoffice_bff.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
+                }
             }
         }
 
@@ -241,16 +230,10 @@ pipeline {
             }
             steps {
                 script {
-                    sh '''
-                    echo "Cart pipeline..."
-					'''
-
-					def cart = load '.pipelines/cart-ci.groovy'
-
-					cart.call([
-						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
-					])
-				}
+                    sh 'echo "Cart pipeline..."'
+                    def cart = load '.pipelines/cart-ci.groovy'
+                    cart.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
+                }
             }
         }
 
@@ -260,16 +243,10 @@ pipeline {
             }
             steps {
                 script {
-                    sh '''
-                    echo "Customer pipeline..."
-					'''
-
-					def customer = load '.pipelines/customer-ci.groovy'
-
-					customer.call([
-						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
-					])
-				}
+                    sh 'echo "Customer pipeline..."'
+                    def customer = load '.pipelines/customer-ci.groovy'
+                    customer.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
+                }
             }
         }
 
@@ -278,9 +255,7 @@ pipeline {
                 expression { servicesToBuild.contains('all') || servicesToBuild.contains('delivery') }
             }
             steps {
-                sh '''
-                echo "Delivery pipeline..."
-                '''
+                sh 'echo "Delivery pipeline..."'
             }
         }
 
@@ -290,16 +265,10 @@ pipeline {
             }
             steps {
                 script {
-                    sh '''
-                    echo "Inventory pipeline..."
-					'''
-
-					def inventory = load '.pipelines/inventory-ci.groovy'
-
-					inventory.call([
-						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
-					])
-				}
+                    sh 'echo "Inventory pipeline..."'
+                    def inventory = load '.pipelines/inventory-ci.groovy'
+                    inventory.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
+                }
             }
         }
 
@@ -309,16 +278,10 @@ pipeline {
             }
             steps {
                 script {
-                    sh '''
-                    echo "Location pipeline..."
-					'''
-
-					def location = load '.pipelines/location-ci.groovy'
-
-					location.call([
-						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
-					])
-				}
+                    sh 'echo "Location pipeline..."'
+                    def location = load '.pipelines/location-ci.groovy'
+                    location.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
+                }
             }
         }
 
@@ -328,16 +291,10 @@ pipeline {
             }
             steps {
                 script {
-                    sh '''
-                    echo "Media pipeline..."
-					'''
-
-					def media = load '.pipelines/media-ci.groovy'
-
-					media.call([
-						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
-					])
-				}
+                    sh 'echo "Media pipeline..."'
+                    def media = load '.pipelines/media-ci.groovy'
+                    media.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
+                }
             }
         }
 
@@ -347,16 +304,10 @@ pipeline {
             }
             steps {
                 script {
-                    sh '''
-                    echo "Order pipeline..."
-					'''
-
-					def order = load '.pipelines/order-ci.groovy'
-
-					order.call([
-						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
-					])
-				}
+                    sh 'echo "Order pipeline..."'
+                    def order = load '.pipelines/order-ci.groovy'
+                    order.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
+                }
             }
         }
 
@@ -366,16 +317,10 @@ pipeline {
             }
             steps {
                 script {
-                    sh '''
-                    echo "Payment pipeline..."
-					'''
-
-					def payment = load '.pipelines/payment-ci.groovy'
-
-					payment.call([
-						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
-					])
-				}
+                    sh 'echo "Payment pipeline..."'
+                    def payment = load '.pipelines/payment-ci.groovy'
+                    payment.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
+                }
             }
         }
 
@@ -385,16 +330,10 @@ pipeline {
             }
             steps {
                 script {
-                    sh '''
-                    echo "Payment-paypal pipeline..."
-					'''
-
-					def paymentPaypal = load '.pipelines/payment-paypal-ci.groovy'
-
-					paymentPaypal.call([
-						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
-					])
-				}
+                    sh 'echo "Payment-paypal pipeline..."'
+                    def paymentPaypal = load '.pipelines/payment-paypal-ci.groovy'
+                    paymentPaypal.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
+                }
             }
         }
 
@@ -404,16 +343,10 @@ pipeline {
             }
             steps {
                 script {
-                    sh '''
-                    echo "Product pipeline..."
-					'''
-
-					def product = load '.pipelines/product-ci.groovy'
-
-					product.call([
-						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
-					])
-				}
+                    sh 'echo "Product pipeline..."'
+                    def product = load '.pipelines/product-ci.groovy'
+                    product.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
+                }
             }
         }
 
@@ -423,16 +356,10 @@ pipeline {
             }
             steps {
                 script {
-                    sh '''
-                    echo "Promotion pipeline..."
-					'''
-
-					def promotion = load '.pipelines/promotion-ci.groovy'
-
-					promotion.call([
-						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
-					])
-				}
+                    sh 'echo "Promotion pipeline..."'
+                    def promotion = load '.pipelines/promotion-ci.groovy'
+                    promotion.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
+                }
             }
         }
 
@@ -442,16 +369,10 @@ pipeline {
             }
             steps {
                 script {
-                    sh '''
-                    echo "Rating pipeline..."
-					'''
-
-					def rating = load '.pipelines/rating-ci.groovy'
-
-					rating.call([
-						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
-					])
-				}
+                    sh 'echo "Rating pipeline..."'
+                    def rating = load '.pipelines/rating-ci.groovy'
+                    rating.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
+                }
             }
         }
 
@@ -461,16 +382,10 @@ pipeline {
             }
             steps {
                 script {
-                    sh '''
-                    echo "Recommendation pipeline..."
-					'''
-
-					def recommendation = load '.pipelines/recommendation-ci.groovy'
-
-					recommendation.call([
-						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
-					])
-				}
+                    sh 'echo "Recommendation pipeline..."'
+                    def recommendation = load '.pipelines/recommendation-ci.groovy'
+                    recommendation.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
+                }
             }
         }
 
@@ -480,16 +395,10 @@ pipeline {
             }
             steps {
                 script {
-                    sh '''
-                    echo "Sampledata pipeline..."
-					'''
-
-					def sampledata = load '.pipelines/sampledata-ci.groovy'
-
-					sampledata.call([
-						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
-					])
-				}
+                    sh 'echo "Sampledata pipeline..."'
+                    def sampledata = load '.pipelines/sampledata-ci.groovy'
+                    sampledata.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
+                }
             }
         }
 
@@ -499,16 +408,10 @@ pipeline {
             }
             steps {
                 script {
-                    sh '''
-                    echo "Search pipeline..."
-					'''
-
-					def search = load '.pipelines/search-ci.groovy'
-
-					search.call([
-						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
-					])
-				}
+                    sh 'echo "Search pipeline..."'
+                    def search = load '.pipelines/search-ci.groovy'
+                    search.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
+                }
             }
         }
 
@@ -518,15 +421,9 @@ pipeline {
             }
             steps {
                 script {
-                    sh '''
-                    echo "Storefront pipeline..."
-                    '''
-
+                    sh 'echo "Storefront pipeline..."'
                     def storefront = load '.pipelines/storefront-ci.groovy'
-
-                    storefront.call([
-                        isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
-                    ])
+                    storefront.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
                 }
             }
         }
@@ -537,16 +434,10 @@ pipeline {
             }
             steps {
                 script {
-					sh '''
-					echo "Storefront-bff pipeline..."
-					'''
-
-					def storefront_bff = load '.pipelines/storefront-bff-ci.groovy'
-
-					storefront_bff.call([
-						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
-					])
-				}
+                    sh 'echo "Storefront-bff pipeline..."'
+                    def storefront_bff = load '.pipelines/storefront-bff-ci.groovy'
+                    storefront_bff.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
+                }
             }
         }
 
@@ -556,16 +447,10 @@ pipeline {
             }
             steps {
                 script {
-                    sh '''
-                    echo "Tax pipeline..."
-					'''
-
-					def tax = load '.pipelines/tax-ci.groovy'
-
-					tax.call([
-						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
-					])
-				}
+                    sh 'echo "Tax pipeline..."'
+                    def tax = load '.pipelines/tax-ci.groovy'
+                    tax.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
+                }
             }
         }
 
@@ -575,16 +460,10 @@ pipeline {
             }
             steps {
                 script {
-                    sh '''
-                    echo "Webhook pipeline..."
-					'''
-
-					def webhook = load '.pipelines/webhook-ci.groovy'
-
-					webhook.call([
-						isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'
-					])
-				}
+                    sh 'echo "Webhook pipeline..."'
+                    def webhook = load '.pipelines/webhook-ci.groovy'
+                    webhook.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
+                }
             }
         }
 
@@ -597,21 +476,16 @@ pipeline {
             }
             steps {
                 sh 'echo "Publish Gitleaks reports..."'
-
                 sh '''
                 mkdir -p reports/gitleaks/merged
-
                 echo "<html><body><h1>Gitleaks Reports</h1><ul>" > reports/gitleaks/merged/index.html
-
                 for f in reports/gitleaks/*gitleaks-report.html; do
                     name=$(basename $f)
                     cp $f reports/gitleaks/merged/
                     echo "<li><a href='$name'>$name</a></li>" >> reports/gitleaks/merged/index.html
                 done
-
                 echo "</ul></body></html>" >> reports/gitleaks/merged/index.html
                 '''
-
                 publishHTML([
                     reportDir: 'reports/gitleaks/merged',
                     reportFiles: 'index.html',
@@ -625,7 +499,6 @@ pipeline {
         stage('Publish Snyk Reports') {
             when {
                 expression {
-                    // Đã bổ sung kiểm tra params.RUN_SECURITY_SCAN tại đây
                     return params.RUN_SECURITY_SCAN && fileExists('reports/snyk') &&
                         sh(script: "find reports/snyk -maxdepth 1 -name '*snyk-report.html' | grep -q .", returnStatus: true) == 0
                 }
