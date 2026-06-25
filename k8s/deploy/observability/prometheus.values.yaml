@@ -6,7 +6,7 @@ grafana:
   grafana.ini:
     database:
       type: postgres
-      host: postgresql.postgres:5432
+      host: postgresql.postgres.svc.cluster.local:5432
       name: grafana
       user: yasadminuser
       password: admin

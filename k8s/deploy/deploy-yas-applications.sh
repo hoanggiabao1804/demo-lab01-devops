@@ -1,12 +1,12 @@
 #!/bin/bash
+set -euo pipefail
 set -x
 
 # Auto restart when change configmap or secret
-helm repo add stakater https://stakater.github.io/stakater-charts
+helm repo add stakater https://stakater.github.io/stakater-charts --force-update
 helm repo update
 
-read -rd '' DOMAIN \
-< <(yq -r '.domain' ./cluster-config.yaml)
+DOMAIN="$(yq -r '.domain' ./cluster-config.yaml)"
 
 helm dependency build ../charts/backoffice-bff
 helm upgrade --install backoffice-bff ../charts/backoffice-bff \

@@ -1,19 +1,53 @@
 write:
   replicas: 1
+  initContainers:
+    - name: init-loki-data
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - mkdir -p /var/loki && chown -R 10001:10001 /var/loki
+      securityContext:
+        runAsUser: 0
+        runAsNonRoot: false
+      volumeMounts:
+        - name: data
+          mountPath: /var/loki
 read:
   replicas: 1
 backend:
   replicas: 1
+  initContainers:
+    - name: init-loki-data
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - mkdir -p /var/loki && chown -R 10001:10001 /var/loki
+      securityContext:
+        runAsUser: 0
+        runAsNonRoot: false
+      volumeMounts:
+        - name: data
+          mountPath: /var/loki
 loki:
   commonConfig:
     replication_factor: 1
   auth_enabled: false
+  limits_config:
+    ingestion_rate_mb: 64
+    ingestion_burst_size_mb: 128
 test:
   enabled: false
 storage:
   type: 'filesystem'
 minio:
   enabled: true
+  securityContext:
+    enabled: true
+    fsGroup: 0
+    runAsGroup: 0
+    runAsUser: 0
 
 monitoring:
   selfMonitoring:

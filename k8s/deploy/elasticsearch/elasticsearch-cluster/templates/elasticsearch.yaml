@@ -16,3 +16,11 @@ spec:
       count: {{ .Values.elasticsearch.replicas }}
       config:
         node.store.allow_mmap: false
+      podTemplate:
+        spec:
+          securityContext:
+            fsGroup: 1000
+          initContainers:
+            - name: elastic-internal-init-filesystem
+              securityContext:
+                runAsUser: 0

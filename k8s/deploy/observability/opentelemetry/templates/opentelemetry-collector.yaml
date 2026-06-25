@@ -1,4 +1,4 @@
-apiVersion: opentelemetry.io/v1alpha1
+apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
 metadata:
   name: opentelemetry
@@ -9,5 +9,5 @@ spec:
       port: 3500
       protocol: TCP
       targetPort: 3500
-  config: |
+  config:
     {{ toYaml .Values.opentelemetryCollectorConfig | nindent 4 }}
