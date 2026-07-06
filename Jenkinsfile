@@ -10,10 +10,10 @@ pipeline {
             --network sonar-network 
             -u root 
             -v /var/run/docker.sock:/var/run/docker.sock
-            -v $HOME/.sonar:/root/.sonar 
-            -v $HOME/.owasp:/owasp
-            -v $HOME/.npm:/root/.npm
-            -v $HOME/.m2:/root/.m2
+            -v jenkins-sonar-cache:/root/.sonar 
+            -v jenkins-owasp-cache:/owasp
+            -v jenkins-npm-cache:/root/.npm
+            -v jenkins-m2-cache:/root/.m2
             '''
         }
     }
@@ -53,10 +53,10 @@ pipeline {
                     ).trim().split("\n")
 
                     for (file in changedFiles) {
-                        if (file == "pom.xml" || file == "Jenkinsfile" || file == ".github/workflows/actions/action.yaml") {
-                            servicesToBuild << "all"
-                            break
-                        }
+                        // if (file == "pom.xml" || file == "Jenkinsfile" || file == ".github/workflows/actions/action.yaml") {
+                        //     servicesToBuild << "all"
+                        //     break
+                        // }
 
                         if (
 							file.startsWith("backoffice-bff/") 
