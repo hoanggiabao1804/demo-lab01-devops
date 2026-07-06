@@ -35,15 +35,20 @@ pipeline {
             }
         }
 
-        stage('Debug') {
+        stage('Debug ownership') {
             steps {
                 sh '''
-                echo "=== identity ==="
                 id
                 whoami
                 pwd
+
                 ls -ld .
+                ls -ld .git
+
                 stat -c "%U:%G %n" .
+                stat -c "%U:%G %n" .git
+
+                git rev-parse --short HEAD || true
                 '''
             }
         }
