@@ -26,7 +26,7 @@ pipeline {
     }
     environment {
         FROM_ORIGINAL_REPOSITORY = "${env.CHANGE_FORK == null || env.BRANCH_NAME == 'main'}"
-        NVD_API_KEY = credentials('nvd-api-key')
+        // NVD_API_KEY = credentials('nvd-api-key')
         SNYK_TOKEN = credentials('snyk-api-token')
     }
     stages {
