@@ -19,19 +19,9 @@ pipeline {
     }
     parameters {
         string(name: 'BUILD_IMAGE', defaultValue: '23120022/zakirepo:maven-3.9.14-eclipse-temurin-25-v4.0', description: 'Docker Image dùng để build')
-        string(name: 'BRANCH_SELECTOR', defaultValue: 'main', description: 'Nhánh cần checkout/build khi chạy job')
-        string(name: 'TAG_SELECTOR', defaultValue: '', description: 'Tag cần checkout/deploy; để trống nếu không dùng tag')
+        string(name: 'BASE_BRANCH', defaultValue: 'main', description: 'Branch chính để build')
         choice(name: 'TARGET_SERVICE', choices: ['auto', 'all', 'backoffice', 'backoffice-bff', 'cart', 'customer', 'delivery', 'inventory', 'location', 'media', 'order', 'payment', 'payment-paypal', 'product', 'promotion', 'rating', 'recommendation', 'sampledata', 'search', 'storefront', 'storefront-bff', 'tax', 'webhook'], description: 'Chọn dịch vụ muốn build (auto = tự động phát hiện thay đổi)')
-        choice(name: 'DEPLOY_ENVIRONMENT', choices: ['none', 'dev', 'staging'], description: 'Môi trường deploy được chọn')
         booleanParam(name: 'RUN_SECURITY_SCAN', defaultValue: true, description: 'Bật/Tắt xuất báo cáo quét bảo mật Gitleaks & Snyk')
-        booleanParam(name: 'RUN_HELM_DEPLOY', defaultValue: false, description: 'Bật/Tắt Helm deploy')
-        booleanParam(name: 'AUTO_DEPLOY_DEV', defaultValue: false, description: 'Tự động deploy lên dev')
-        booleanParam(name: 'RUN_STAGING_DEPLOY', defaultValue: false, description: 'Tự động deploy staging')
-        booleanParam(name: 'RUN_RELEASE_TAG', defaultValue: false, description: 'Tạo tag release')
-        string(name: 'HELM_RELEASE_NAME', defaultValue: '', description: 'Tên release Helm')
-        string(name: 'HELM_NAMESPACE', defaultValue: '', description: 'Namespace Helm deploy')
-        string(name: 'HELM_CHART_PATH', defaultValue: 'k8s/charts/backend', description: 'Đường dẫn chart Helm')
-        choice(name: 'CLEANUP_ACTION', choices: ['none', 'namespace', 'release', 'jenkins', 'all'], description: 'Loại cleanup cần chạy')
     }
     environment {
         FROM_ORIGINAL_REPOSITORY = "${env.CHANGE_FORK == null || env.BRANCH_NAME == 'main'}"
@@ -48,24 +38,6 @@ pipeline {
                 '''
             }
         }
-        stage('Checkout selected branch or tag') {
-            steps {
-                script {
-                    sh '''
-                    git config --global --add safe.directory '*'
-                    '''
-
-                    if (params.TAG_SELECTOR?.trim()) {
-                        sh 'git fetch --tags origin'
-                        sh "git checkout ${params.TAG_SELECTOR}"
-                    } else {
-                        sh "git fetch origin ${params.BRANCH_SELECTOR}:refs/remotes/origin/${params.BRANCH_SELECTOR}"
-                        sh "git checkout -B ${params.BRANCH_SELECTOR} origin/${params.BRANCH_SELECTOR}"
-                    }
-                }
-            }
-        }
-
         stage('Detect Changes') {
             steps {
                 script {
@@ -78,7 +50,7 @@ pipeline {
                         '''
 
                         echo "env.CHANGE_TARGET: '${env.CHANGE_TARGET}'"
-                        def base = env.CHANGE_TARGET ?: params.BRANCH_SELECTOR ?: params.BASE_BRANCH
+                        def base = env.CHANGE_TARGET ?: params.BASE_BRANCH
                         sh "git fetch origin ${base}:refs/remotes/origin/${base}"
 
                         // Lấy stdout dưới dạng chuỗi và loại bỏ khoảng trắng thừa
@@ -491,94 +463,6 @@ pipeline {
                     sh 'echo "Webhook pipeline..."'
                     def webhook = load '.pipelines/webhook-ci.groovy'
                     webhook.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
-                }
-            }
-        }
-
-        stage('Cleanup job') {
-            when {
-                expression { return params.CLEANUP_ACTION != 'none' }
-            }
-            steps {
-                script {
-                    if (params.CLEANUP_ACTION == 'namespace' || params.CLEANUP_ACTION == 'all') {
-                        sh "kubectl delete namespace ${params.HELM_NAMESPACE} --ignore-not-found=true || true"
-                    }
-
-                    if (params.CLEANUP_ACTION == 'release' || params.CLEANUP_ACTION == 'all') {
-                        sh "helm uninstall ${params.HELM_RELEASE_NAME} -n ${params.HELM_NAMESPACE} --ignore-not-found || true"
-                    }
-
-                    if (params.CLEANUP_ACTION == 'jenkins' || params.CLEANUP_ACTION == 'all') {
-                        cleanWs()
-                    }
-                }
-            }
-        }
-
-        stage('Helm deploy trigger') {
-            when {
-                expression { return params.RUN_HELM_DEPLOY && params.DEPLOY_ENVIRONMENT != 'none' }
-            }
-            steps {
-                script {
-                    sh """
-                    echo "Deploying Helm release ${params.HELM_RELEASE_NAME} to ${params.HELM_NAMESPACE}"
-                    helm upgrade --install ${params.HELM_RELEASE_NAME} ${params.HELM_CHART_PATH} \
-                      --namespace ${params.HELM_NAMESPACE} \
-                      --create-namespace \
-                      --set image.tag=${params.TAG_SELECTOR ?: 'latest'}
-                    """
-                }
-            }
-        }
-
-        stage('Auto deploy dev') {
-            when {
-                expression { return params.AUTO_DEPLOY_DEV || params.DEPLOY_ENVIRONMENT == 'dev' }
-            }
-            steps {
-                script {
-                    sh """
-                    echo "Deploying to dev namespace ${params.HELM_NAMESPACE}"
-                    helm upgrade --install ${params.HELM_RELEASE_NAME}-dev ${params.HELM_CHART_PATH} \
-                      --namespace ${params.HELM_NAMESPACE} \
-                      --create-namespace \
-                      --set image.tag=${params.TAG_SELECTOR ?: 'latest'}
-                    """
-                }
-            }
-        }
-
-        stage('Release tag pipeline') {
-            when {
-                expression { return params.RUN_RELEASE_TAG || params.TAG_SELECTOR?.trim() }
-            }
-            steps {
-                script {
-                    if (params.TAG_SELECTOR?.trim()) {
-                        sh "git tag ${params.TAG_SELECTOR}"
-                        sh "git push origin ${params.TAG_SELECTOR}"
-                    } else {
-                        echo 'No tag selected; skipping release tag creation.'
-                    }
-                }
-            }
-        }
-
-        stage('Deploy staging') {
-            when {
-                expression { return params.RUN_STAGING_DEPLOY || params.DEPLOY_ENVIRONMENT == 'staging' }
-            }
-            steps {
-                script {
-                    sh """
-                    echo "Deploying to staging namespace ${params.HELM_NAMESPACE}"
-                    helm upgrade --install ${params.HELM_RELEASE_NAME}-staging ${params.HELM_CHART_PATH} \
-                      --namespace ${params.HELM_NAMESPACE} \
-                      --create-namespace \
-                      --set image.tag=${params.TAG_SELECTOR ?: 'latest'}
-                    """
                 }
             }
         }

@@ -6,21 +6,22 @@ pipeline {
             image '23120022/zakirepo:maven-3.9.14-eclipse-temurin-25-v4.0'
             registryUrl 'https://index.docker.io/v1/'
             registryCredentialsId 'dockerhub_cred'
+            customWorkspace "/home/jenkins/workspace/${env.JOB_BASE_NAME}"
             args '''
             --network sonar-network 
             -u root 
             -v /var/run/docker.sock:/var/run/docker.sock
-            -v $HOME/.sonar:/root/.sonar 
-            -v $HOME/.owasp:/owasp
-            -v $HOME/.npm:/root/.npm
-            -v $HOME/.m2:/root/.m2
+            -v jenkins-sonar-cache:/root/.sonar 
+            -v jenkins-owasp-cache:/owasp
+            -v jenkins-npm-cache:/root/.npm
+            -v jenkins-m2-cache:/root/.m2
             '''
         }
     }
 
     environment {
         FROM_ORIGINAL_REPOSITORY = "${env.CHANGE_FORK == null || env.BRANCH_NAME == 'main'}"
-        NVD_API_KEY = credentials('nvd-api-key')
+        //NVD_API_KEY = credentials('nvd-api-key')
         SNYK_TOKEN = credentials('snyk-api-token')
     }
 
@@ -53,10 +54,10 @@ pipeline {
                     ).trim().split("\n")
 
                     for (file in changedFiles) {
-                        if (file == "pom.xml" || file == "Jenkinsfile" || file == ".github/workflows/actions/action.yaml") {
-                            servicesToBuild << "all"
-                            break
-                        }
+                        // if (file == "pom.xml" || file == "Jenkinsfile" || file == ".github/workflows/actions/action.yaml") {
+                        //     servicesToBuild << "all"
+                        //     break
+                        // }
 
                         if (
 							file.startsWith("backoffice-bff/") 
