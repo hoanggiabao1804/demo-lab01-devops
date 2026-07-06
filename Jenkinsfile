@@ -6,7 +6,7 @@ pipeline {
             image '23120022/zakirepo:maven-3.9.14-eclipse-temurin-25-v4.0'
             registryUrl 'https://index.docker.io/v1/'
             registryCredentialsId 'dockerhub_cred'
-            customWorkspace '/home/jenkins/workspace/${JOB_NAME}'
+            customWorkspace "/home/jenkins/workspace/${env.JOB_BASE_NAME}"
             args '''
             --network sonar-network 
             -u root 
