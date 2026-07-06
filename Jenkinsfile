@@ -36,14 +36,16 @@ pipeline {
         }
 
         stage('Debug') {
-            sh '''
-            echo "=== identity ==="
-            id
-            whoami
-            pwd
-            ls -ld .
-            stat -c "%U:%G %n" .
-            '''
+            steps {
+                sh '''
+                echo "=== identity ==="
+                id
+                whoami
+                pwd
+                ls -ld .
+                stat -c "%U:%G %n" .
+                '''
+            }
         }
 
         stage('Detect Changes') {
