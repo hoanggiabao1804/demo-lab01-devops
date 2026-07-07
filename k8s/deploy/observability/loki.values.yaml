@@ -1,25 +1,14 @@
 write:
   replicas: 1
   initContainers:
-<<<<<<< Updated upstream
-    - name: init-loki-data
-=======
     - name: loki-data-permissions
->>>>>>> Stashed changes
       image: busybox:1.36
       command:
         - sh
         - -c
-<<<<<<< Updated upstream
-        - mkdir -p /var/loki && chown -R 10001:10001 /var/loki
-      securityContext:
-        runAsUser: 0
-        runAsNonRoot: false
-=======
         - chown -R 10001:10001 /var/loki && chmod -R u+rwX,g+rwX /var/loki
       securityContext:
         runAsUser: 0
->>>>>>> Stashed changes
       volumeMounts:
         - name: data
           mountPath: /var/loki
@@ -28,25 +17,14 @@ read:
 backend:
   replicas: 1
   initContainers:
-<<<<<<< Updated upstream
-    - name: init-loki-data
-=======
     - name: loki-data-permissions
->>>>>>> Stashed changes
       image: busybox:1.36
       command:
         - sh
         - -c
-<<<<<<< Updated upstream
-        - mkdir -p /var/loki && chown -R 10001:10001 /var/loki
-      securityContext:
-        runAsUser: 0
-        runAsNonRoot: false
-=======
         - chown -R 10001:10001 /var/loki && chmod -R u+rwX,g+rwX /var/loki
       securityContext:
         runAsUser: 0
->>>>>>> Stashed changes
       volumeMounts:
         - name: data
           mountPath: /var/loki
@@ -56,11 +34,6 @@ loki:
   commonConfig:
     replication_factor: 1
   auth_enabled: false
-<<<<<<< Updated upstream
-  limits_config:
-    ingestion_rate_mb: 64
-    ingestion_burst_size_mb: 128
-=======
   schemaConfig:
     configs:
       - from: "2024-04-01"
@@ -70,11 +43,10 @@ loki:
         index:
           prefix: loki_index_
           period: 24h
->>>>>>> Stashed changes
 test:
   enabled: false
 storage:
-  type: 'filesystem'
+  type: "filesystem"
 minio:
   enabled: true
   securityContext:

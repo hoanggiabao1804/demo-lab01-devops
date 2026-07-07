@@ -6,7 +6,9 @@ metadata:
     strimzi.io/use-connector-resources: "true"
 spec:
   replicas: 1
+  {{- if .Values.debeziumConnect.version }}
   version: {{ .Values.debeziumConnect.version | quote }}
+  {{- end }}
   bootstrapServers: kafka-cluster-kafka-bootstrap:9092
   {{- if .Values.debeziumConnect.image }}
   image: {{ .Values.debeziumConnect.image }}
