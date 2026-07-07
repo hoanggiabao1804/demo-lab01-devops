@@ -101,7 +101,6 @@ pipeline {
                 sh '''
                     set -e
                     helm version
-                    yq --version
                     kubectl version --client
                     docker version
                 '''

@@ -29,7 +29,7 @@ pipeline{
     options {
         skipDefaultCheckout(true)
     }
-    
+
     stages{
         // Bước 1: Check kho lưu trữ
         stage('Checkout SCM'){
@@ -42,7 +42,6 @@ pipeline{
             steps{
                 sh '''
                 helm --version
-                yq --version
                 kubectl get nodes
                 '''
             }
