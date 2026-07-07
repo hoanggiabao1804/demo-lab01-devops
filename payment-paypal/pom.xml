@@ -18,6 +18,7 @@
         <sonar.organization>nashtech-garage</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.projectKey>nashtech-garage_yas-payment-paypal</sonar.projectKey>
+        <sonar.coverage.exclusions>**/*Application.java</sonar.coverage.exclusions>    
     </properties>
     <dependencies>
         <dependency>
@@ -86,6 +87,10 @@
     </dependencies>
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
