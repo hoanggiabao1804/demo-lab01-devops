@@ -11,14 +11,13 @@ spring:
   security:
     oauth2:
       client:
-        provider:
-          keycloak:
-            issuer-uri: http://identity/realms/Yas
         registration:
           keycloak:
             provider: keycloak
             client-id: storefront-bff
             client-secret: ZrU9I0q2uXBglBnmvyJdkl1lf0ncr8tn #gitleaks:allow
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope: openid, profile, email, roles
   data:
     redis:
