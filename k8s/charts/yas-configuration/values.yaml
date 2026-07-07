@@ -219,10 +219,10 @@ backofficeBffExtraConfig:
               token-uri: http://keycloak-service.keycloak/realms/Yas/protocol/openid-connect/token
               jwk-set-uri: http://keycloak-service.keycloak/realms/Yas/protocol/openid-connect/certs
               user-info-uri: http://keycloak-service.keycloak/realms/Yas/protocol/openid-connect/userinfo
-              user-name-attribute:
+              user-name-attribute: preferred_username
           registration:
             api-client:
-              providpreferred_usernameer: keycloak
+              provider: keycloak
               client-id: backoffice-bff
               client-secret: ${KEYCLOAK_BACKOFFICE_BFF_CLIENT_SECRET}
               authorization-grant-type: authorization_code
