@@ -10,7 +10,7 @@ def services = [
     [name: 'media',             path: 'media/',             chart: 'media',             type: 'backend',    build: 'mvn clean install -pl media -am -DskipTests -Djacoco.skip=true'],
     [name: 'order',             path: 'order/',             chart: 'order',             type: 'backend',    build: 'mvn clean install -pl order -am -DskipTests -Djacoco.skip=true'],
     [name: 'payment',           path: 'payment/',           chart: 'payment',           type: 'backend',    build: 'mvn clean install -pl payment -am -DskipTests -Djacoco.skip=true'],
-    [name: 'payment-paypal',    path: 'payment-paypal/',    chart: 'payment-paypal',    type: 'backend',    build: 'mvn clean install -pl payment-paypal -am -DskipTests -Djacoco.skip=true && rm payment-paypal/target/payment-paypal*-tests.jar'],
+    // [name: 'payment-paypal',    path: 'payment-paypal/',    chart: 'payment-paypal',    type: 'backend',    build: 'mvn clean install -pl payment-paypal -am -DskipTests -Djacoco.skip=true && rm payment-paypal/target/payment-paypal*-tests.jar'],
     [name: 'product',           path: 'product/',           chart: 'product',           type: 'backend',    build: 'mvn clean install -pl product -am -DskipTests -Djacoco.skip=true'],
     [name: 'promotion',         path: 'promotion/',         chart: 'promotion',         type: 'backend',    build: 'mvn clean install -pl promotion -am -DskipTests -Djacoco.skip=true'],
     [name: 'rating',            path: 'rating/',            chart: 'rating',            type: 'backend',    build: 'mvn clean install -pl rating -am -DskipTests -Djacoco.skip=true'],
@@ -54,7 +54,7 @@ pipeline{
                         git config --global --add safe.directory '*'
                     '''
                     
-                    CURRENT_BRANCH = env.GIT_BRANCH.replaceFirst(/^origin\//, '')
+                    CURRENT_BRANCH = (env.BRANCH_NAME ?: env.GIT_BRANCH ?: '').replaceFirst(/^origin\//, '')
 
                     IMAGE_TAG = sh(
                         script: "git rev-parse --short HEAD",
@@ -74,13 +74,15 @@ pipeline{
                         returnStdout: true
                     ).trim()
 
-                    def changedFiles = sh(
+                    def changedFilesOutput = sh(
                         script: "git diff --name-only ${previousCommit} ${env.GIT_COMMIT}",
                         returnStdout: true
-                    ).trim().split("\n")
+                    ).trim()
+
+                    def changedFiles = changedFilesOutput ? changedFilesOutput.split("\n") : []
 
                     if (changedFiles.any { it.startsWith('common-library') }) {
-                        servicesToDeploy = services*.name
+                        servicesToDeploy = services
                     } else {
                         services.each { svc -> 
                             if (changedFiles.any { it.startsWith(svc.path) }) {
@@ -132,16 +134,42 @@ pipeline{
                 )]) {
                     script{
                         servicesToDeploy.each { svc ->
-                            def serviceRepository = "$DOCKER_USER/yas-${svc.name}"
+                            def repository = "${env.DOCKER_USER}/yas-${svc.name}"
+
+                            if (svc.type == 'backend') {
+                                sh """
+                                    eval "${svc.build}"
+                                """
+                            }
+
                             sh """
-                                eval "${svc.build}"
-                                docker build -t $repository:$IMAGE_TAG $repository:main
+                                docker build -t $repository:$IMAGE_TAG ./${svc.path}
+                                docker tag $repository:$IMAGE_TAG $repository:main
 
                                 docker push $repository:$IMAGE_TAG
                                 docker push $repository:main
-                                """
+                            """
                         }
                     }
+                }
+            }
+        }
+        stage('Checkout to YAS manifest repository') {
+            when {
+                expression{
+                    CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty()
+                }
+            }
+            steps{
+                withCredentials([usernamePassword(
+                    credentialsId: 'github_cred',
+                    usernameVariable: 'GITHUB_USER',
+                    passwordVariable: 'GITHUB_TOKEN'
+                )]) {
+                    sh """
+                        [ -d "yas-helmchart-k8s" ] && rm -rf yas-helmchart-k8s/
+                        git clone https://\$GITHUB_USER:\$GITHUB_TOKEN@github.com/hoanggiabao1804/yas-helmchart-k8s.git
+                    """
                 }
             }
         }
@@ -168,9 +196,11 @@ pipeline{
                             echo "Updating Deployment..."
 
                             servicesToDeploy.each { svc -> 
+                                def repository = "${env.DOCKER_USER}/yas-${svc.name}"
+
                                 sh """
                                     yq -i '
-                                    .${svc.type}.image.repository = "$DOCKER_USER/yas-${svc.name}" |
+                                    .${svc.type}.image.repository = "${repository}" |
                                     .${svc.type}.image.tag = "$IMAGE_TAG"
                                     ' dev/${svc.chart}-values.yaml
 

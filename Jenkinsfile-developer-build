@@ -1,25 +1,25 @@
 def services = [
-    [key: 'BACKOFFICE_BFF',    repository: 'yas-backoffice-bff',    chart: 'backoffice-bff',    branchParam: 'BACKOFFICE_BFF_BRANCH'],
-    [key: 'BACKOFFICE_UI',     repository: 'yas-backoffice',        chart: 'backoffice-ui',     branchParam: 'BACKOFFICE_UI_BRANCH'],
-    [key: 'STOREFRONT_BFF',    repository: 'yas-storefront-bff',    chart: 'storefront-bff',    branchParam: 'STOREFRONT_BFF_BRANCH'],
-    [key: 'STOREFRONT_UI',     repository: 'yas-storefront',        chart: 'storefront-ui',     branchParam: 'STOREFRONT_UI_BRANCH'],
+    [key: 'BACKOFFICE_BFF',    name: 'backoffice-bff',    repository: 'yas-backoffice-bff',    path: 'backoffice-bff/',    chart: 'backoffice-bff',    imageType: 'backend', branchParam: 'BACKOFFICE_BFF_BRANCH',    build: 'mvn clean package -pl backoffice-bff -am -DskipTests'],
+    [key: 'BACKOFFICE_UI',     name: 'backoffice',        repository: 'yas-backoffice',        path: 'backoffice/',        chart: 'backoffice-ui',     imageType: 'ui',      branchParam: 'BACKOFFICE_UI_BRANCH',     build: null],
+    [key: 'STOREFRONT_BFF',    name: 'storefront-bff',    repository: 'yas-storefront-bff',    path: 'storefront-bff/',    chart: 'storefront-bff',    imageType: 'backend', branchParam: 'STOREFRONT_BFF_BRANCH',    build: 'mvn clean package -pl storefront-bff -am -DskipTests'],
+    [key: 'STOREFRONT_UI',     name: 'storefront',        repository: 'yas-storefront',        path: 'storefront/',        chart: 'storefront-ui',     imageType: 'ui',      branchParam: 'STOREFRONT_UI_BRANCH',     build: null],
 
-    [key: 'CART',              repository: 'yas-cart',              chart: 'cart',              branchParam: 'CART_BRANCH'],
-    [key: 'CUSTOMER',          repository: 'yas-customer',          chart: 'customer',          branchParam: 'CUSTOMER_BRANCH'],
-    [key: 'INVENTORY',         repository: 'yas-inventory',         chart: 'inventory',         branchParam: 'INVENTORY_BRANCH'],
-    [key: 'LOCATION',          repository: 'yas-location',          chart: 'location',          branchParam: 'LOCATION_BRANCH'],
-    [key: 'MEDIA',             repository: 'yas-media',             chart: 'media',             branchParam: 'MEDIA_BRANCH'],
-    [key: 'ORDER',             repository: 'yas-order',             chart: 'order',             branchParam: 'ORDER_BRANCH'],
-    [key: 'PAYMENT',           repository: 'yas-payment',           chart: 'payment',           branchParam: 'PAYMENT_BRANCH'],
-    [key: 'PAYMENT_PAYPAL',    repository: 'yas-payment-paypal',    chart: 'payment-paypal',    branchParam: 'PAYMENT_PAYPAL_BRANCH'],
-    [key: 'PRODUCT',           repository: 'yas-product',           chart: 'product',           branchParam: 'PRODUCT_BRANCH'],
-    [key: 'PROMOTION',         repository: 'yas-promotion',         chart: 'promotion',         branchParam: 'PROMOTION_BRANCH'],
-    [key: 'RATING',            repository: 'yas-rating',            chart: 'rating',            branchParam: 'RATING_BRANCH'],
-    [key: 'RECOMMENDATION',    repository: 'yas-recommendation',    chart: 'recommendation',    branchParam: 'RECOMMENDATION_BRANCH'],
-    [key: 'SEARCH',            repository: 'yas-search',            chart: 'search',            branchParam: 'SEARCH_BRANCH'],
-    [key: 'TAX',               repository: 'yas-tax',               chart: 'tax',               branchParam: 'TAX_BRANCH'],
-    [key: 'WEBHOOK',           repository: 'yas-webhook',           chart: 'webhook',           branchParam: 'WEBHOOK_BRANCH'],
-    [key: 'SAMPLEDATA',        repository: 'yas-sampledata',        chart: 'sampledata',        branchParam: 'SAMPLEDATA_BRANCH']
+    [key: 'CART',              name: 'cart',              repository: 'yas-cart',              path: 'cart/',              chart: 'cart',              imageType: 'backend', branchParam: 'CART_BRANCH',              build: 'mvn clean install -pl cart -am -DskipTests -Djacoco.skip=true'],
+    [key: 'CUSTOMER',          name: 'customer',          repository: 'yas-customer',          path: 'customer/',          chart: 'customer',          imageType: 'backend', branchParam: 'CUSTOMER_BRANCH',          build: 'mvn clean install -pl customer -am -DskipTests -Djacoco.skip=true'],
+    [key: 'INVENTORY',         name: 'inventory',         repository: 'yas-inventory',         path: 'inventory/',         chart: 'inventory',         imageType: 'backend', branchParam: 'INVENTORY_BRANCH',         build: 'mvn clean install -pl inventory -am -DskipTests -Djacoco.skip=true'],
+    [key: 'LOCATION',          name: 'location',          repository: 'yas-location',          path: 'location/',          chart: 'location',          imageType: 'backend', branchParam: 'LOCATION_BRANCH',          build: 'mvn clean install -pl location -am -DskipTests -Djacoco.skip=true'],
+    [key: 'MEDIA',             name: 'media',             repository: 'yas-media',             path: 'media/',             chart: 'media',             imageType: 'backend', branchParam: 'MEDIA_BRANCH',             build: 'mvn clean install -pl media -am -DskipTests -Djacoco.skip=true'],
+    [key: 'ORDER',             name: 'order',             repository: 'yas-order',             path: 'order/',             chart: 'order',             imageType: 'backend', branchParam: 'ORDER_BRANCH',             build: 'mvn clean install -pl order -am -DskipTests -Djacoco.skip=true'],
+    [key: 'PAYMENT',           name: 'payment',           repository: 'yas-payment',           path: 'payment/',           chart: 'payment',           imageType: 'backend', branchParam: 'PAYMENT_BRANCH',           build: 'mvn clean install -pl payment -am -DskipTests -Djacoco.skip=true'],
+    // [key: 'PAYMENT_PAYPAL',    name: 'payment-paypal',    repository: 'yas-payment-paypal',    path: 'payment-paypal/',    chart: 'payment-paypal',    imageType: 'backend', branchParam: 'PAYMENT_PAYPAL_BRANCH',    build: 'mvn clean install -pl payment-paypal -am -DskipTests -Djacoco.skip=true && rm payment-paypal/target/payment-paypal*-tests.jar'],
+    [key: 'PRODUCT',           name: 'product',           repository: 'yas-product',           path: 'product/',           chart: 'product',           imageType: 'backend', branchParam: 'PRODUCT_BRANCH',           build: 'mvn clean install -pl product -am -DskipTests -Djacoco.skip=true'],
+    [key: 'PROMOTION',         name: 'promotion',         repository: 'yas-promotion',         path: 'promotion/',         chart: 'promotion',         imageType: 'backend', branchParam: 'PROMOTION_BRANCH',         build: 'mvn clean install -pl promotion -am -DskipTests -Djacoco.skip=true'],
+    [key: 'RATING',            name: 'rating',            repository: 'yas-rating',            path: 'rating/',            chart: 'rating',            imageType: 'backend', branchParam: 'RATING_BRANCH',            build: 'mvn clean install -pl rating -am -DskipTests -Djacoco.skip=true'],
+    [key: 'RECOMMENDATION',    name: 'recommendation',    repository: 'yas-recommendation',    path: 'recommendation/',    chart: 'recommendation',    imageType: 'backend', branchParam: 'RECOMMENDATION_BRANCH',    build: 'mvn clean install -pl recommendation -am -DskipTests -Djacoco.skip=true'],
+    [key: 'SEARCH',            name: 'search',            repository: 'yas-search',            path: 'search/',            chart: 'search',            imageType: 'backend', branchParam: 'SEARCH_BRANCH',            build: 'mvn clean install -pl search -am -DskipTests -Djacoco.skip=true'],
+    [key: 'TAX',               name: 'tax',               repository: 'yas-tax',               path: 'tax/',               chart: 'tax',               imageType: 'backend', branchParam: 'TAX_BRANCH',               build: 'mvn clean install -pl tax -am -DskipTests -Djacoco.skip=true'],
+    [key: 'WEBHOOK',           name: 'webhook',           repository: 'yas-webhook',           path: 'webhook/',           chart: 'webhook',           imageType: 'backend', branchParam: 'WEBHOOK_BRANCH',           build: 'mvn clean install -pl webhook -am -DskipTests -Djacoco.skip=true'],
+    [key: 'SAMPLEDATA',        name: 'sampledata',        repository: 'yas-sampledata',        path: 'sampledata/',        chart: 'sampledata',        imageType: 'backend', branchParam: 'SAMPLEDATA_BRANCH',        build: 'mvn clean install -pl sampledata -am -DskipTests -Djacoco.skip=true']
 ]
 
 def NAMESPACE = 'yas'
@@ -67,7 +67,7 @@ pipeline {
         string(name: 'MEDIA_BRANCH', defaultValue: 'main', description: 'Branch to deploy for media')
         string(name: 'ORDER_BRANCH', defaultValue: 'main', description: 'Branch to deploy for order')
         string(name: 'PAYMENT_BRANCH', defaultValue: 'main', description: 'Branch to deploy for payment')
-        string(name: 'PAYMENT_PAYPAL_BRANCH', defaultValue: 'main', description: 'Branch to deploy for payment-paypal')
+        // string(name: 'PAYMENT_PAYPAL_BRANCH', defaultValue: 'main', description: 'Branch to deploy for payment-paypal')
         string(name: 'PRODUCT_BRANCH', defaultValue: 'main', description: 'Branch to deploy for product')
         string(name: 'PROMOTION_BRANCH', defaultValue: 'main', description: 'Branch to deploy for promotion')
         string(name: 'RATING_BRANCH', defaultValue: 'main', description: 'Branch to deploy for rating')
@@ -109,11 +109,10 @@ pipeline {
                 script {
                     def summary = []
                     services.each { svc ->
-                        def branch = normalizeBranch(params["${svc.key}_BRANCH"])
+                        def branch = normalizeBranch(params[svc.branchParam])
                         validateBranch(branch)
                         def imageTag = resolveBranchCommitId(branch)
                         def repository = "${params.DOCKERHUB_ORG}/${svc.repository}"
-
                         env["${svc.key}_RESOLVED_BRANCH"] = branch
                         env["${svc.key}_IMAGE_TAG"] = imageTag
                         env["${svc.key}_IMAGE_REPOSITORY"] = repository
@@ -152,6 +151,7 @@ pipeline {
                             def imageTag = env["${svc.key}_IMAGE_TAG"]
                             def repository = env["${svc.key}_IMAGE_REPOSITORY"]
                             def servicePath = svc.path
+                            def buildCommand = svc.build ?: ''
 
                             echo "Building and pushing ${svc.chart} for branch ${branch} as ${repository}:${imageTag}"
 
@@ -161,13 +161,17 @@ pipeline {
                                 REPO=\"${repository}\"
                                 TAG=\"${imageTag}\"
                                 SERVICE_PATH=\"${servicePath}\"
+                                BUILD_COMMAND=\"${buildCommand}\"
 
-                                git fetch origin \"${branch}\" --no-tags || true
+                                git fetch origin \"\$BRANCH:refs/remotes/origin/\$BRANCH\" --no-tags
                                 tmpdir=\$(mktemp -d)
-                                git archive \"origin/${branch}\" | tar -x -C \"\$tmpdir\"
+                                trap 'rm -rf \"\$tmpdir\"' EXIT
+                                git archive \"refs/remotes/origin/\$BRANCH\" | tar -x -C \"\$tmpdir\"
+                                if [ -n \"\$BUILD_COMMAND\" ]; then
+                                    (cd \"\$tmpdir\" && eval \"\$BUILD_COMMAND\")
+                                fi
                                 docker build -t \"\$REPO:\$TAG\" \"\$tmpdir/\$SERVICE_PATH\"
                                 docker push \"\$REPO:\$TAG\"
-                                rm -rf \"\$tmpdir\"
                             """
                         }
                     }

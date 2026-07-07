@@ -12,7 +12,7 @@ def services = [
     [key: 'MEDIA',             chart: 'media'],
     [key: 'ORDER',             chart: 'order'],
     [key: 'PAYMENT',           chart: 'payment'],
-    [key: 'PAYMENT_PAYPAL',    chart: 'payment-paypal'],
+    // [key: 'PAYMENT_PAYPAL',    chart: 'payment-paypal'],
     [key: 'PRODUCT',           chart: 'product'],
     [key: 'PROMOTION',         chart: 'promotion'],
     [key: 'RATING',            chart: 'rating'],
@@ -45,24 +45,24 @@ pipeline{
         }
         stage('Uninstall'){
             steps{
-                for (service in services){
-                //Uninstall Helm Releases
-                sh """helm uninstall ${service.chart} -n ${NAMESPACE}"""
+                script {
+                    services.each { service ->
+                        sh """helm uninstall ${service.chart} -n ${NAMESPACE} --ignore-not-found"""
+                    }
 
-                //Delete PVC
-                sh """kubectl delete pvc --all -n ${NAMESPACE}"""
-                sh '''
-                    echo "Waiting for services to be terminated..."
-                '''
+                    sh """kubectl delete pvc --all -n ${NAMESPACE} --ignore-not-found"""
+                    sh '''
+                        echo "Waiting for services to be terminated..."
+                    '''
                 }
             }
         }
         stage('Check Services Left'){
             steps{
-                sh
-                """
-                    kubectl get nodes -n ${NAMESPACE}
-                    kubectl get pvc -n ${NAMESPACE}
+                sh """
+                    kubectl get pods -n ${NAMESPACE} || true
+                    kubectl get svc -n ${NAMESPACE} || true
+                    kubectl get pvc -n ${NAMESPACE} || true
                 """
             }
         }

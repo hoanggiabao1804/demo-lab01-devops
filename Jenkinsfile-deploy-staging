@@ -10,7 +10,7 @@ def services = [
     [name: 'media',             path: 'media/',             chart: 'media',             type: 'backend',    build: 'mvn clean install -pl media -am -DskipTests -Djacoco.skip=true'],
     [name: 'order',             path: 'order/',             chart: 'order',             type: 'backend',    build: 'mvn clean install -pl order -am -DskipTests -Djacoco.skip=true'],
     [name: 'payment',           path: 'payment/',           chart: 'payment',           type: 'backend',    build: 'mvn clean install -pl payment -am -DskipTests -Djacoco.skip=true'],
-    [name: 'payment-paypal',    path: 'payment-paypal/',    chart: 'payment-paypal',    type: 'backend',    build: 'mvn clean install -pl payment-paypal -am -DskipTests -Djacoco.skip=true && rm payment-paypal/target/payment-paypal*-tests.jar'],
+    // [name: 'payment-paypal',    path: 'payment-paypal/',    chart: 'payment-paypal',    type: 'backend',    build: 'mvn clean install -pl payment-paypal -am -DskipTests -Djacoco.skip=true && rm payment-paypal/target/payment-paypal*-tests.jar'],
     [name: 'product',           path: 'product/',           chart: 'product',           type: 'backend',    build: 'mvn clean install -pl product -am -DskipTests -Djacoco.skip=true'],
     [name: 'promotion',         path: 'promotion/',         chart: 'promotion',         type: 'backend',    build: 'mvn clean install -pl promotion -am -DskipTests -Djacoco.skip=true'],
     [name: 'rating',            path: 'rating/',            chart: 'rating',            type: 'backend',    build: 'mvn clean install -pl rating -am -DskipTests -Djacoco.skip=true'],
@@ -21,9 +21,6 @@ def services = [
     [name: 'sampledata',        path: 'sampledata/',        chart: 'sampledata',        type: 'backend',    build: 'mvn clean install -pl sampledata -am -DskipTests -Djacoco.skip=true']
 ]
 
-def servicesToDeploy = []
-
-def CURRENT_BRANCH = ''
 def IMAGE_TAG = ''
 
 pipeline{
@@ -50,17 +47,37 @@ pipeline{
         stage('Init') {
             steps {
                 script {
-                    IMAGE_TAG = ref.replace("refs/tag/", "")
+                    sh '''
+                        git config --global --add safe.directory '*'
+                    '''
+
+                    def gitRef = env.TAG_NAME ?: env.ref ?: env.REF ?: env.GIT_BRANCH ?: env.BRANCH_NAME ?: ''
+                    if (!env.TAG_NAME && !(gitRef ==~ /^refs\/tags\/.+/)) {
+                        error 'Staging deploy must run from a Git tag.'
+                    }
+                    IMAGE_TAG = gitRef.replaceFirst(/^origin\//, '').replaceFirst(/^refs\/tags\//, '')
+                    if (IMAGE_TAG == '') {
+                        error 'Cannot resolve release tag. Run this job from a Git tag.'
+                    }
                     echo "Current tag name is: '$IMAGE_TAG'"
                 }
             }
         }
-        stage('Build and Push Docker Images'){
-            when {
-                expression{
-                    CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty()
+        stage('Dockerhub Login') {
+            steps{
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub_cred',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''#!/usr/bin/env bash
+                        set -e
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    '''
                 }
             }
+        }
+        stage('Build and Push Docker Images'){
             steps{
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub_cred',
@@ -68,26 +85,39 @@ pipeline{
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     script{
-                        servicesToDeploy.each { svc ->
-                            def serviceRepository = "$DOCKER_USER/yas-${svc.name}"
-                            sh """
-                                eval "${svc.build}"
-                                docker build -t $repository:$IMAGE_TAG $repository:main
+                        services.each { svc ->
+                            def repository = "${env.DOCKER_USER}/yas-${svc.name}"
 
-                                docker push $repository:$IMAGE_TAG
-                                docker push $repository:main
+                            if (svc.type == 'backend') {
+                                sh """
+                                    eval "${svc.build}"
                                 """
+                            }
+
+                            sh """
+                                docker build -t $repository:$IMAGE_TAG ./${svc.path}
+                                docker push $repository:$IMAGE_TAG
+                            """
                         }
                     }
                 }
             }
         }
-        stage('Apply Deployments'){
-            when {
-                expression{
-                    CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty()
+        stage('Checkout to YAS manifest repository') {
+            steps{
+                withCredentials([usernamePassword(
+                    credentialsId: 'github_cred',
+                    usernameVariable: 'GITHUB_USER',
+                    passwordVariable: 'GITHUB_TOKEN'
+                )]) {
+                    sh """
+                        [ -d "yas-helmchart-k8s" ] && rm -rf yas-helmchart-k8s/
+                        git clone https://\$GITHUB_USER:\$GITHUB_TOKEN@github.com/hoanggiabao1804/yas-helmchart-k8s.git
+                    """
                 }
             }
+        }
+        stage('Apply Deployments'){
             steps{
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub_cred',
@@ -104,19 +134,21 @@ pipeline{
 
                             echo "Updating Deployment..."
 
-                            servicesToDeploy.each { svc -> 
+                            services.each { svc ->
+                                def repository = "${env.DOCKER_USER}/yas-${svc.name}"
+
                                 sh """
                                     yq -i '
-                                    .${svc.type}.image.repository = "$DOCKER_USER/yas-${svc.name}" |
+                                    .${svc.type}.image.repository = "${repository}" |
                                     .${svc.type}.image.tag = "$IMAGE_TAG"
-                                    ' dev/${svc.chart}-values.yaml
+                                    ' staging/${svc.chart}-values.yaml
 
-                                    git add dev/${svc.chart}-values.yaml
+                                    git add staging/${svc.chart}-values.yaml
                                 """
                             }
 
                             sh """
-                                git commit -m "feat(dev-manifest): Update dev manifest files of services: ${servicesToDeploy*.name.collect().join("|")}."
+                                git commit -m "release(${IMAGE_TAG}): Update staging manifest files of services: ${services*.name.collect().join("|")}."
                                 git push origin main
                             """    
                         }
