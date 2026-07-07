@@ -55,6 +55,10 @@ def resolveBranchCommitId = { branch ->
 pipeline {
     agent any
 
+    options {
+        skipDefaultCheckout(true)
+    }
+
     parameters {
         string(name: 'BACKOFFICE_BFF_BRANCH', defaultValue: 'main', description: 'Branch to deploy for backoffice-bff')
         string(name: 'BACKOFFICE_UI_BRANCH', defaultValue: 'main', description: 'Branch to deploy for backoffice-ui')

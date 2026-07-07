@@ -26,6 +26,10 @@ def services = [
 pipeline{
     agent any
 
+    options {
+        skipDefaultCheckout(true)
+    }
+    
     stages{
         // Bước 1: Check kho lưu trữ
         stage('Checkout SCM'){
