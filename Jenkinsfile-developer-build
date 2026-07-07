@@ -116,9 +116,9 @@ pipeline {
                         validateBranch(branch)
                         def imageTag = resolveBranchCommitId(branch)
                         def repository = "${params.DOCKERHUB_ORG}/${svc.repository}"
-                        env["${svc.key}_RESOLVED_BRANCH"] = branch
-                        env["${svc.key}_IMAGE_TAG"] = imageTag
-                        env["${svc.key}_IMAGE_REPOSITORY"] = repository
+                        env."${svc.key}_RESOLVED_BRANCH" = branch
+                        env."${svc.key}_IMAGE_TAG" = imageTag
+                        env."${svc.key}_IMAGE_REPOSITORY" = repository
 
                         summary << "${svc.chart.padRight(18)} branch=${branch.padRight(25)} tag=${imageTag}"
                     }
@@ -132,7 +132,7 @@ pipeline {
         stage('Build and Push Docker Images') {
             steps {
                 script {
-                    def changedServices = services.findAll { svc -> env["${svc.key}_RESOLVED_BRANCH"] != 'main' }
+                    def changedServices = services.findAll { svc -> env."${svc.key}_RESOLVED_BRANCH" != 'main' }
                     if (changedServices.isEmpty()) {
                         echo 'No non-main branch services to build. Using default tags for all services.'
                         return
@@ -150,9 +150,9 @@ pipeline {
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                         '''
                         changedServices.each { svc ->
-                            def branch = env["${svc.key}_RESOLVED_BRANCH"]
-                            def imageTag = env["${svc.key}_IMAGE_TAG"]
-                            def repository = env["${svc.key}_IMAGE_REPOSITORY"]
+                            def branch = env."${svc.key}_RESOLVED_BRANCH"
+                            def imageTag = env."${svc.key}_IMAGE_TAG"
+                            def repository = env."${svc.key}_IMAGE_REPOSITORY"
                             def servicePath = svc.path
                             def buildCommand = svc.build ?: ''
 
@@ -199,8 +199,8 @@ pipeline {
                 dir('k8s/deploy') {
                     script {
                         services.each { svc ->
-                            def repository = env["${svc.key}_IMAGE_REPOSITORY"]
-                            def imageTag = env["${svc.key}_IMAGE_TAG"]
+                            def repository = env."${svc.key}_IMAGE_REPOSITORY"
+                            def imageTag = env."${svc.key}_IMAGE_TAG"
                             def imagePath = svc.imageType == 'ui' ? 'ui.image' : 'backend.image'
 
                             echo "Deploying ${svc.chart} with image ${repository}:${imageTag}"
@@ -228,9 +228,9 @@ pipeline {
                 echo 'developer_build job completed. Summary of service deployments:'
                 script {
                     services.each { svc ->
-                        def branch = env["${svc.key}_RESOLVED_BRANCH"]
-                        def imageTag = env["${svc.key}_IMAGE_TAG"]
-                        def repository = env["${svc.key}_IMAGE_REPOSITORY"]
+                        def branch = env."${svc.key}_RESOLVED_BRANCH"
+                        def imageTag = env."${svc.key}_IMAGE_TAG"
+                        def repository = env."${svc.key}_IMAGE_REPOSITORY"
                         echo "- ${svc.chart}: ${repository}:${imageTag} (branch=${branch})"
                     }
                 }
