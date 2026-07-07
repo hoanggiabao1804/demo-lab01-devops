@@ -1,0 +1,74 @@
+# Routes browser traffic through the Istio ingress gateway to the BFF services.
+#
+# Apply:
+#   kubectl apply -f k8s/deploy/istio/gateway-dev.yaml
+#
+# Local access options:
+#   1. With minikube tunnel:
+#      minikube tunnel
+#      kubectl get svc istio-ingress -n istio-system
+#      Add the EXTERNAL-IP to /etc/hosts for storefront.yas.local.com and backoffice.yas.local.com.
+#
+#   2. Without minikube tunnel:
+#      Use the istio-ingress NodePort for port 80, for example http://storefront.yas.local.com:30805
+#      if your current NodePort is 30805.
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: yas-dev-gateway
+  namespace: dev
+spec:
+  selector:
+    istio: ingress
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - storefront.yas.local.com
+        - backoffice.yas.local.com
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: storefront-bff
+  namespace: dev
+spec:
+  hosts:
+    - storefront.yas.local.com
+  gateways:
+    - yas-dev-gateway
+  http:
+    - route:
+        - destination:
+            host: storefront-bff.dev.svc.cluster.local
+            port:
+              number: 80
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream,5xx
+      timeout: 10s
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: backoffice-bff
+  namespace: dev
+spec:
+  hosts:
+    - backoffice.yas.local.com
+  gateways:
+    - yas-dev-gateway
+  http:
+    - route:
+        - destination:
+            host: backoffice-bff.dev.svc.cluster.local
+            port:
+              number: 80
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream,5xx
+      timeout: 10s
