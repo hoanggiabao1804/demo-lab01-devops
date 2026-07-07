@@ -1,0 +1,77 @@
+def NAMESPACE = 'yas'
+def services = [
+    [key: 'BACKOFFICE_BFF',    chart: 'backoffice-bff'],
+    [key: 'BACKOFFICE_UI',     chart: 'backoffice-ui'],
+    [key: 'STOREFRONT_BFF',    chart: 'storefront-bff'],
+    [key: 'STOREFRONT_UI',     chart: 'storefront-ui'],
+
+    [key: 'CART',              chart: 'cart'],
+    [key: 'CUSTOMER',          chart: 'customer'],
+    [key: 'INVENTORY',         chart: 'inventory'],
+    [key: 'LOCATION',          chart: 'location'],
+    [key: 'MEDIA',             chart: 'media'],
+    [key: 'ORDER',             chart: 'order'],
+    [key: 'PAYMENT',           chart: 'payment'],
+    [key: 'PAYMENT_PAYPAL',    chart: 'payment-paypal'],
+    [key: 'PRODUCT',           chart: 'product'],
+    [key: 'PROMOTION',         chart: 'promotion'],
+    [key: 'RATING',            chart: 'rating'],
+    [key: 'RECOMMENDATION',    chart: 'recommendation'],
+    [key: 'SEARCH',            chart: 'search'],
+    [key: 'TAX',               chart: 'tax'],
+    [key: 'WEBHOOK',           chart: 'webhook'],
+    [key: 'SAMPLEDATA',        chart: 'sampledata']
+]
+
+pipeline{
+    agent any
+
+    stages{
+        // Bước 1: Check kho lưu trữ
+        stage('Checkout SCM'){
+            steps{
+                checkout scm
+            }
+        }
+        // Bước 2: Check lại CI/CD agent
+        stage('Checkout CD Agent'){
+            steps{
+                sh '''
+                helm --version
+                yq --version
+                kubectl get nodes
+                '''
+            }
+        }
+        stage('Uninstall'){
+            steps{
+                for (service in services){
+                //Uninstall Helm Releases
+                sh """helm uninstall ${service.chart} -n ${NAMESPACE}"""
+
+                //Delete PVC
+                sh """kubectl delete pvc --all -n ${NAMESPACE}"""
+                sh '''
+                    echo "Waiting for services to be terminated..."
+                '''
+                }
+            }
+        }
+        stage('Check Services Left'){
+            steps{
+                sh
+                """
+                    kubectl get nodes -n ${NAMESPACE}
+                    kubectl get pvc -n ${NAMESPACE}
+                """
+            }
+        }
+        stage('Done'){
+            steps{
+                sh'''
+                echo 'Application successfully removed'
+                '''
+            }
+        }
+    }
+}
