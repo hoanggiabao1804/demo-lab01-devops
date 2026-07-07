@@ -35,6 +35,37 @@ pipeline {
             }
         }
 
+        // stage('Debug ownership') {
+        //     steps {
+        //         sh '''
+        //         id
+        //         whoami
+        //         pwd
+
+        //         ls -ld .
+        //         ls -ld .git
+
+        //         stat -c "%U:%G %n" .
+        //         stat -c "%U:%G %n" .git
+
+        //         echo "HOME=$HOME"
+
+        //         echo "===== root gitconfig ====="
+        //         cat ~/.gitconfig || true
+
+        //         env | grep GIT
+
+        //         echo "===== git config ====="
+        //         git config --global --list
+
+        //         echo "===== show origin ====="
+        //         git config --list --show-origin
+
+        //         git rev-parse --short HEAD || true
+        //         '''
+        //     }
+        // }
+
         stage('Detect Changes') {
             steps {
                 script {
