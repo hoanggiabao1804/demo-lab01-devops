@@ -53,6 +53,8 @@ pipeline {
                 echo "===== root gitconfig ====="
                 cat ~/.gitconfig || true
 
+                env | grep GIT
+
                 echo "===== git config ====="
                 git config --global --list
 
