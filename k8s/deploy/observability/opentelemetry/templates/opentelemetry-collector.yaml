@@ -4,6 +4,7 @@ metadata:
   name: opentelemetry
 spec:
   mode: deployment
+<<<<<<< Updated upstream
   ports:
     - name: loki
       port: 3500
@@ -11,3 +12,7 @@ spec:
       targetPort: 3500
   config:
     {{ toYaml .Values.opentelemetryCollectorConfig | nindent 4 }}
+=======
+  config:
+{{- toYaml .Values.opentelemetryCollectorConfig | nindent 4 }}
+>>>>>>> Stashed changes

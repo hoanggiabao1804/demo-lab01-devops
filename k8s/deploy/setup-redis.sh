@@ -5,6 +5,7 @@ set -x
 # Read configuration value from cluster-config.yaml file
 REDIS_PASSWORD="$(yq -r '.redis.password' ./cluster-config.yaml)"
 
+<<<<<<< Updated upstream
 helm upgrade --install redis \
   --set auth.password="$REDIS_PASSWORD" \
   --set volumePermissions.enabled=true \
@@ -12,3 +13,10 @@ helm upgrade --install redis \
   --set volumePermissions.image.repository=bitnami/os-shell \
   --set volumePermissions.image.tag=latest \
   oci://registry-1.docker.io/bitnamicharts/redis -n redis --create-namespace
+=======
+helm upgrade --install redis oci://registry-1.docker.io/bitnamicharts/redis \
+  --namespace redis \
+  --create-namespace \
+  --set auth.password="$REDIS_PASSWORD" \
+  --set volumePermissions.enabled=true
+>>>>>>> Stashed changes

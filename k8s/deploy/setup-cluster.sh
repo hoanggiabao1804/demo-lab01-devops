@@ -30,6 +30,8 @@ GRAFANA_PASSWORD="${CLUSTER_CONFIG[8]}"
 # Install the postgres-operator
 helm upgrade --install postgres-operator postgres-operator-charts/postgres-operator \
  --create-namespace --namespace postgres
+kubectl rollout status deployment/postgres-operator --timeout=180s \
+ --namespace postgres
 
 # Đợi Postgres Operator sẵn sàng trước khi tạo Cluster DB
 echo "Waiting for postgres-operator to be ready..."
@@ -50,6 +52,11 @@ helm upgrade --install pgadmin ./postgres/pgadmin \
 # Install strimzi-kafka-operator
 helm upgrade --install kafka-operator strimzi/strimzi-kafka-operator \
 --create-namespace --namespace kafka
+kubectl wait --for=condition=established --timeout=180s crd/kafkas.kafka.strimzi.io
+kubectl wait --for=condition=established --timeout=180s crd/kafkaconnects.kafka.strimzi.io
+kubectl wait --for=condition=established --timeout=180s crd/kafkaconnectors.kafka.strimzi.io
+kubectl rollout status deployment/strimzi-cluster-operator --timeout=180s \
+ --namespace kafka
 
 # Đợi Strimzi Operator đăng ký hoàn tất các Custom Resource Definitions (CRDs) vào API Server
 echo "Waiting for Strimzi Kafka CRDs to be established..."
@@ -79,6 +86,8 @@ helm upgrade --install akhq akhq/akhq \
 # Install elastic-operator
 helm upgrade --install elastic-operator elastic/eck-operator \
  --create-namespace --namespace elasticsearch
+kubectl rollout status statefulset/elastic-operator --timeout=180s \
+ --namespace elasticsearch
 
 # Đợi Elastic Operator sẵn sàng để tránh lỗi khi deploy cluster ngay sau đó
 echo "Waiting for elastic-operator to be ready..."
@@ -110,6 +119,12 @@ helm upgrade --install cert-manager jetstack/cert-manager \
   --set prometheus.enabled=false \
   --set webhook.timeoutSeconds=4 \
   --set admissionWebhooks.certManager.create=true
+kubectl rollout status deployment/cert-manager --timeout=180s \
+  --namespace cert-manager
+kubectl rollout status deployment/cert-manager-cainjector --timeout=180s \
+  --namespace cert-manager
+kubectl rollout status deployment/cert-manager-webhook --timeout=180s \
+  --namespace cert-manager
 
 kubectl rollout status deployment/cert-manager -n cert-manager --timeout=180s
 kubectl rollout status deployment/cert-manager-webhook -n cert-manager --timeout=180s
@@ -118,6 +133,9 @@ kubectl rollout status deployment/cert-manager-cainjector -n cert-manager --time
 # Install opentelemetry-operator
 helm upgrade --install opentelemetry-operator open-telemetry/opentelemetry-operator \
 --create-namespace --namespace observability
+kubectl wait --for=condition=established --timeout=180s crd/opentelemetrycollectors.opentelemetry.io
+kubectl rollout status deployment/opentelemetry-operator --timeout=180s \
+ --namespace observability
 
 # Đợi Webhook của OpenTelemetry Operator hoàn toàn "sống" để xử lý chuyển đổi dữ liệu thành công
 echo "Waiting for OpenTelemetry operator webhook service to be ready..."
@@ -206,6 +224,8 @@ set -x
 helm upgrade --install grafana-operator oci://ghcr.io/grafana-operator/helm-charts/grafana-operator \
 --version v5.0.2 \
 --create-namespace --namespace observability
+kubectl rollout status deployment/grafana-operator --timeout=180s \
+ --namespace observability
 
 set +x
 echo "Waiting for Grafana operator to be ready..."
@@ -223,8 +243,11 @@ helm upgrade --install grafana ./observability/grafana \
 
 helm upgrade --install zookeeper ./zookeeper \
  --namespace zookeeper --create-namespace
+<<<<<<< Updated upstream
 
 set +x
 echo "Waiting for Zookeeper to be ready..."
 kubectl rollout status statefulset/zookeeper -n zookeeper --timeout=180s
 set -x
+=======
+>>>>>>> Stashed changes

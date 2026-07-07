@@ -23,7 +23,7 @@ spec:
   volume:
     size: {{ .Values.volumeSize }}
   users:
-    {{ .Values.username }}:
+    {{ .Values.username | quote }}:
       - superuser
       - inherit
       - login
@@ -31,6 +31,7 @@ spec:
       - createdb
       - replication
   databases:
+<<<<<<< Updated upstream
     cart: {{ .Values.username }}
     customer: {{ .Values.username }}
     inventory: {{ .Values.username }}
@@ -46,6 +47,23 @@ spec:
     recommendation: {{ .Values.username }}
     webhook: {{ .Values.username }}
     grafana: {{ .Values.username }}
+=======
+    cart: {{ .Values.username | quote }}
+    customer: {{ .Values.username | quote }}
+    inventory: {{ .Values.username | quote }}
+    keycloak: {{ .Values.username | quote }}
+    location: {{ .Values.username | quote }}
+    media: {{ .Values.username | quote }}
+    order: {{ .Values.username | quote }}
+    payment: {{ .Values.username | quote }}
+    product: {{ .Values.username | quote }}
+    promotion: {{ .Values.username | quote }}
+    rating: {{ .Values.username | quote }}
+    tax: {{ .Values.username | quote }}
+    recommendation: {{ .Values.username | quote }}
+    webhook: {{ .Values.username | quote }}
+    grafana: {{ .Values.username | quote }}
+>>>>>>> Stashed changes
   patroni:
     slots:
       eventuate_slot_cart:

@@ -10,13 +10,21 @@ opentelemetryCollectorConfig:
     batch: {}
 
   exporters:
+<<<<<<< Updated upstream
     debug:
       verbosity: detailed
     otlp_http:
+=======
+    otlphttp:
+>>>>>>> Stashed changes
       endpoint: http://tempo:4318
   service:
     pipelines:
       traces:
         receivers: [otlp]
         processors: [batch]
+<<<<<<< Updated upstream
         exporters: [otlp_http]
+=======
+        exporters: [otlphttp]
+>>>>>>> Stashed changes
