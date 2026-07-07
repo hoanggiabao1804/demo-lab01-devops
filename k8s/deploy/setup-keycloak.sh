@@ -15,7 +15,6 @@ BOOTSTRAP_ADMIN_PASSWORD="${KEYCLOAK_CONFIG[4]}"
 KEYCLOAK_BACKOFFICE_REDIRECT_URL="${KEYCLOAK_CONFIG[5]}"
 KEYCLOAK_STOREFRONT_REDIRECT_URL="${KEYCLOAK_CONFIG[6]}"
 
-# Install CRD keycloak
 kubectl create namespace keycloak --dry-run=client -o yaml | kubectl apply -f -
 kubectl apply -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/26.0.2/kubernetes/keycloaks.k8s.keycloak.org-v1.yml
 kubectl apply -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/26.0.2/kubernetes/keycloakrealmimports.k8s.keycloak.org-v1.yml

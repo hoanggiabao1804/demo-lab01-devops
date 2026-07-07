@@ -1,0 +1,192 @@
+def services = [
+    [name: 'backoffice-bff',    path: 'backoffice-bff/',    chart: 'backoffice-bff',    type: 'backend',    build: 'mvn clean package -pl backoffice-bff -am -DskipTests'],
+    [name: 'backoffice',        path: 'backoffice/',        chart: 'backoffice-ui',     type: 'ui',         build: 'npm ci && npm run build'],
+    [name: 'storefront-bff',    path: 'storefront-bff/',    chart: 'storefront-bff',    type: 'backend',    build: 'mvn clean package -pl storefront-bff -am -DskipTests'],
+    [name: 'storefront',        path: 'storefront/',        chart: 'storefront-ui',     type: 'ui',         build: 'npm ci && npm run build'],
+    [name: 'cart',              path: 'cart/',              chart: 'cart',              type: 'backend',    build: 'mvn clean install -pl cart -am -DskipTests -Djacoco.skip=true'],
+    [name: 'customer',          path: 'customer/',          chart: 'customer',          type: 'backend',    build: 'mvn clean install -pl customer -am -DskipTests -Djacoco.skip=true'],
+    [name: 'inventory',         path: 'inventory/',         chart: 'inventory',         type: 'backend',    build: 'mvn clean install -pl inventory -am -DskipTests -Djacoco.skip=true'],
+    [name: 'location',          path: 'location/',          chart: 'location',          type: 'backend',    build: 'mvn clean install -pl location -am -DskipTests -Djacoco.skip=true'],
+    [name: 'media',             path: 'media/',             chart: 'media',             type: 'backend',    build: 'mvn clean install -pl media -am -DskipTests -Djacoco.skip=true'],
+    [name: 'order',             path: 'order/',             chart: 'order',             type: 'backend',    build: 'mvn clean install -pl order -am -DskipTests -Djacoco.skip=true'],
+    [name: 'payment',           path: 'payment/',           chart: 'payment',           type: 'backend',    build: 'mvn clean install -pl payment -am -DskipTests -Djacoco.skip=true'],
+    [name: 'payment-paypal',    path: 'payment-paypal/',    chart: 'payment-paypal',    type: 'backend',    build: 'mvn clean install -pl payment-paypal -am -DskipTests -Djacoco.skip=true && rm payment-paypal/target/payment-paypal*-tests.jar'],
+    [name: 'product',           path: 'product/',           chart: 'product',           type: 'backend',    build: 'mvn clean install -pl product -am -DskipTests -Djacoco.skip=true'],
+    [name: 'promotion',         path: 'promotion/',         chart: 'promotion',         type: 'backend',    build: 'mvn clean install -pl promotion -am -DskipTests -Djacoco.skip=true'],
+    [name: 'rating',            path: 'rating/',            chart: 'rating',            type: 'backend',    build: 'mvn clean install -pl rating -am -DskipTests -Djacoco.skip=true'],
+    [name: 'recommendation',    path: 'recommendation/',    chart: 'recommendation',    type: 'backend',    build: 'mvn clean install -pl recommendation -am -DskipTests -Djacoco.skip=true'],
+    [name: 'search',            path: 'search/',            chart: 'search',            type: 'backend',    build: 'mvn clean install -pl search -am -DskipTests -Djacoco.skip=true'],
+    [name: 'tax',               path: 'tax/',               chart: 'tax',               type: 'backend',    build: 'mvn clean install -pl tax -am -DskipTests -Djacoco.skip=true'],
+    [name: 'webhook',           path: 'webhook/',           chart: 'webhook',           type: 'backend',    build: 'mvn clean install -pl webhook -am -DskipTests -Djacoco.skip=true'],
+    [name: 'sampledata',        path: 'sampledata/',        chart: 'sampledata',        type: 'backend',    build: 'mvn clean install -pl sampledata -am -DskipTests -Djacoco.skip=true']
+]
+
+def servicesToDeploy = []
+
+def CURRENT_BRANCH = ''
+def IMAGE_TAG = ''
+
+pipeline{
+    agent {
+        docker {
+            image '23120022/zakirepo:release-builder-v1.0'
+            registryUrl 'https://index.docker.io/v1/'
+            registryCredentialsId 'dockerhub_cred'
+            args '''
+            -u root 
+            -v /var/run/docker.sock:/var/run/docker.sock
+            -v $HOME/.npm:/root/.npm
+            -v $HOME/.m2:/root/.m2
+            '''
+        }
+    }
+
+    stages{
+        stage('Checkout'){
+            steps{
+                checkout scm
+            }
+        }
+        stage('Init') {
+            steps {
+                script {
+                    sh '''
+                        git config --global --add safe.directory '*'
+                    '''
+                    
+                    CURRENT_BRANCH = env.GIT_BRANCH.replaceFirst(/^origin\//, '')
+
+                    IMAGE_TAG = sh(
+                        script: "git rev-parse --short HEAD",
+                        returnStdout: true
+                    ).trim()
+
+                    echo "Current branch: '${CURRENT_BRANCH}'"
+                    echo "Current commit ID is: '$IMAGE_TAG'"
+                }
+            }
+        }
+        stage('Detect Changes') {
+            steps {
+                script {
+                    def previousCommit = sh(
+                        script: "git rev-parse HEAD~1",
+                        returnStdout: true
+                    ).trim()
+
+                    def changedFiles = sh(
+                        script: "git diff --name-only ${previousCommit} ${env.GIT_COMMIT}",
+                        returnStdout: true
+                    ).trim().split("\n")
+
+                    if (changedFiles.any { it.startsWith('common-library') }) {
+                        servicesToDeploy = services*.name
+                    } else {
+                        services.each { svc -> 
+                            if (changedFiles.any { it.startsWith(svc.path) }) {
+                                servicesToDeploy << svc
+                            }
+                        }
+                    }
+
+                    def changedServices = servicesToDeploy*.name.collect().join("\n");
+                    
+                    echo "Changed service: $changedServices\n"
+
+                    if (servicesToDeploy.isEmpty()) {
+                        echo "No services changed"
+                    }
+                }
+            }
+        }
+        stage('Dockerhub Login') {
+            when {
+                expression{
+                    CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty()
+                }
+            }
+            steps{
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub_cred',
+                    usernameVariable: 'DOCKER_USER', 
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''#!/usr/bin/env bash
+                        set -e
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    '''
+                }
+            }
+        }
+        stage('Build and Push Docker Images'){
+            when {
+                expression{
+                    CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty()
+                }
+            }
+            steps{
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub_cred',
+                    usernameVariable: 'DOCKER_USER', 
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    script{
+                        servicesToDeploy.each { svc ->
+                            def serviceRepository = "$DOCKER_USER/yas-${svc.name}"
+                            sh """
+                                eval "${svc.build}"
+                                docker build -t $repository:$IMAGE_TAG $repository:main
+
+                                docker push $repository:$IMAGE_TAG
+                                docker push $repository:main
+                                """
+                        }
+                    }
+                }
+            }
+        }
+        stage('Apply Deployments'){
+            when {
+                expression{
+                    CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty()
+                }
+            }
+            steps{
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub_cred',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    script {
+                        dir('yas-helmchart-k8s') {
+                            sh """
+                                git config --global user.name "Jenkins CI"
+                                git config --global user.email "jenkins@example.com"
+                                git checkout main
+                            """
+
+                            echo "Updating Deployment..."
+
+                            servicesToDeploy.each { svc -> 
+                                sh """
+                                    yq -i '
+                                    .${svc.type}.image.repository = "$DOCKER_USER/yas-${svc.name}" |
+                                    .${svc.type}.image.tag = "$IMAGE_TAG"
+                                    ' dev/${svc.chart}-values.yaml
+
+                                    git add dev/${svc.chart}-values.yaml
+                                """
+                            }
+
+                            sh """
+                                git commit -m "feat(dev-manifest): Update dev manifest files of services: ${servicesToDeploy*.name.collect().join("|")}."
+                                git push origin main
+                            """    
+                        }
+
+                    }
+                }
+            }
+        }
+    }
+}

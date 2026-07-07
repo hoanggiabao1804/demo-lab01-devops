@@ -10,13 +10,11 @@ opentelemetryCollectorConfig:
     batch: {}
 
   exporters:
-    debug:
-      verbosity: detailed
-    otlp_http:
+    otlphttp:
       endpoint: http://tempo:4318
   service:
     pipelines:
       traces:
         receivers: [otlp]
         processors: [batch]
-        exporters: [otlp_http]
+        exporters: [otlphttp]

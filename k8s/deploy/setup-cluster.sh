@@ -30,6 +30,8 @@ GRAFANA_PASSWORD="${CLUSTER_CONFIG[8]}"
 # Install the postgres-operator
 helm upgrade --install postgres-operator postgres-operator-charts/postgres-operator \
  --create-namespace --namespace postgres
+kubectl rollout status deployment/postgres-operator --timeout=180s \
+ --namespace postgres
 
 # Đợi Postgres Operator sẵn sàng trước khi tạo Cluster DB
 echo "Waiting for postgres-operator to be ready..."
@@ -50,6 +52,11 @@ helm upgrade --install pgadmin ./postgres/pgadmin \
 # Install strimzi-kafka-operator
 helm upgrade --install kafka-operator strimzi/strimzi-kafka-operator \
 --create-namespace --namespace kafka
+kubectl wait --for=condition=established --timeout=180s crd/kafkas.kafka.strimzi.io
+kubectl wait --for=condition=established --timeout=180s crd/kafkaconnects.kafka.strimzi.io
+kubectl wait --for=condition=established --timeout=180s crd/kafkaconnectors.kafka.strimzi.io
+kubectl rollout status deployment/strimzi-cluster-operator --timeout=180s \
+ --namespace kafka
 
 # Đợi Strimzi Operator đăng ký hoàn tất các Custom Resource Definitions (CRDs) vào API Server
 echo "Waiting for Strimzi Kafka CRDs to be established..."
@@ -57,10 +64,9 @@ kubectl wait --for=condition=Established crd/kafkas.kafka.strimzi.io --timeout=1
 kubectl wait --for=condition=Established crd/kafkaconnects.kafka.strimzi.io --timeout=180s
 kubectl wait --for=condition=Established crd/kafkaconnectors.kafka.strimzi.io --timeout=180s
 
-# Build Kafka Connect image locally for minikube. Strimzi 1.0 supports plugin
-# image volumes, but the Docker runtime used by minikube cannot mount them
-# reliably, so the Debezium PostgreSQL connector is baked into the Connect image.
-minikube image build -t yas-debezium-connect-postgresql:1.0.1-kafka-4.2.0-debezium-3.3 ./kafka/kafka-connect
+# Build Kafka Connect image with the Debezium PostgreSQL plugin into Minikube.
+DEBEZIUM_CONNECT_IMAGE="yas-debezium-connect-postgresql:1.0.1-kafka-4.3.0-debezium-3.3"
+minikube image build -t "$DEBEZIUM_CONNECT_IMAGE" ./kafka/kafka-connect
 
 # Install kafka and postgresql connector
 helm upgrade --install kafka-cluster ./kafka/kafka-cluster \
@@ -68,7 +74,8 @@ helm upgrade --install kafka-cluster ./kafka/kafka-cluster \
 --set kafka.replicas="$KAFKA_REPLICAS" \
 --set zookeeper.replicas="$ZOOKEEPER_REPLICAS" \
 --set postgresql.username="$POSTGRESQL_USERNAME" \
---set postgresql.password="$POSTGRESQL_PASSWORD"
+--set postgresql.password="$POSTGRESQL_PASSWORD" \
+--set debeziumConnect.image="$DEBEZIUM_CONNECT_IMAGE"
 
 # Install akhq
 akhq_hostname="akhq.$DOMAIN" yq -i '.hostname=env(akhq_hostname)' ./kafka/akhq.values.yaml
@@ -79,6 +86,8 @@ helm upgrade --install akhq akhq/akhq \
 # Install elastic-operator
 helm upgrade --install elastic-operator elastic/eck-operator \
  --create-namespace --namespace elasticsearch
+kubectl rollout status statefulset/elastic-operator --timeout=180s \
+ --namespace elasticsearch
 
 # Đợi Elastic Operator sẵn sàng để tránh lỗi khi deploy cluster ngay sau đó
 echo "Waiting for elastic-operator to be ready..."
@@ -93,8 +102,7 @@ helm upgrade --install elasticsearch-cluster ./elasticsearch/elasticsearch-clust
 # Install loki (Thêm flag sử dụng Test Schema để tránh lỗi Validate đòi cấu hình lưu trữ dài hạn)
 helm upgrade --install loki grafana/loki \
  --create-namespace --namespace observability \
- -f ./observability/loki.values.yaml \
- --set loki.useTestSchema=true
+ -f ./observability/loki.values.yaml
 
 # Install tempo
 helm upgrade --install tempo grafana/tempo \
@@ -110,6 +118,12 @@ helm upgrade --install cert-manager jetstack/cert-manager \
   --set prometheus.enabled=false \
   --set webhook.timeoutSeconds=4 \
   --set admissionWebhooks.certManager.create=true
+kubectl rollout status deployment/cert-manager --timeout=180s \
+  --namespace cert-manager
+kubectl rollout status deployment/cert-manager-cainjector --timeout=180s \
+  --namespace cert-manager
+kubectl rollout status deployment/cert-manager-webhook --timeout=180s \
+  --namespace cert-manager
 
 kubectl rollout status deployment/cert-manager -n cert-manager --timeout=180s
 kubectl rollout status deployment/cert-manager-webhook -n cert-manager --timeout=180s
@@ -118,6 +132,9 @@ kubectl rollout status deployment/cert-manager-cainjector -n cert-manager --time
 # Install opentelemetry-operator
 helm upgrade --install opentelemetry-operator open-telemetry/opentelemetry-operator \
 --create-namespace --namespace observability
+kubectl wait --for=condition=established --timeout=180s crd/opentelemetrycollectors.opentelemetry.io
+kubectl rollout status deployment/opentelemetry-operator --timeout=180s \
+ --namespace observability
 
 # Đợi Webhook của OpenTelemetry Operator hoàn toàn "sống" để xử lý chuyển đổi dữ liệu thành công
 echo "Waiting for OpenTelemetry operator webhook service to be ready..."
@@ -206,6 +223,8 @@ set -x
 helm upgrade --install grafana-operator oci://ghcr.io/grafana-operator/helm-charts/grafana-operator \
 --version v5.0.2 \
 --create-namespace --namespace observability
+kubectl rollout status deployment/grafana-operator --timeout=180s \
+ --namespace observability
 
 set +x
 echo "Waiting for Grafana operator to be ready..."
@@ -223,8 +242,3 @@ helm upgrade --install grafana ./observability/grafana \
 
 helm upgrade --install zookeeper ./zookeeper \
  --namespace zookeeper --create-namespace
-
-set +x
-echo "Waiting for Zookeeper to be ready..."
-kubectl rollout status statefulset/zookeeper -n zookeeper --timeout=180s
-set -x

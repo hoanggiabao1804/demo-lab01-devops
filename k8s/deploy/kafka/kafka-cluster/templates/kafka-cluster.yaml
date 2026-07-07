@@ -1,4 +1,27 @@
 apiVersion: kafka.strimzi.io/v1
+kind: KafkaNodePool
+metadata:
+  name: kafka-cluster-pool
+  labels:
+    strimzi.io/cluster: kafka-cluster
+spec:
+  replicas: {{ .Values.kafka.replicas }}
+  roles:
+    - controller
+    - broker
+  storage:
+    type: persistent-claim
+    size: {{ required "kafka.storeSize is required" .Values.kafka.storeSize }}
+    kraftMetadata: shared
+    deleteClaim: false
+  template:
+    pod:
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 0
+---
+apiVersion: kafka.strimzi.io/v1
 kind: Kafka
 metadata:
   name: kafka-cluster

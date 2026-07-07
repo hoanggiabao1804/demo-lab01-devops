@@ -1,15 +1,14 @@
 write:
   replicas: 1
   initContainers:
-    - name: init-loki-data
+    - name: loki-data-permissions
       image: busybox:1.36
       command:
         - sh
         - -c
-        - mkdir -p /var/loki && chown -R 10001:10001 /var/loki
+        - chown -R 10001:10001 /var/loki && chmod -R u+rwX,g+rwX /var/loki
       securityContext:
         runAsUser: 0
-        runAsNonRoot: false
       volumeMounts:
         - name: data
           mountPath: /var/loki
@@ -18,29 +17,36 @@ read:
 backend:
   replicas: 1
   initContainers:
-    - name: init-loki-data
+    - name: loki-data-permissions
       image: busybox:1.36
       command:
         - sh
         - -c
-        - mkdir -p /var/loki && chown -R 10001:10001 /var/loki
+        - chown -R 10001:10001 /var/loki && chmod -R u+rwX,g+rwX /var/loki
       securityContext:
         runAsUser: 0
-        runAsNonRoot: false
       volumeMounts:
         - name: data
           mountPath: /var/loki
 loki:
+  podSecurityContext:
+    runAsNonRoot: false
   commonConfig:
     replication_factor: 1
   auth_enabled: false
-  limits_config:
-    ingestion_rate_mb: 64
-    ingestion_burst_size_mb: 128
+  schemaConfig:
+    configs:
+      - from: "2024-04-01"
+        store: tsdb
+        object_store: s3
+        schema: v13
+        index:
+          prefix: loki_index_
+          period: 24h
 test:
   enabled: false
 storage:
-  type: 'filesystem'
+  type: "filesystem"
 minio:
   enabled: true
   securityContext:

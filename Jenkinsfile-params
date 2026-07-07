@@ -1,528 +1,232 @@
-def servicesToBuild = []
+def services = [
+    [key: 'BACKOFFICE_BFF',    repository: 'yas-backoffice-bff',    chart: 'backoffice-bff',    branchParam: 'BACKOFFICE_BFF_BRANCH'],
+    [key: 'BACKOFFICE_UI',     repository: 'yas-backoffice',        chart: 'backoffice-ui',     branchParam: 'BACKOFFICE_UI_BRANCH'],
+    [key: 'STOREFRONT_BFF',    repository: 'yas-storefront-bff',    chart: 'storefront-bff',    branchParam: 'STOREFRONT_BFF_BRANCH'],
+    [key: 'STOREFRONT_UI',     repository: 'yas-storefront',        chart: 'storefront-ui',     branchParam: 'STOREFRONT_UI_BRANCH'],
+
+    [key: 'CART',              repository: 'yas-cart',              chart: 'cart',              branchParam: 'CART_BRANCH'],
+    [key: 'CUSTOMER',          repository: 'yas-customer',          chart: 'customer',          branchParam: 'CUSTOMER_BRANCH'],
+    [key: 'INVENTORY',         repository: 'yas-inventory',         chart: 'inventory',         branchParam: 'INVENTORY_BRANCH'],
+    [key: 'LOCATION',          repository: 'yas-location',          chart: 'location',          branchParam: 'LOCATION_BRANCH'],
+    [key: 'MEDIA',             repository: 'yas-media',             chart: 'media',             branchParam: 'MEDIA_BRANCH'],
+    [key: 'ORDER',             repository: 'yas-order',             chart: 'order',             branchParam: 'ORDER_BRANCH'],
+    [key: 'PAYMENT',           repository: 'yas-payment',           chart: 'payment',           branchParam: 'PAYMENT_BRANCH'],
+    [key: 'PAYMENT_PAYPAL',    repository: 'yas-payment-paypal',    chart: 'payment-paypal',    branchParam: 'PAYMENT_PAYPAL_BRANCH'],
+    [key: 'PRODUCT',           repository: 'yas-product',           chart: 'product',           branchParam: 'PRODUCT_BRANCH'],
+    [key: 'PROMOTION',         repository: 'yas-promotion',         chart: 'promotion',         branchParam: 'PROMOTION_BRANCH'],
+    [key: 'RATING',            repository: 'yas-rating',            chart: 'rating',            branchParam: 'RATING_BRANCH'],
+    [key: 'RECOMMENDATION',    repository: 'yas-recommendation',    chart: 'recommendation',    branchParam: 'RECOMMENDATION_BRANCH'],
+    [key: 'SEARCH',            repository: 'yas-search',            chart: 'search',            branchParam: 'SEARCH_BRANCH'],
+    [key: 'TAX',               repository: 'yas-tax',               chart: 'tax',               branchParam: 'TAX_BRANCH'],
+    [key: 'WEBHOOK',           repository: 'yas-webhook',           chart: 'webhook',           branchParam: 'WEBHOOK_BRANCH'],
+    [key: 'SAMPLEDATA',        repository: 'yas-sampledata',        chart: 'sampledata',        branchParam: 'SAMPLEDATA_BRANCH']
+]
+
+def NAMESPACE = 'yas'
+
+def normalizeBranch = { rawBranch ->
+    def branch = rawBranch == null ? '' : rawBranch.trim()
+    if (branch == '') {
+        return 'main'
+    }
+    branch = branch.replaceFirst(/^origin\//, '')
+    branch = branch.replaceFirst(/^refs\/heads\//, '')
+    return branch
+}
+
+def validateBranch = { branch ->
+    if (!(branch ==~ /^[A-Za-z0-9._\/-]+$/)) {
+        error "Invalid branch name: ${branch}"
+    }
+}
+
+def resolveBranchCommitId = { branch ->
+    if (branch == 'main') {
+        return params.DEFAULT_SERVICE_TAG ?: 'main'
+    }
+
+    def sha = sh(script: "git ls-remote --heads origin refs/heads/${branch} | cut -f1", returnStdout: true).trim()
+    if (sha == '') {
+        error "Branch not found on remote origin: ${branch}"
+    }
+    return sha.take(7)
+}
 
 pipeline {
-    agent {
-        docker {
-            image "${params.BUILD_IMAGE}"
-            registryUrl 'https://index.docker.io/v1/'
-            registryCredentialsId 'dockerhub_cred'
-            args '''
-            --network sonar-network 
-            -u root 
-            -v /var/run/docker.sock:/var/run/docker.sock
-            -v $HOME/.sonar:/root/.sonar 
-            -v $HOME/.owasp:/owasp
-            -v $HOME/.npm:/root/.npm
-            -v $HOME/.m2:/root/.m2
-            '''
-        }
-    }
+    agent any
+
     parameters {
-        string(name: 'BUILD_IMAGE', defaultValue: '23120022/zakirepo:maven-3.9.14-eclipse-temurin-25-v4.0', description: 'Docker Image dùng để build')
-        string(name: 'BASE_BRANCH', defaultValue: 'main', description: 'Branch chính để build')
-        choice(name: 'TARGET_SERVICE', choices: ['auto', 'all', 'backoffice', 'backoffice-bff', 'cart', 'customer', 'delivery', 'inventory', 'location', 'media', 'order', 'payment', 'payment-paypal', 'product', 'promotion', 'rating', 'recommendation', 'sampledata', 'search', 'storefront', 'storefront-bff', 'tax', 'webhook'], description: 'Chọn dịch vụ muốn build (auto = tự động phát hiện thay đổi)')
-        booleanParam(name: 'RUN_SECURITY_SCAN', defaultValue: true, description: 'Bật/Tắt xuất báo cáo quét bảo mật Gitleaks & Snyk')
+        string(name: 'BACKOFFICE_BFF_BRANCH', defaultValue: 'main', description: 'Branch to deploy for backoffice-bff')
+        string(name: 'BACKOFFICE_UI_BRANCH', defaultValue: 'main', description: 'Branch to deploy for backoffice-ui')
+        string(name: 'STOREFRONT_BFF_BRANCH', defaultValue: 'main', description: 'Branch to deploy for storefront-bff')
+        string(name: 'STOREFRONT_UI_BRANCH', defaultValue: 'main', description: 'Branch to deploy for storefront-ui')
+        string(name: 'CART_BRANCH', defaultValue: 'main', description: 'Branch to deploy for cart')
+        string(name: 'CUSTOMER_BRANCH', defaultValue: 'main', description: 'Branch to deploy for customer')
+        string(name: 'INVENTORY_BRANCH', defaultValue: 'main', description: 'Branch to deploy for inventory')
+        string(name: 'LOCATION_BRANCH', defaultValue: 'main', description: 'Branch to deploy for location')
+        string(name: 'MEDIA_BRANCH', defaultValue: 'main', description: 'Branch to deploy for media')
+        string(name: 'ORDER_BRANCH', defaultValue: 'main', description: 'Branch to deploy for order')
+        string(name: 'PAYMENT_BRANCH', defaultValue: 'main', description: 'Branch to deploy for payment')
+        string(name: 'PAYMENT_PAYPAL_BRANCH', defaultValue: 'main', description: 'Branch to deploy for payment-paypal')
+        string(name: 'PRODUCT_BRANCH', defaultValue: 'main', description: 'Branch to deploy for product')
+        string(name: 'PROMOTION_BRANCH', defaultValue: 'main', description: 'Branch to deploy for promotion')
+        string(name: 'RATING_BRANCH', defaultValue: 'main', description: 'Branch to deploy for rating')
+        string(name: 'RECOMMENDATION_BRANCH', defaultValue: 'main', description: 'Branch to deploy for recommendation')
+        string(name: 'SEARCH_BRANCH', defaultValue: 'main', description: 'Branch to deploy for search')
+        string(name: 'TAX_BRANCH', defaultValue: 'main', description: 'Branch to deploy for tax')
+        string(name: 'WEBHOOK_BRANCH', defaultValue: 'main', description: 'Branch to deploy for webhook')
+        string(name: 'SAMPLEDATA_BRANCH', defaultValue: 'main', description: 'Branch to deploy for sampledata')
+        string(name: 'DOCKERHUB_ORG', defaultValue: '23120022', description: 'Docker Hub organization or username for images')
+        string(name: 'DEFAULT_SERVICE_TAG', defaultValue: 'main', description: 'Default tag for services using main branch')
     }
+
     environment {
-        FROM_ORIGINAL_REPOSITORY = "${env.CHANGE_FORK == null || env.BRANCH_NAME == 'main'}"
-        // NVD_API_KEY = credentials('nvd-api-key')
-        SNYK_TOKEN = credentials('snyk-api-token')
+        NAMESPACE = "${NAMESPACE}"
     }
+
     stages {
-        stage('Initialize reports storage') {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                sh 'git fetch --all --tags --prune'
+            }
+        }
+
+        stage('Check CD Agent') {
             steps {
                 sh '''
-                mkdir -p reports/gitleaks
-                mkdir -p reports/snyk
-                mkdir -p reports/checkstyle
+                    set -e
+                    helm version
+                    yq --version
+                    kubectl version --client
+                    docker version
                 '''
             }
         }
-        stage('Detect Changes') {
+
+        stage('Resolve Image Tags') {
             steps {
                 script {
-                    sh '''
-                        git config --global --add safe.directory '*'
-                    '''
-                    if (params.TARGET_SERVICE != 'auto') {
-                        servicesToBuild << params.TARGET_SERVICE
-                        echo "Chạy dịch vụ: ${params.TARGET_SERVICE}"
-                    } else {
+                    def summary = []
+                    services.each { svc ->
+                        def branch = normalizeBranch(params["${svc.key}_BRANCH"])
+                        validateBranch(branch)
+                        def imageTag = resolveBranchCommitId(branch)
+                        def repository = "${params.DOCKERHUB_ORG}/${svc.repository}"
 
-                        echo "env.CHANGE_TARGET: '${env.CHANGE_TARGET}'"
-                        def base = env.CHANGE_TARGET ?: params.BASE_BRANCH
-                        sh "git fetch origin ${base}:refs/remotes/origin/${base}"
+                        env["${svc.key}_RESOLVED_BRANCH"] = branch
+                        env["${svc.key}_IMAGE_TAG"] = imageTag
+                        env["${svc.key}_IMAGE_REPOSITORY"] = repository
 
-                        // Lấy stdout dưới dạng chuỗi và loại bỏ khoảng trắng thừa
-                        def stdout = sh(
-                            script: "git diff refs/remotes/origin/${base}...HEAD --name-only",
-                            returnStdout: true
-                        ).trim()
+                        summary << "${svc.chart.padRight(18)} branch=${branch.padRight(25)} tag=${imageTag}"
+                    }
 
-                        if (stdout) {
-                            // Tách chuỗi thành danh sách các dòng (an toàn hơn split)
-                            def changedFilesList = stdout.tokenize('\n')
-                            
-                            changedFilesList.each { file ->
-                                if (file == "pom.xml" || file == "Jenkinsfile" || file == ".github/workflows/actions/action.yaml") {
-                                    servicesToBuild << "all"
-                                }
+                    echo "===== Resolved Image Tags ====="
+                    echo summary.join('\n')
+                }
+            }
+        }
 
-                                if (
-                                    file.startsWith("backoffice-bff/") 
-                                    || file == ".github/workflows/backoffice-bff-ci.yaml"
-                                    || file == ".pipelines/backoffice-bff-ci.groovy"
-                                ) {
-                                    servicesToBuild << "backoffice-bff"
-                                } else if (file.startsWith("backoffice/") 
-                                    || file == ".github/workflows/backoffice-ci.yaml"
-                                    || file == ".pipelines/backoffice-ci.groovy"
-                                ) {
-                                    servicesToBuild << "backoffice"
-                                } else if (file.startsWith("cart/") 
-                                    || file == ".github/workflows/cart-ci.yaml"
-                                    || file == ".pipelines/cart-ci.groovy"
-                                ) {
-                                    servicesToBuild << "cart"
-                                } else if (
-                                    file.startsWith("customer/") 
-                                    || file == ".github/workflows/customer-ci.yaml"
-                                    || file == ".pipelines/customer-ci.groovy"
-                                ) {
-                                    servicesToBuild << "customer"
-                                } else if (file.startsWith("delivery/")) {
-                                    servicesToBuild << "delivery"
-                                } else if (
-                                    file.startsWith("inventory/") 
-                                    || file == ".github/workflows/inventory-ci.yaml"
-                                    || file == ".pipelines/inventory-ci.groovy"
-                                ) {
-                                    servicesToBuild << "inventory"
-                                } else if (
-                                    file.startsWith("location/") 
-                                    || file == ".github/workflows/location-ci.yaml"
-                                    || file == ".pipelines/location-ci.groovy"                        
-                                ) {
-                                    servicesToBuild << "location"
-                                } else if (
-                                    file.startsWith("media/") 
-                                    || file == ".github/workflows/media-ci.yaml"
-                                    || file == ".pipelines/media-ci.groovy"    
-                                ) {
-                                    servicesToBuild << "media"
-                                } else if (
-                                    file.startsWith("order/") 
-                                    || file == ".github/workflows/order-ci.yaml"
-                                    || file == ".pipelines/order-ci.groovy"    
-                                ) {
-                                    servicesToBuild << "order"
-                                } else if (
-                                    file.startsWith("payment/") 
-                                    || file == ".github/workflows/payment-ci.yaml"
-                                    || file == ".pipelines/payment-ci.groovy"    
-                                ) {
-                                    servicesToBuild << "payment"
-                                } else if (
-                                    file.startsWith("payment-paypal/") 
-                                    || file == ".github/workflows/payment-paypal-ci.yaml"
-                                    || file == ".pipelines/payment-paypal-ci.groovy"    
-                                ) {
-                                    servicesToBuild << "payment-paypal"
-                                } else if (
-                                    file.startsWith("product/") 
-                                    || file == ".github/workflows/product-ci.yaml"
-                                    || file == ".pipelines/product-ci.groovy"    
-                                ) {
-                                    servicesToBuild << "product"
-                                } else if (
-                                    file.startsWith("promotion/") 
-                                    || file == ".github/workflows/promotion-ci.yaml"
-                                    || file == ".pipelines/promotion-ci.groovy"
-                                ) {
-                                    servicesToBuild << "promotion"
-                                } else if (
-                                    file.startsWith("rating/") 
-                                    || file == ".github/workflows/rating-ci.yaml"
-                                    || file == ".pipelines/rating-ci.groovy"    
-                                ) {
-                                    servicesToBuild << "rating"
-                                } else if (
-                                    file.startsWith("recommendation/") 
-                                    || file == ".github/workflows/recommendation-ci.yaml"
-                                    || file == ".pipelines/recommendation-ci.groovy"    
-                                ) {
-                                    servicesToBuild << "recommendation"
-                                } else if (
-                                    file.startsWith("sampledata/") 
-                                    || file == ".github/workflows/sampledata-ci.yaml"
-                                    || file == ".pipelines/sampledata-ci.groovy"    
-                                ) {
-                                    servicesToBuild << "sampledata"
-                                } else if (
-                                    file.startsWith("search/") 
-                                    || file == ".github/workflows/search-ci.yaml"
-                                    || file == ".pipelines/search-ci.groovy"    
-                                ) {
-                                    servicesToBuild << "search"
-                                } else if (
-                                    file.startsWith("storefront/") 
-                                    || file == ".github/workflows/storefront-ci.yaml"
-                                    || file == ".pipelines/storefront-ci.groovy"    
-                                ) {
-                                    servicesToBuild << "storefront"
-                                } else if (
-                                    file.startsWith("storefront-bff/") 
-                                    || file == ".github/workflows/storefront-bff-ci.yaml"
-                                    || file == ".pipelines/storefront-bff-ci.groovy"    
-                                ) {
-                                    servicesToBuild << "storefront-bff"
-                                } else if (
-                                    file.startsWith("tax/") 
-                                    || file == ".github/workflows/tax-ci.yaml"
-                                    || file == ".pipelines/tax-ci.groovy"    
-                                ) {
-                                    servicesToBuild << "tax"
-                                } else if (
-                                    file.startsWith("webhook/") 
-                                    || file == ".github/workflows/webhook-ci.yaml"
-                                    || file == ".pipelines/webhook-ci.groovy"
-                                ) {
-                                    servicesToBuild << "webhook"
-                                }
-                            }
-                        } else {
-                            echo "Không phát hiện file nào thay đổi."
+        stage('Build and Push Docker Images') {
+            steps {
+                script {
+                    def changedServices = services.findAll { svc -> env["${svc.key}_RESOLVED_BRANCH"] != 'main' }
+                    if (changedServices.isEmpty()) {
+                        echo 'No non-main branch services to build. Using default tags for all services.'
+                        return
+                    }
+
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: 'dockerhub_cred',
+                            usernameVariable: 'DOCKER_USER', 
+                            passwordVariable: 'DOCKER_PASS'
+                            )
+                    ]) {
+                        sh '''#!/usr/bin/env bash
+                        set -e
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        '''
+                        changedServices.each { svc ->
+                            def branch = env["${svc.key}_RESOLVED_BRANCH"]
+                            def imageTag = env["${svc.key}_IMAGE_TAG"]
+                            def repository = env["${svc.key}_IMAGE_REPOSITORY"]
+                            def servicePath = svc.path
+
+                            echo "Building and pushing ${svc.chart} for branch ${branch} as ${repository}:${imageTag}"
+
+                            sh """#!/usr/bin/env bash
+                                set -e
+                                BRANCH=\"${branch}\"
+                                REPO=\"${repository}\"
+                                TAG=\"${imageTag}\"
+                                SERVICE_PATH=\"${servicePath}\"
+
+                                git fetch origin \"${branch}\" --no-tags || true
+                                tmpdir=\$(mktemp -d)
+                                git archive \"origin/${branch}\" | tar -x -C \"\$tmpdir\"
+                                docker build -t \"\$REPO:\$TAG\" \"\$tmpdir/\$SERVICE_PATH\"
+                                docker push \"\$REPO:\$TAG\"
+                                rm -rf \"\$tmpdir\"
+                            """
                         }
                     }
                 }
             }
         }
 
-        stage('Run backoffice pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('backoffice') }
-            }
+        stage('Deploy YAS Configuration') {
             steps {
+                dir('k8s/deploy') {
+                    sh '''
+                        set -e
+                        chmod a+x ./deploy-yas-configuration.sh
+                        ./deploy-yas-configuration.sh
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy Services') {
+            steps {
+                dir('k8s/deploy') {
+                    script {
+                        services.each { svc ->
+                            def repository = env["${svc.key}_IMAGE_REPOSITORY"]
+                            def imageTag = env["${svc.key}_IMAGE_TAG"]
+                            def imagePath = svc.imageType == 'ui' ? 'ui.image' : 'backend.image'
+
+                            echo "Deploying ${svc.chart} with image ${repository}:${imageTag}"
+
+                            sh """#!/usr/bin/env bash
+                                set -e
+                                helm dependency build ../charts/${svc.chart}
+                                helm upgrade --install ${svc.chart} ../charts/${svc.chart} \
+                                    --namespace \"$NAMESPACE\" \
+                                    --create-namespace \
+                                    --reset-values \
+                                    --set ${imagePath}.repository=${repository} \
+                                    --set ${imagePath}.tag=${imageTag} \
+                                    --wait \
+                                    --timeout 5m
+                            """
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Summary') {
+            steps {
+                echo 'developer_build job completed. Summary of service deployments:'
                 script {
-                    sh 'echo "Backoffice pipeline..."'
-                    def backoffice = load '.pipelines/backoffice-ci.groovy'
-                    backoffice.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
+                    services.each { svc ->
+                        def branch = env["${svc.key}_RESOLVED_BRANCH"]
+                        def imageTag = env["${svc.key}_IMAGE_TAG"]
+                        def repository = env["${svc.key}_IMAGE_REPOSITORY"]
+                        echo "- ${svc.chart}: ${repository}:${imageTag} (branch=${branch})"
+                    }
                 }
-            }
-        }
-
-        stage('Run backoffice-bff pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('backoffice-bff') }
-            }
-            steps {
-                script {
-                    sh 'echo "Backoffice-bff pipeline..."'
-                    def backoffice_bff = load '.pipelines/backoffice-bff-ci.groovy'
-                    backoffice_bff.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
-                }
-            }
-        }
-
-        stage('Run cart pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('cart') }
-            }
-            steps {
-                script {
-                    sh 'echo "Cart pipeline..."'
-                    def cart = load '.pipelines/cart-ci.groovy'
-                    cart.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
-                }
-            }
-        }
-
-        stage('Run customer pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('customer') }
-            }
-            steps {
-                script {
-                    sh 'echo "Customer pipeline..."'
-                    def customer = load '.pipelines/customer-ci.groovy'
-                    customer.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
-                }
-            }
-        }
-
-        stage('Run delivery pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('delivery') }
-            }
-            steps {
-                sh 'echo "Delivery pipeline..."'
-            }
-        }
-
-        stage('Run inventory pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('inventory') }
-            }
-            steps {
-                script {
-                    sh 'echo "Inventory pipeline..."'
-                    def inventory = load '.pipelines/inventory-ci.groovy'
-                    inventory.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
-                }
-            }
-        }
-
-        stage('Run location pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('location') }
-            }
-            steps {
-                script {
-                    sh 'echo "Location pipeline..."'
-                    def location = load '.pipelines/location-ci.groovy'
-                    location.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
-                }
-            }
-        }
-
-        stage('Run media pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('media') }
-            }
-            steps {
-                script {
-                    sh 'echo "Media pipeline..."'
-                    def media = load '.pipelines/media-ci.groovy'
-                    media.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
-                }
-            }
-        }
-
-        stage('Run order pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('order') }
-            }
-            steps {
-                script {
-                    sh 'echo "Order pipeline..."'
-                    def order = load '.pipelines/order-ci.groovy'
-                    order.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
-                }
-            }
-        }
-
-        stage('Run payment pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('payment') }
-            }
-            steps {
-                script {
-                    sh 'echo "Payment pipeline..."'
-                    def payment = load '.pipelines/payment-ci.groovy'
-                    payment.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
-                }
-            }
-        }
-
-        stage('Run payment-paypal pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('payment-paypal') }
-            }
-            steps {
-                script {
-                    sh 'echo "Payment-paypal pipeline..."'
-                    def paymentPaypal = load '.pipelines/payment-paypal-ci.groovy'
-                    paymentPaypal.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
-                }
-            }
-        }
-
-        stage('Run product pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('product') }
-            }
-            steps {
-                script {
-                    sh 'echo "Product pipeline..."'
-                    def product = load '.pipelines/product-ci.groovy'
-                    product.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
-                }
-            }
-        }
-
-        stage('Run promotion pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('promotion')}
-            }
-            steps {
-                script {
-                    sh 'echo "Promotion pipeline..."'
-                    def promotion = load '.pipelines/promotion-ci.groovy'
-                    promotion.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
-                }
-            }
-        }
-
-        stage('Run rating pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('rating') }
-            }
-            steps {
-                script {
-                    sh 'echo "Rating pipeline..."'
-                    def rating = load '.pipelines/rating-ci.groovy'
-                    rating.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
-                }
-            }
-        }
-
-        stage('Run recommendation pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('recommendation') }
-            }
-            steps {
-                script {
-                    sh 'echo "Recommendation pipeline..."'
-                    def recommendation = load '.pipelines/recommendation-ci.groovy'
-                    recommendation.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
-                }
-            }
-        }
-
-        stage('Run sampledata pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('sampledata') }
-            }
-            steps {
-                script {
-                    sh 'echo "Sampledata pipeline..."'
-                    def sampledata = load '.pipelines/sampledata-ci.groovy'
-                    sampledata.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
-                }
-            }
-        }
-
-        stage('Run search pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('search') }
-            }
-            steps {
-                script {
-                    sh 'echo "Search pipeline..."'
-                    def search = load '.pipelines/search-ci.groovy'
-                    search.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
-                }
-            }
-        }
-
-        stage('Run storefront pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('storefront') }
-            }
-            steps {
-                script {
-                    sh 'echo "Storefront pipeline..."'
-                    def storefront = load '.pipelines/storefront-ci.groovy'
-                    storefront.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
-                }
-            }
-        }
-
-        stage('Run storefront-bff pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('storefront-bff') }
-            }
-            steps {
-                script {
-                    sh 'echo "Storefront-bff pipeline..."'
-                    def storefront_bff = load '.pipelines/storefront-bff-ci.groovy'
-                    storefront_bff.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
-                }
-            }
-        }
-
-        stage('Run tax pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('tax') }
-            }
-            steps {
-                script {
-                    sh 'echo "Tax pipeline..."'
-                    def tax = load '.pipelines/tax-ci.groovy'
-                    tax.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
-                }
-            }
-        }
-
-        stage('Run webhook pipeline') {
-            when {
-                expression { servicesToBuild.contains('all') || servicesToBuild.contains('webhook') }
-            }
-            steps {
-                script {
-                    sh 'echo "Webhook pipeline..."'
-                    def webhook = load '.pipelines/webhook-ci.groovy'
-                    webhook.call([isFromOriginalRepository: env.FROM_ORIGINAL_REPOSITORY == 'true'])
-                }
-            }
-        }
-
-        stage('Publish Gitleaks Reports') {
-            when {
-                expression {
-                    return params.RUN_SECURITY_SCAN && fileExists('reports/gitleaks') &&
-                    sh(script: "find reports/gitleaks -maxdepth 1 -name '*gitleaks-report.html' | grep -q .", returnStatus: true) == 0
-                }
-            }
-            steps {
-                sh 'echo "Publish Gitleaks reports..."'
-                sh '''
-                mkdir -p reports/gitleaks/merged
-                echo "<html><body><h1>Gitleaks Reports</h1><ul>" > reports/gitleaks/merged/index.html
-                for f in reports/gitleaks/*gitleaks-report.html; do
-                    name=$(basename $f)
-                    cp $f reports/gitleaks/merged/
-                    echo "<li><a href='$name'>$name</a></li>" >> reports/gitleaks/merged/index.html
-                done
-                echo "</ul></body></html>" >> reports/gitleaks/merged/index.html
-                '''
-                publishHTML([
-                    reportDir: 'reports/gitleaks/merged',
-                    reportFiles: 'index.html',
-                    reportName: 'Gitleaks Report',
-                    allowMissing: true,
-                    alwaysLinkToLastBuild: true,
-                    keepAll: true
-                ])
-            }
-        }
-        stage('Publish Snyk Reports') {
-            when {
-                expression {
-                    return params.RUN_SECURITY_SCAN && fileExists('reports/snyk') &&
-                        sh(script: "find reports/snyk -maxdepth 1 -name '*snyk-report.html' | grep -q .", returnStatus: true) == 0
-                }
-            }
-            steps {
-                sh 'echo "Publish Snyk reports..."'
-                sh '''
-                mkdir -p reports/snyk/merged
-                echo "<html><body><h1>Snyk Reports</h1><ul>" > reports/snyk/merged/index.html
-                for f in reports/snyk/*snyk-report.html; do
-                    name=$(basename $f)
-                    cp $f reports/snyk/merged/
-                    echo "<li><a href='$name'>$name</a></li>" >> reports/snyk/merged/index.html
-                done
-                echo "</ul></body></html>" >> reports/snyk/merged/index.html
-                '''
-                publishHTML([
-                    reportDir: 'reports/snyk/merged',
-                    reportFiles: 'index.html',
-                    reportName: 'Snyk Report',
-                    allowMissing: true,
-                    alwaysLinkToLastBuild: true,
-                    keepAll: true
-                ])
             }
         }
     }
