@@ -28,20 +28,12 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       initContainers:
-<<<<<<< Updated upstream
-        - name: init-pgadmin-data
-=======
         - name: pgadmin-data-permissions
->>>>>>> Stashed changes
           image: busybox:1.36
           command:
             - sh
             - -c
-<<<<<<< Updated upstream
-            - mkdir -p /var/lib/pgadmin/sessions && chown -R 5050:5050 /var/lib/pgadmin
-=======
             - mkdir -p /var/lib/pgadmin/sessions /var/lib/pgadmin/storage && chown -R 5050:5050 /var/lib/pgadmin && chmod -R u+rwX,g+rwX /var/lib/pgadmin
->>>>>>> Stashed changes
           securityContext:
             runAsUser: 0
           volumeMounts:

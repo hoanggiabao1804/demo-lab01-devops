@@ -31,23 +31,6 @@ spec:
       - createdb
       - replication
   databases:
-<<<<<<< Updated upstream
-    cart: {{ .Values.username }}
-    customer: {{ .Values.username }}
-    inventory: {{ .Values.username }}
-    keycloak: {{ .Values.username }}
-    location: {{ .Values.username }}
-    media: {{ .Values.username }}
-    order: {{ .Values.username }}
-    payment: {{ .Values.username }}
-    product: {{ .Values.username }}
-    promotion: {{ .Values.username }}
-    rating: {{ .Values.username }}
-    tax: {{ .Values.username }}
-    recommendation: {{ .Values.username }}
-    webhook: {{ .Values.username }}
-    grafana: {{ .Values.username }}
-=======
     cart: {{ .Values.username | quote }}
     customer: {{ .Values.username | quote }}
     inventory: {{ .Values.username | quote }}
@@ -63,7 +46,6 @@ spec:
     recommendation: {{ .Values.username | quote }}
     webhook: {{ .Values.username | quote }}
     grafana: {{ .Values.username | quote }}
->>>>>>> Stashed changes
   patroni:
     slots:
       eventuate_slot_cart:
@@ -113,4 +95,4 @@ spec:
   allowedSourceRanges:
   # IP ranges to access your cluster go here
   resources:
-    {{ toYaml .Values.resources | nindent 4 }}
+{{ toYaml .Values.resources | nindent 4 }}

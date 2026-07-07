@@ -4,8 +4,6 @@ config:
   snippets:
     pipelineStages:
       - docker: {}
-<<<<<<< Updated upstream
-=======
 readinessProbe:
   failureThreshold: 5
   httpGet:
@@ -15,4 +13,3 @@ readinessProbe:
   periodSeconds: 10
   successThreshold: 1
   timeoutSeconds: 5
->>>>>>> Stashed changes

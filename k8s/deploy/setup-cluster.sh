@@ -64,10 +64,9 @@ kubectl wait --for=condition=Established crd/kafkas.kafka.strimzi.io --timeout=1
 kubectl wait --for=condition=Established crd/kafkaconnects.kafka.strimzi.io --timeout=180s
 kubectl wait --for=condition=Established crd/kafkaconnectors.kafka.strimzi.io --timeout=180s
 
-# Build Kafka Connect image locally for minikube. Strimzi 1.0 supports plugin
-# image volumes, but the Docker runtime used by minikube cannot mount them
-# reliably, so the Debezium PostgreSQL connector is baked into the Connect image.
-minikube image build -t yas-debezium-connect-postgresql:1.0.1-kafka-4.2.0-debezium-3.3 ./kafka/kafka-connect
+# Build Kafka Connect image with the Debezium PostgreSQL plugin into Minikube.
+DEBEZIUM_CONNECT_IMAGE="yas-debezium-connect-postgresql:1.0.1-kafka-4.3.0-debezium-3.3"
+minikube image build -t "$DEBEZIUM_CONNECT_IMAGE" ./kafka/kafka-connect
 
 # Install kafka and postgresql connector
 helm upgrade --install kafka-cluster ./kafka/kafka-cluster \
@@ -75,7 +74,8 @@ helm upgrade --install kafka-cluster ./kafka/kafka-cluster \
 --set kafka.replicas="$KAFKA_REPLICAS" \
 --set zookeeper.replicas="$ZOOKEEPER_REPLICAS" \
 --set postgresql.username="$POSTGRESQL_USERNAME" \
---set postgresql.password="$POSTGRESQL_PASSWORD"
+--set postgresql.password="$POSTGRESQL_PASSWORD" \
+--set debeziumConnect.image="$DEBEZIUM_CONNECT_IMAGE"
 
 # Install akhq
 akhq_hostname="akhq.$DOMAIN" yq -i '.hostname=env(akhq_hostname)' ./kafka/akhq.values.yaml
@@ -102,8 +102,7 @@ helm upgrade --install elasticsearch-cluster ./elasticsearch/elasticsearch-clust
 # Install loki (Thêm flag sử dụng Test Schema để tránh lỗi Validate đòi cấu hình lưu trữ dài hạn)
 helm upgrade --install loki grafana/loki \
  --create-namespace --namespace observability \
- -f ./observability/loki.values.yaml \
- --set loki.useTestSchema=true
+ -f ./observability/loki.values.yaml
 
 # Install tempo
 helm upgrade --install tempo grafana/tempo \
@@ -243,11 +242,3 @@ helm upgrade --install grafana ./observability/grafana \
 
 helm upgrade --install zookeeper ./zookeeper \
  --namespace zookeeper --create-namespace
-<<<<<<< Updated upstream
-
-set +x
-echo "Waiting for Zookeeper to be ready..."
-kubectl rollout status statefulset/zookeeper -n zookeeper --timeout=180s
-set -x
-=======
->>>>>>> Stashed changes

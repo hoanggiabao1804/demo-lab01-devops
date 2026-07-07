@@ -29,6 +29,7 @@ spec:
   ingress:
     enabled: true
     className: nginx
+  {{- if .Files.Get "themes/yas.jar" }}
   unsupported:
     podTemplate:
       spec:
@@ -41,3 +42,4 @@ spec:
             volumeMounts:
               - name: yas-themes
                 mountPath: /opt/keycloak/providers
+  {{- end }}
