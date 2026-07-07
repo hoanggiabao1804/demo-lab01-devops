@@ -7,7 +7,8 @@
 #   1. With minikube tunnel:
 #      minikube tunnel
 #      kubectl get svc istio-ingress -n istio-system
-#      Add the EXTERNAL-IP to /etc/hosts for storefront.yas.local.com and backoffice.yas.local.com.
+#      Add the EXTERNAL-IP to /etc/hosts for storefront.yas.local.com,
+#      backoffice.yas.local.com, and identity.yas.local.com.
 #
 #   2. Without minikube tunnel:
 #      Use the istio-ingress NodePort for port 80, for example http://storefront.yas.local.com:30805
@@ -28,6 +29,7 @@ spec:
       hosts:
         - storefront.yas.local.com
         - backoffice.yas.local.com
+        - identity.yas.local.com
 ---
 apiVersion: networking.istio.io/v1
 kind: VirtualService
@@ -43,6 +45,28 @@ spec:
     - route:
         - destination:
             host: storefront-bff.dev.svc.cluster.local
+            port:
+              number: 80
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream,5xx
+      timeout: 10s
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: identity
+  namespace: dev
+spec:
+  hosts:
+    - identity.yas.local.com
+  gateways:
+    - yas-dev-gateway
+  http:
+    - route:
+        - destination:
+            host: keycloak-service.keycloak.svc.cluster.local
             port:
               number: 80
       retries:

@@ -1,0 +1,15 @@
+auth:
+  strategy: anonymous
+
+deployment:
+  accessible_namespaces:
+    - "**"
+
+external_services:
+  grafana:
+    internal_url: "http://prometheus-grafana.observability:80"
+  prometheus:
+    url: "http://prometheus-kube-prometheus-prometheus.observability.svc.cluster.local:9090"
+
+server:
+  web_root: ""
