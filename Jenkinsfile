@@ -35,36 +35,36 @@ pipeline {
             }
         }
 
-        stage('Debug ownership') {
-            steps {
-                sh '''
-                id
-                whoami
-                pwd
+        // stage('Debug ownership') {
+        //     steps {
+        //         sh '''
+        //         id
+        //         whoami
+        //         pwd
 
-                ls -ld .
-                ls -ld .git
+        //         ls -ld .
+        //         ls -ld .git
 
-                stat -c "%U:%G %n" .
-                stat -c "%U:%G %n" .git
+        //         stat -c "%U:%G %n" .
+        //         stat -c "%U:%G %n" .git
 
-                echo "HOME=$HOME"
+        //         echo "HOME=$HOME"
 
-                echo "===== root gitconfig ====="
-                cat ~/.gitconfig || true
+        //         echo "===== root gitconfig ====="
+        //         cat ~/.gitconfig || true
 
-                env | grep GIT
+        //         env | grep GIT
 
-                echo "===== git config ====="
-                git config --global --list
+        //         echo "===== git config ====="
+        //         git config --global --list
 
-                echo "===== show origin ====="
-                git config --list --show-origin
+        //         echo "===== show origin ====="
+        //         git config --list --show-origin
 
-                git rev-parse --short HEAD || true
-                '''
-            }
-        }
+        //         git rev-parse --short HEAD || true
+        //         '''
+        //     }
+        // }
 
         stage('Detect Changes') {
             steps {
