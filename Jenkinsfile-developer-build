@@ -336,9 +336,9 @@ pipeline {
                             BFF_HEALTH_NODE_PORT=$(ensure_nodeport storefront-bff 8090)
                         fi
 
-                        UI_URL="http://$APP_HOST:$UI_NODE_PORT"
-                        BFF_API_BASE_URL="http://$APP_HOST:$BFF_NODE_PORT/api"
-                        BFF_HEALTH_URL="http://$APP_HOST:$BFF_HEALTH_NODE_PORT/actuator/health"
+                        UI_URL="http://$NODE_IP:$UI_NODE_PORT"
+                        BFF_API_BASE_URL="http://$NODE_IP:$BFF_NODE_PORT/api"
+                        BFF_HEALTH_URL="http://$NODE_IP:$BFF_HEALTH_NODE_PORT/actuator/health"
 
                         cat > "$WORKSPACE/nodeport-urls.txt" <<EOF
 ===== Developer Access Information =====
