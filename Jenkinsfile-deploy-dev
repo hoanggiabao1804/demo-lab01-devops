@@ -24,6 +24,7 @@ def services = [
 def servicesToDeploy = []
 
 def CURRENT_BRANCH = ''
+def CURRENT_COMMIT = ''
 def IMAGE_TAG = ''
 
 pipeline{
@@ -56,14 +57,35 @@ pipeline{
                         git config --global --add safe.directory '*'
                     '''
                     
-                    CURRENT_BRANCH = (env.BRANCH_NAME ?: env.GIT_BRANCH ?: '').replaceFirst(/^origin\//, '')
+                    CURRENT_COMMIT = sh(
+                        script: "git rev-parse HEAD",
+                        returnStdout: true
+                    ).trim()
 
                     IMAGE_TAG = sh(
                         script: "git rev-parse --short HEAD",
                         returnStdout: true
                     ).trim()
 
+                    def branchFromGit = sh(
+                        script: '''
+                            git branch -r --contains HEAD |
+                            sed 's#^[ *]*origin/##' |
+                            grep -v '^HEAD$' |
+                            head -n 1
+                        ''',
+                        returnStdout: true
+                    ).trim()
+
+                    def rawBranch = env.BRANCH_NAME ?: env.GIT_BRANCH ?: branchFromGit ?: ''
+                    CURRENT_BRANCH = rawBranch.replaceFirst(/^origin\//, '').replaceFirst(/^refs\/heads\//, '')
+
+                    if (CURRENT_BRANCH == '') {
+                        error "Cannot resolve current branch from Jenkins env or git remote branches"
+                    }
+
                     echo "Current branch: '${CURRENT_BRANCH}'"
+                    echo "Current commit SHA is: '${CURRENT_COMMIT}'"
                     echo "Current commit ID is: '$IMAGE_TAG'"
                 }
             }
@@ -77,7 +99,7 @@ pipeline{
                     ).trim()
 
                     def changedFilesOutput = sh(
-                        script: "git diff --name-only ${previousCommit} ${env.GIT_COMMIT}",
+                        script: "git diff --name-only ${previousCommit} ${CURRENT_COMMIT}",
                         returnStdout: true
                     ).trim()
 
@@ -106,7 +128,7 @@ pipeline{
         stage('Dockerhub Login') {
             when {
                 expression{
-                    CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty()
+                    CURRENT_BRANCH == "dev" && !servicesToDeploy.isEmpty()
                 }
             }
             steps{
@@ -125,7 +147,7 @@ pipeline{
         stage('Build and Push Docker Images'){
             when {
                 expression{
-                    CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty()
+                    CURRENT_BRANCH == "dev" && !servicesToDeploy.isEmpty()
                 }
             }
             steps{
@@ -159,7 +181,7 @@ pipeline{
         stage('Checkout to YAS manifest repository') {
             when {
                 expression{
-                    CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty()
+                    CURRENT_BRANCH == "dev" && !servicesToDeploy.isEmpty()
                 }
             }
             steps{
@@ -178,7 +200,7 @@ pipeline{
         stage('Apply Deployments'){
             when {
                 expression{
-                    CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty()
+                    CURRENT_BRANCH == "dev" && !servicesToDeploy.isEmpty()
                 }
             }
             steps{
