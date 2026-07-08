@@ -8,7 +8,7 @@ pipeline {
             registryCredentialsId 'dockerhub_cred'
             args '''
             --network sonar-network 
-            -u root 
+            -u root
             -v /var/run/docker.sock:/var/run/docker.sock
             -v $HOME/.sonar:/root/.sonar 
             -v $HOME/.owasp:/owasp

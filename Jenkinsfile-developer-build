@@ -138,61 +138,69 @@ pipeline {
                         return
                     }
 
-                    withCredentials([
-                        usernamePassword(
-                            credentialsId: 'dockerhub_cred',
-                            usernameVariable: 'DOCKER_USER', 
-                            passwordVariable: 'DOCKER_PASS'
-                            )
-                    ]) {
-                        sh '''#!/usr/bin/env bash
-                        set -e
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        '''
-                        def originalRef = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
-                        if (originalRef == 'HEAD') {
-                            originalRef = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
-                        }
+                    changedServices.each { svc ->
+                        def branch = env."${svc.key}_RESOLVED_BRANCH"
+                        def imageTag = env."${svc.key}_IMAGE_TAG"
+                        def repository = env."${svc.key}_IMAGE_REPOSITORY"
 
-                        try {
-                            changedServices.each { svc ->
-                                def branch = env."${svc.key}_RESOLVED_BRANCH"
-                                def imageTag = env."${svc.key}_IMAGE_TAG"
-                                def repository = env."${svc.key}_IMAGE_REPOSITORY"
-                                def servicePath = svc.path
-                                def buildCommand = svc.build ?: ''
-
-                                echo "Building and pushing ${svc.chart} for branch ${branch} as ${repository}:${imageTag}"
-
-                                sh """#!/usr/bin/env bash
-                                    set -e
-                                    BRANCH=\"${branch}\"
-                                    REPO=\"${repository}\"
-                                    TAG=\"${imageTag}\"
-                                    SERVICE_PATH=\"${servicePath}\"
-                                    BUILD_COMMAND=\"${buildCommand}\"
-                                    
-                                    pwd
-                                    ls -la
-
-                                    git fetch origin \"\$BRANCH:refs/remotes/origin/\$BRANCH\" --no-tags
-                                    git checkout -f \"refs/remotes/origin/\$BRANCH\"
-                                    if [ -n \"\$BUILD_COMMAND\" ]; then
-                                        pwd
-                                        ls -la
-                                        eval \"\$BUILD_COMMAND\"
-                                    fi
-                                    docker build -t \"\$REPO:\$TAG\" \"\$SERVICE_PATH\"
-                                    docker push \"\$REPO:\$TAG\"
-                                """
-                            }
-                        } finally {
-                            sh """#!/usr/bin/env bash
-                                set -e
-                                git checkout -f "${originalRef}"
-                            """
-                        }
+                        echo "Skipping Docker build/push for ${svc.chart}. Expecting image from CI: ${repository}:${imageTag} (branch=${branch})"
                     }
+
+                    // Images are built and pushed by the service CI pipelines from the root Jenkinsfile.
+                    // Keep developer-build focused on resolving tags and deploying those existing images.
+                    //
+                    // withCredentials([
+                    //     usernamePassword(
+                    //         credentialsId: 'dockerhub_cred',
+                    //         usernameVariable: 'DOCKER_USER',
+                    //         passwordVariable: 'DOCKER_PASS'
+                    //         )
+                    // ]) {
+                    //     sh '''#!/usr/bin/env bash
+                    //     set -e
+                    //     echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    //     '''
+                    //     def originalRef = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
+                    //     if (originalRef == 'HEAD') {
+                    //         originalRef = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                    //     }
+                    //
+                    //     try {
+                    //         changedServices.each { svc ->
+                    //             def branch = env."${svc.key}_RESOLVED_BRANCH"
+                    //             def imageTag = env."${svc.key}_IMAGE_TAG"
+                    //             def repository = env."${svc.key}_IMAGE_REPOSITORY"
+                    //             def servicePath = svc.path
+                    //             def buildCommand = svc.build ?: ''
+                    //
+                    //             echo "Building and pushing ${svc.chart} for branch ${branch} as ${repository}:${imageTag}"
+                    //
+                    //             sh """#!/usr/bin/env bash
+                    //                 set -e
+                    //                 BRANCH=\"${branch}\"
+                    //                 REPO=\"${repository}\"
+                    //                 TAG=\"${imageTag}\"
+                    //                 SERVICE_PATH=\"${servicePath}\"
+                    //                 BUILD_COMMAND=\"${buildCommand}\"
+                    //
+                    //                 git fetch origin \"\$BRANCH:refs/remotes/origin/\$BRANCH\" --no-tags
+                    //                 git checkout -f \"refs/remotes/origin/\$BRANCH\"
+                    //                 if [ -n \"\$BUILD_COMMAND\" ]; then
+                    //                     pwd
+                    //                     ls -la
+                    //                     eval \"\$BUILD_COMMAND\"
+                    //                 fi
+                    //                 docker build -t \"\$REPO:\$TAG\" \"\$SERVICE_PATH\"
+                    //                 docker push \"\$REPO:\$TAG\"
+                    //             """
+                    //         }
+                    //     } finally {
+                    //         sh """#!/usr/bin/env bash
+                    //             set -e
+                    //             git checkout -f "${originalRef}"
+                    //         """
+                    //     }
+                    // }
                 }
             }
         }
@@ -217,6 +225,12 @@ pipeline {
                             def repository = env."${svc.key}_IMAGE_REPOSITORY"
                             def imageTag = env."${svc.key}_IMAGE_TAG"
                             def imagePath = svc.imageType == 'ui' ? 'ui.image' : 'backend.image'
+                            def extraHelmArgs = ''
+                            if (svc.chart == 'storefront-ui') {
+                                extraHelmArgs = '--set ui.service.type=NodePort'
+                            } else if (svc.chart == 'storefront-bff') {
+                                extraHelmArgs = '--set backend.service.type=NodePort'
+                            }
 
                             echo "Deploying ${svc.chart} with image ${repository}:${imageTag}"
 
@@ -229,6 +243,7 @@ pipeline {
                                     --reset-values \
                                     --set ${imagePath}.repository=${repository} \
                                     --set ${imagePath}.tag=${imageTag} \
+                                    ${extraHelmArgs} \
                                     --wait \
                                     --timeout 5m
                             """
@@ -251,5 +266,123 @@ pipeline {
                 }
             }
         }
+        stage('Show NodePort URLs') {
+            steps {
+                dir('k8s/deploy') {
+                    sh '''#!/usr/bin/env bash
+                        set -euo pipefail
+
+                        NAMESPACE="${NAMESPACE:-yas}"
+                        DOMAIN=$(yq -r '.domain' ./cluster-config.yaml)
+                        APP_HOST="storefront.$DOMAIN"
+
+                        NODE_IP=$(kubectl get nodes \
+                        -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+
+                        ensure_nodeport() {
+                            local service_name="$1"
+                            local service_port="$2"
+                            local node_port=""
+
+                            kubectl get svc "$service_name" -n "$NAMESPACE" >/dev/null
+
+                            local service_type
+                            service_type=$(kubectl get svc "$service_name" -n "$NAMESPACE" -o jsonpath='{.spec.type}')
+
+                            if [ "$service_type" != "NodePort" ] && [ "$service_type" != "LoadBalancer" ]; then
+                                echo "Service $service_name is $service_type. Patching it to NodePort..." >&2
+                                kubectl patch svc "$service_name" -n "$NAMESPACE" --type=merge -p '{"spec":{"type":"NodePort"}}' >&2
+                            fi
+
+                            for _ in $(seq 1 30); do
+                                node_port=$(kubectl get svc "$service_name" \
+                                    -n "$NAMESPACE" \
+                                    -o jsonpath="{.spec.ports[?(@.port==$service_port)].nodePort}")
+
+                                if [ -n "$node_port" ]; then
+                                    echo "$node_port"
+                                    return 0
+                                fi
+
+                                sleep 2
+                            done
+
+                            echo "ERROR: Cannot find NodePort for $service_name port $service_port" >&2
+                            kubectl get svc "$service_name" -n "$NAMESPACE" -o yaml >&2
+                            return 1
+                        }
+
+                        UI_NODE_PORT=$(kubectl get svc storefront-ui \
+                        -n "$NAMESPACE" \
+                        -o jsonpath='{.spec.ports[?(@.port==3000)].nodePort}')
+
+                        BFF_NODE_PORT=$(kubectl get svc storefront-bff \
+                        -n "$NAMESPACE" \
+                        -o jsonpath='{.spec.ports[?(@.port==80)].nodePort}')
+
+                        BFF_HEALTH_NODE_PORT=$(kubectl get svc storefront-bff \
+                        -n "$NAMESPACE" \
+                        -o jsonpath='{.spec.ports[?(@.port==8090)].nodePort}')
+
+                        if [ -z "$UI_NODE_PORT" ]; then
+                            UI_NODE_PORT=$(ensure_nodeport storefront-ui 3000)
+                        fi
+
+                        if [ -z "$BFF_NODE_PORT" ]; then
+                            BFF_NODE_PORT=$(ensure_nodeport storefront-bff 80)
+                        fi
+
+                        if [ -z "$BFF_HEALTH_NODE_PORT" ]; then
+                            BFF_HEALTH_NODE_PORT=$(ensure_nodeport storefront-bff 8090)
+                        fi
+
+                        UI_URL="http://$NODE_IP:$UI_NODE_PORT"
+                        BFF_API_BASE_URL="http://$NODE_IP:$BFF_NODE_PORT/api"
+                        BFF_HEALTH_URL="http://$NODE_IP:$BFF_HEALTH_NODE_PORT/actuator/health"
+
+                        cat > "$WORKSPACE/nodeport-urls.txt" <<EOF
+===== Developer Access Information =====
+
+Namespace:
+$NAMESPACE
+
+Worker/Minikube Node IP:
+$NODE_IP
+
+Add this line to /etc/hosts if not exists:
+$NODE_IP $APP_HOST
+
+Storefront UI:
+$UI_URL
+
+Storefront BFF API base:
+$BFF_API_BASE_URL
+
+Storefront BFF health:
+$BFF_HEALTH_URL
+
+Kubernetes services:
+EOF
+
+                        kubectl get svc -n "$NAMESPACE" storefront-ui storefront-bff >> "$WORKSPACE/nodeport-urls.txt"
+
+                        echo ""
+                        cat "$WORKSPACE/nodeport-urls.txt"
+                        echo ""
+
+                        echo "Verify BFF health endpoint..."
+                        curl -fsS "$BFF_HEALTH_URL" || {
+                            echo ""
+                            echo "WARNING: BFF health check failed. Check logs:"
+                            echo "kubectl logs -n $NAMESPACE deploy/storefront-bff --tail=200"
+                            exit 1
+                        }
+                    '''
+                }
+
+                archiveArtifacts artifacts: 'nodeport-urls.txt', fingerprint: true
+            }
+        }
+
     }
 }
