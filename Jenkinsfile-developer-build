@@ -131,7 +131,7 @@ pipeline {
             }
         }
 
-        stage('Build and Push Docker Images') {
+        stage('Detect Changes') {
             steps {
                 script {
                     def changedServices = services.findAll { svc -> env."${svc.key}_RESOLVED_BRANCH" != 'main' }
