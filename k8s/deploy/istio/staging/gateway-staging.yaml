@@ -1,23 +1,24 @@
 # Routes browser traffic through the Istio ingress gateway to the BFF services.
 #
 # Apply:
-#   kubectl apply -f k8s/deploy/istio/gateway-dev.yaml
+#   kubectl apply -f k8s/deploy/istio/staging/gateway-staging.yaml
 #
 # Local access options:
 #   1. With minikube tunnel:
 #      minikube tunnel
 #      kubectl get svc istio-ingress -n istio-system
-#      Add the EXTERNAL-IP to /etc/hosts for storefront.yas.local.com,
-#      backoffice.yas.local.com, and identity.yas.local.com.
+#      Add the EXTERNAL-IP to /etc/hosts for storefront.staging.yas.local.com,
+#      backoffice.staging.yas.local.com, identity.staging.yas.local.com,
+#      and api.staging.yas.local.com.
 #
 #   2. Without minikube tunnel:
-#      Use the istio-ingress NodePort for port 80, for example http://storefront.yas.local.com:30805
+#      Use the istio-ingress NodePort for port 80, for example http://storefront.staging.yas.local.com:30805
 #      if your current NodePort is 30805.
 apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
-  name: yas-dev-gateway
-  namespace: dev
+  name: yas-staging-gateway
+  namespace: staging
 spec:
   selector:
     istio: ingress
@@ -27,24 +28,25 @@ spec:
         name: http
         protocol: HTTP
       hosts:
-        - storefront.yas.local.com
-        - backoffice.yas.local.com
-        - identity.yas.local.com
+        - storefront.staging.yas.local.com
+        - backoffice.staging.yas.local.com
+        - identity.staging.yas.local.com
+        - api.staging.yas.local.com
 ---
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: storefront-bff
-  namespace: dev
+  namespace: staging
 spec:
   hosts:
-    - storefront.yas.local.com
+    - storefront.staging.yas.local.com
   gateways:
-    - yas-dev-gateway
+    - yas-staging-gateway
   http:
     - route:
         - destination:
-            host: storefront-bff.dev.svc.cluster.local
+            host: storefront-bff.staging.svc.cluster.local
             port:
               number: 80
       retries:
@@ -57,12 +59,12 @@ apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: identity
-  namespace: dev
+  namespace: staging
 spec:
   hosts:
-    - identity.yas.local.com
+    - identity.staging.yas.local.com
   gateways:
-    - yas-dev-gateway
+    - yas-staging-gateway
   http:
     - route:
         - destination:
@@ -78,17 +80,42 @@ spec:
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: backoffice-bff
-  namespace: dev
+  name: media
+  namespace: staging
 spec:
   hosts:
-    - backoffice.yas.local.com
+    - api.staging.yas.local.com
   gateways:
-    - yas-dev-gateway
+    - yas-staging-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /media/
+      route:
+        - destination:
+            host: media.staging.svc.cluster.local
+            port:
+              number: 80
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream,5xx
+      timeout: 10s
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: backoffice-bff
+  namespace: staging
+spec:
+  hosts:
+    - backoffice.staging.yas.local.com
+  gateways:
+    - yas-staging-gateway
   http:
     - route:
         - destination:
-            host: backoffice-bff.dev.svc.cluster.local
+            host: backoffice-bff.staging.svc.cluster.local
             port:
               number: 80
       retries:

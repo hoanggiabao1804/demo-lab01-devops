@@ -1,8 +1,8 @@
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: dev-default-deny
-  namespace: dev
+  name: staging-default-deny
+  namespace: staging
 spec:
   action: ALLOW
 ---
@@ -10,7 +10,7 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-health-and-metrics
-  namespace: dev
+  namespace: staging
 spec:
   action: ALLOW
   rules:
@@ -25,7 +25,7 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-public-to-backoffice-bff
-  namespace: dev
+  namespace: staging
 spec:
   action: ALLOW
   selector:
@@ -40,7 +40,7 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-public-to-storefront-bff
-  namespace: dev
+  namespace: staging
 spec:
   action: ALLOW
   selector:
@@ -54,8 +54,23 @@ spec:
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
+  name: allow-public-to-media
+  namespace: staging
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: media
+  rules:
+    - to:
+        - operation:
+            ports: ["80"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
   name: allow-bff-to-ui
-  namespace: dev
+  namespace: staging
 spec:
   action: ALLOW
   selector:
@@ -65,7 +80,7 @@ spec:
     - from:
         - source:
             principals:
-              - cluster.local/ns/dev/sa/backoffice-bff
+              - cluster.local/ns/staging/sa/backoffice-bff
       to:
         - operation:
             ports: ["3000"]
@@ -74,7 +89,7 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-storefront-bff-to-ui
-  namespace: dev
+  namespace: staging
 spec:
   action: ALLOW
   selector:
@@ -84,7 +99,7 @@ spec:
     - from:
         - source:
             principals:
-              - cluster.local/ns/dev/sa/storefront-bff
+              - cluster.local/ns/staging/sa/storefront-bff
       to:
         - operation:
             ports: ["3000"]
@@ -93,7 +108,7 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-to-product
-  namespace: dev
+  namespace: staging
 spec:
   action: ALLOW
   selector:
@@ -103,15 +118,15 @@ spec:
     - from:
         - source:
             principals:
-              - cluster.local/ns/dev/sa/backoffice-bff
-              - cluster.local/ns/dev/sa/storefront-bff
-              - cluster.local/ns/dev/sa/cart
-              - cluster.local/ns/dev/sa/inventory
-              - cluster.local/ns/dev/sa/order
-              - cluster.local/ns/dev/sa/promotion
-              - cluster.local/ns/dev/sa/rating
-              - cluster.local/ns/dev/sa/search
-              - cluster.local/ns/dev/sa/recommendation
+              - cluster.local/ns/staging/sa/backoffice-bff
+              - cluster.local/ns/staging/sa/storefront-bff
+              - cluster.local/ns/staging/sa/cart
+              - cluster.local/ns/staging/sa/inventory
+              - cluster.local/ns/staging/sa/order
+              - cluster.local/ns/staging/sa/promotion
+              - cluster.local/ns/staging/sa/rating
+              - cluster.local/ns/staging/sa/search
+              - cluster.local/ns/staging/sa/recommendation
       to:
         - operation:
             ports: ["80"]
@@ -120,7 +135,7 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-to-media
-  namespace: dev
+  namespace: staging
 spec:
   action: ALLOW
   selector:
@@ -130,11 +145,11 @@ spec:
     - from:
         - source:
             principals:
-              - cluster.local/ns/dev/sa/backoffice-bff
-              - cluster.local/ns/dev/sa/storefront-bff
-              - cluster.local/ns/dev/sa/cart
-              - cluster.local/ns/dev/sa/payment
-              - cluster.local/ns/dev/sa/product
+              - cluster.local/ns/staging/sa/backoffice-bff
+              - cluster.local/ns/staging/sa/storefront-bff
+              - cluster.local/ns/staging/sa/cart
+              - cluster.local/ns/staging/sa/payment
+              - cluster.local/ns/staging/sa/product
       to:
         - operation:
             ports: ["80"]
@@ -143,7 +158,7 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-to-customer
-  namespace: dev
+  namespace: staging
 spec:
   action: ALLOW
   selector:
@@ -153,11 +168,11 @@ spec:
     - from:
         - source:
             principals:
-              - cluster.local/ns/dev/sa/backoffice-bff
-              - cluster.local/ns/dev/sa/storefront-bff
-              - cluster.local/ns/dev/sa/order
-              - cluster.local/ns/dev/sa/rating
-              - cluster.local/ns/dev/sa/recommendation
+              - cluster.local/ns/staging/sa/backoffice-bff
+              - cluster.local/ns/staging/sa/storefront-bff
+              - cluster.local/ns/staging/sa/order
+              - cluster.local/ns/staging/sa/rating
+              - cluster.local/ns/staging/sa/recommendation
       to:
         - operation:
             ports: ["80"]
@@ -166,7 +181,7 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-to-cart
-  namespace: dev
+  namespace: staging
 spec:
   action: ALLOW
   selector:
@@ -176,9 +191,9 @@ spec:
     - from:
         - source:
             principals:
-              - cluster.local/ns/dev/sa/backoffice-bff
-              - cluster.local/ns/dev/sa/storefront-bff
-              - cluster.local/ns/dev/sa/order
+              - cluster.local/ns/staging/sa/backoffice-bff
+              - cluster.local/ns/staging/sa/storefront-bff
+              - cluster.local/ns/staging/sa/order
       to:
         - operation:
             ports: ["80"]
@@ -187,7 +202,7 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-to-order
-  namespace: dev
+  namespace: staging
 spec:
   action: ALLOW
   selector:
@@ -197,11 +212,11 @@ spec:
     - from:
         - source:
             principals:
-              - cluster.local/ns/dev/sa/backoffice-bff
-              - cluster.local/ns/dev/sa/storefront-bff
-              - cluster.local/ns/dev/sa/payment
-              - cluster.local/ns/dev/sa/rating
-              - cluster.local/ns/dev/sa/recommendation
+              - cluster.local/ns/staging/sa/backoffice-bff
+              - cluster.local/ns/staging/sa/storefront-bff
+              - cluster.local/ns/staging/sa/payment
+              - cluster.local/ns/staging/sa/rating
+              - cluster.local/ns/staging/sa/recommendation
       to:
         - operation:
             ports: ["80"]
@@ -210,7 +225,7 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-to-location
-  namespace: dev
+  namespace: staging
 spec:
   action: ALLOW
   selector:
@@ -220,11 +235,11 @@ spec:
     - from:
         - source:
             principals:
-              - cluster.local/ns/dev/sa/backoffice-bff
-              - cluster.local/ns/dev/sa/storefront-bff
-              - cluster.local/ns/dev/sa/customer
-              - cluster.local/ns/dev/sa/inventory
-              - cluster.local/ns/dev/sa/tax
+              - cluster.local/ns/staging/sa/backoffice-bff
+              - cluster.local/ns/staging/sa/storefront-bff
+              - cluster.local/ns/staging/sa/customer
+              - cluster.local/ns/staging/sa/inventory
+              - cluster.local/ns/staging/sa/tax
       to:
         - operation:
             ports: ["80"]
@@ -233,7 +248,7 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-to-inventory
-  namespace: dev
+  namespace: staging
 spec:
   action: ALLOW
   selector:
@@ -243,8 +258,8 @@ spec:
     - from:
         - source:
             principals:
-              - cluster.local/ns/dev/sa/backoffice-bff
-              - cluster.local/ns/dev/sa/storefront-bff
+              - cluster.local/ns/staging/sa/backoffice-bff
+              - cluster.local/ns/staging/sa/storefront-bff
       to:
         - operation:
             ports: ["80"]
@@ -253,7 +268,7 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-to-tax
-  namespace: dev
+  namespace: staging
 spec:
   action: ALLOW
   selector:
@@ -263,9 +278,9 @@ spec:
     - from:
         - source:
             principals:
-              - cluster.local/ns/dev/sa/backoffice-bff
-              - cluster.local/ns/dev/sa/storefront-bff
-              - cluster.local/ns/dev/sa/order
+              - cluster.local/ns/staging/sa/backoffice-bff
+              - cluster.local/ns/staging/sa/storefront-bff
+              - cluster.local/ns/staging/sa/order
       to:
         - operation:
             ports: ["80"]
@@ -274,7 +289,7 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-to-promotion
-  namespace: dev
+  namespace: staging
 spec:
   action: ALLOW
   selector:
@@ -284,9 +299,9 @@ spec:
     - from:
         - source:
             principals:
-              - cluster.local/ns/dev/sa/backoffice-bff
-              - cluster.local/ns/dev/sa/storefront-bff
-              - cluster.local/ns/dev/sa/order
+              - cluster.local/ns/staging/sa/backoffice-bff
+              - cluster.local/ns/staging/sa/storefront-bff
+              - cluster.local/ns/staging/sa/order
       to:
         - operation:
             ports: ["80"]
@@ -295,7 +310,7 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-to-rating
-  namespace: dev
+  namespace: staging
 spec:
   action: ALLOW
   selector:
@@ -305,9 +320,9 @@ spec:
     - from:
         - source:
             principals:
-              - cluster.local/ns/dev/sa/backoffice-bff
-              - cluster.local/ns/dev/sa/storefront-bff
-              - cluster.local/ns/dev/sa/product
+              - cluster.local/ns/staging/sa/backoffice-bff
+              - cluster.local/ns/staging/sa/storefront-bff
+              - cluster.local/ns/staging/sa/product
       to:
         - operation:
             ports: ["80"]
@@ -316,7 +331,7 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-to-payment
-  namespace: dev
+  namespace: staging
 spec:
   action: ALLOW
   selector:
@@ -326,8 +341,8 @@ spec:
     - from:
         - source:
             principals:
-              - cluster.local/ns/dev/sa/backoffice-bff
-              - cluster.local/ns/dev/sa/storefront-bff
+              - cluster.local/ns/staging/sa/backoffice-bff
+              - cluster.local/ns/staging/sa/storefront-bff
       to:
         - operation:
             ports: ["80"]
@@ -336,7 +351,7 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-to-payment-paypal
-  namespace: dev
+  namespace: staging
 spec:
   action: ALLOW
   selector:
@@ -346,8 +361,8 @@ spec:
     - from:
         - source:
             principals:
-              - cluster.local/ns/dev/sa/backoffice-bff
-              - cluster.local/ns/dev/sa/storefront-bff
+              - cluster.local/ns/staging/sa/backoffice-bff
+              - cluster.local/ns/staging/sa/storefront-bff
       to:
         - operation:
             ports: ["80"]
@@ -356,7 +371,7 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-to-search
-  namespace: dev
+  namespace: staging
 spec:
   action: ALLOW
   selector:
@@ -366,8 +381,8 @@ spec:
     - from:
         - source:
             principals:
-              - cluster.local/ns/dev/sa/backoffice-bff
-              - cluster.local/ns/dev/sa/storefront-bff
+              - cluster.local/ns/staging/sa/backoffice-bff
+              - cluster.local/ns/staging/sa/storefront-bff
       to:
         - operation:
             ports: ["80"]
@@ -376,7 +391,7 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-to-recommendation
-  namespace: dev
+  namespace: staging
 spec:
   action: ALLOW
   selector:
@@ -386,8 +401,8 @@ spec:
     - from:
         - source:
             principals:
-              - cluster.local/ns/dev/sa/backoffice-bff
-              - cluster.local/ns/dev/sa/storefront-bff
+              - cluster.local/ns/staging/sa/backoffice-bff
+              - cluster.local/ns/staging/sa/storefront-bff
       to:
         - operation:
             ports: ["80"]
@@ -396,7 +411,7 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-to-webhook
-  namespace: dev
+  namespace: staging
 spec:
   action: ALLOW
   selector:
@@ -406,8 +421,8 @@ spec:
     - from:
         - source:
             principals:
-              - cluster.local/ns/dev/sa/backoffice-bff
-              - cluster.local/ns/dev/sa/storefront-bff
+              - cluster.local/ns/staging/sa/backoffice-bff
+              - cluster.local/ns/staging/sa/storefront-bff
       to:
         - operation:
             ports: ["80"]
@@ -416,7 +431,7 @@ apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-to-sampledata
-  namespace: dev
+  namespace: staging
 spec:
   action: ALLOW
   selector:
@@ -426,8 +441,8 @@ spec:
     - from:
         - source:
             principals:
-              - cluster.local/ns/dev/sa/backoffice-bff
-              - cluster.local/ns/dev/sa/storefront-bff
+              - cluster.local/ns/staging/sa/backoffice-bff
+              - cluster.local/ns/staging/sa/storefront-bff
       to:
         - operation:
             ports: ["80"]

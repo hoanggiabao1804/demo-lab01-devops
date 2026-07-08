@@ -1,0 +1,5 @@
+resources:
+  - gateway-dev.yaml
+  - mtls-dev.yaml
+  - authorization-policies-dev.yaml
+  - envoy-podmonitor.yaml

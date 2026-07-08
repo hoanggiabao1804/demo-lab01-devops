@@ -1,0 +1,448 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: dev-default-deny
+  namespace: dev
+spec:
+  action: ALLOW
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-health-and-metrics
+  namespace: dev
+spec:
+  action: ALLOW
+  rules:
+    - to:
+        - operation:
+            ports: ["8090"]
+            paths:
+              - /actuator/health*
+              - /actuator/prometheus
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-public-to-backoffice-bff
+  namespace: dev
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: backoffice-bff
+  rules:
+    - to:
+        - operation:
+            ports: ["80"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-public-to-storefront-bff
+  namespace: dev
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: storefront-bff
+  rules:
+    - to:
+        - operation:
+            ports: ["80"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-public-to-media
+  namespace: dev
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: media
+  rules:
+    - to:
+        - operation:
+            ports: ["80"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-bff-to-ui
+  namespace: dev
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: backoffice-ui
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/dev/sa/backoffice-bff
+      to:
+        - operation:
+            ports: ["3000"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-storefront-bff-to-ui
+  namespace: dev
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: storefront-ui
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/dev/sa/storefront-bff
+      to:
+        - operation:
+            ports: ["3000"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-to-product
+  namespace: dev
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: product
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/dev/sa/backoffice-bff
+              - cluster.local/ns/dev/sa/storefront-bff
+              - cluster.local/ns/dev/sa/cart
+              - cluster.local/ns/dev/sa/inventory
+              - cluster.local/ns/dev/sa/order
+              - cluster.local/ns/dev/sa/promotion
+              - cluster.local/ns/dev/sa/rating
+              - cluster.local/ns/dev/sa/search
+              - cluster.local/ns/dev/sa/recommendation
+      to:
+        - operation:
+            ports: ["80"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-to-media
+  namespace: dev
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: media
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/dev/sa/backoffice-bff
+              - cluster.local/ns/dev/sa/storefront-bff
+              - cluster.local/ns/dev/sa/cart
+              - cluster.local/ns/dev/sa/payment
+              - cluster.local/ns/dev/sa/product
+      to:
+        - operation:
+            ports: ["80"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-to-customer
+  namespace: dev
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: customer
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/dev/sa/backoffice-bff
+              - cluster.local/ns/dev/sa/storefront-bff
+              - cluster.local/ns/dev/sa/order
+              - cluster.local/ns/dev/sa/rating
+              - cluster.local/ns/dev/sa/recommendation
+      to:
+        - operation:
+            ports: ["80"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-to-cart
+  namespace: dev
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cart
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/dev/sa/backoffice-bff
+              - cluster.local/ns/dev/sa/storefront-bff
+              - cluster.local/ns/dev/sa/order
+      to:
+        - operation:
+            ports: ["80"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-to-order
+  namespace: dev
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: order
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/dev/sa/backoffice-bff
+              - cluster.local/ns/dev/sa/storefront-bff
+              - cluster.local/ns/dev/sa/payment
+              - cluster.local/ns/dev/sa/rating
+              - cluster.local/ns/dev/sa/recommendation
+      to:
+        - operation:
+            ports: ["80"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-to-location
+  namespace: dev
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: location
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/dev/sa/backoffice-bff
+              - cluster.local/ns/dev/sa/storefront-bff
+              - cluster.local/ns/dev/sa/customer
+              - cluster.local/ns/dev/sa/inventory
+              - cluster.local/ns/dev/sa/tax
+      to:
+        - operation:
+            ports: ["80"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-to-inventory
+  namespace: dev
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: inventory
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/dev/sa/backoffice-bff
+              - cluster.local/ns/dev/sa/storefront-bff
+      to:
+        - operation:
+            ports: ["80"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-to-tax
+  namespace: dev
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tax
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/dev/sa/backoffice-bff
+              - cluster.local/ns/dev/sa/storefront-bff
+              - cluster.local/ns/dev/sa/order
+      to:
+        - operation:
+            ports: ["80"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-to-promotion
+  namespace: dev
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: promotion
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/dev/sa/backoffice-bff
+              - cluster.local/ns/dev/sa/storefront-bff
+              - cluster.local/ns/dev/sa/order
+      to:
+        - operation:
+            ports: ["80"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-to-rating
+  namespace: dev
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: rating
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/dev/sa/backoffice-bff
+              - cluster.local/ns/dev/sa/storefront-bff
+              - cluster.local/ns/dev/sa/product
+      to:
+        - operation:
+            ports: ["80"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-to-payment
+  namespace: dev
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: payment
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/dev/sa/backoffice-bff
+              - cluster.local/ns/dev/sa/storefront-bff
+      to:
+        - operation:
+            ports: ["80"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-to-payment-paypal
+  namespace: dev
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: payment-paypal
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/dev/sa/backoffice-bff
+              - cluster.local/ns/dev/sa/storefront-bff
+      to:
+        - operation:
+            ports: ["80"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-to-search
+  namespace: dev
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: search
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/dev/sa/backoffice-bff
+              - cluster.local/ns/dev/sa/storefront-bff
+      to:
+        - operation:
+            ports: ["80"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-to-recommendation
+  namespace: dev
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: recommendation
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/dev/sa/backoffice-bff
+              - cluster.local/ns/dev/sa/storefront-bff
+      to:
+        - operation:
+            ports: ["80"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-to-webhook
+  namespace: dev
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: webhook
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/dev/sa/backoffice-bff
+              - cluster.local/ns/dev/sa/storefront-bff
+      to:
+        - operation:
+            ports: ["80"]
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-to-sampledata
+  namespace: dev
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sampledata
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/dev/sa/backoffice-bff
+              - cluster.local/ns/dev/sa/storefront-bff
+      to:
+        - operation:
+            ports: ["80"]

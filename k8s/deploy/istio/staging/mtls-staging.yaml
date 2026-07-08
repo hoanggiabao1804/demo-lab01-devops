@@ -1,21 +1,21 @@
-# Enables strict mTLS for workloads in the dev namespace.
+# Enables strict mTLS for workloads in the staging namespace.
 #
 # Important:
 # - This is correct for service-to-service traffic inside the Istio mesh.
 # - Your ingress-nginx controller is not currently injected with an Istio sidecar.
-#   After applying STRICT mTLS, browser traffic through ingress-nginx to dev
+#   After applying STRICT mTLS, browser traffic through ingress-nginx to staging
 #   workloads may fail unless ingress traffic also enters through the mesh.
 #
 # Apply:
-#   kubectl apply -f k8s/deploy/istio/mtls-dev.yaml
+#   kubectl apply -f k8s/deploy/istio/staging/mtls-staging.yaml
 #
 # Roll back:
-#   kubectl delete -f k8s/deploy/istio/mtls-dev.yaml
+#   kubectl delete -f k8s/deploy/istio/staging/mtls-staging.yaml
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
-  name: dev-strict-mtls
-  namespace: dev
+  name: staging-strict-mtls
+  namespace: staging
 spec:
   mtls:
     mode: STRICT
@@ -23,10 +23,10 @@ spec:
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: dev-istio-mutual
-  namespace: dev
+  name: staging-istio-mutual
+  namespace: staging
 spec:
-  host: "*.dev.svc.cluster.local"
+  host: "*.staging.svc.cluster.local"
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL
@@ -34,10 +34,10 @@ spec:
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: dev-istio-mutual-from-gateway
+  name: staging-istio-mutual-from-gateway
   namespace: istio-system
 spec:
-  host: "*.dev.svc.cluster.local"
+  host: "*.staging.svc.cluster.local"
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL
