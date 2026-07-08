@@ -3,31 +3,17 @@ def servicesToBuild = []
 pipeline {
     agent {
         docker {
-            // image '23120022/zakirepo:maven-3.9.14-eclipse-temurin-25-v4.0'
-            // registryUrl 'https://index.docker.io/v1/'
-            // registryCredentialsId 'dockerhub_cred'
-            // args '''
-            // --network sonar-network 
-            // -u root
-            // -v /var/run/docker.sock:/var/run/docker.sock
-            // -v $HOME/.sonar:/root/.sonar 
-            // -v $HOME/.owasp:/owasp
-            // -v $HOME/.npm:/root/.npm
-            // -v $HOME/.m2:/root/.m2
-            // '''
             image '23120022/zakirepo:maven-3.9.14-eclipse-temurin-25-v4.0'
             registryUrl 'https://index.docker.io/v1/'
             registryCredentialsId 'dockerhub_cred'
             args '''
             --network sonar-network 
-            --entrypoint=''
+            -u root
             -v /var/run/docker.sock:/var/run/docker.sock
-            -e HOME=/var/lib/jenkins
-            -e MAVEN_CONFIG=/var/lib/jenkins/.m2
-            -v $HOME/.sonar:/var/lib/jenkins/.sonar 
-            -v $HOME/.owasp:/var/lib/jenkins/.owasp
-            -v $HOME/.npm:/var/lib/jenkins/.npm
-            -v $HOME/.m2:/var/lib/jenkins/.m2
+            -v $HOME/.sonar:/root/.sonar 
+            -v $HOME/.owasp:/owasp
+            -v $HOME/.npm:/root/.npm
+            -v $HOME/.m2:/root/.m2
             '''
         }
     }
