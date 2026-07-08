@@ -48,7 +48,10 @@ pipeline{
                     branches: [[name: '*/main']],
                     userRemoteConfigs: scm.userRemoteConfigs
                 ])
-                sh 'git fetch --tags --force origin "+refs/tags/*:refs/tags/*"'
+                sh '''
+                    git config --global --add safe.directory "$WORKSPACE"
+                    git fetch --tags --force origin "+refs/tags/*:refs/tags/*"
+                '''
             }
         }
         stage('Init') {
