@@ -41,7 +41,7 @@ pipeline{
         stage('Checkout CD Agent'){
             steps{
                 sh '''
-                helm --version
+                helm version
                 kubectl get nodes
                 '''
             }
