@@ -78,7 +78,7 @@ pipeline{
                         error 'Cannot resolve latest release tag. Create a tag like v1.2.3 on main first.'
                     }
 
-                    if (!(IMAGE_TAG ==~ /^v\\d+\\.\\d+\\.\\d+$/)) {
+                    if (!IMAGE_TAG.matches('^v[0-9]+\\.[0-9]+\\.[0-9]+$')) {
                         error "Invalid staging release tag '${IMAGE_TAG}'. Expected format: v1.2.3"
                     }
 
