@@ -21,7 +21,6 @@ pipeline {
             args '''
             --network sonar-network 
             --entrypoint=''
-            -u $(id -u):$(id -g)
             -v /var/run/docker.sock:/var/run/docker.sock
             -e HOME=/var/lib/jenkins
             -e MAVEN_CONFIG=/var/lib/jenkins/.m2
