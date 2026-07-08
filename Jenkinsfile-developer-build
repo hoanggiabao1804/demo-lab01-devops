@@ -149,38 +149,47 @@ pipeline {
                         set -e
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                         '''
-                        changedServices.each { svc ->
-                            def branch = env."${svc.key}_RESOLVED_BRANCH"
-                            def imageTag = env."${svc.key}_IMAGE_TAG"
-                            def repository = env."${svc.key}_IMAGE_REPOSITORY"
-                            def servicePath = svc.path
-                            def buildCommand = svc.build ?: ''
+                        def originalRef = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
+                        if (originalRef == 'HEAD') {
+                            originalRef = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                        }
 
-                            echo "Building and pushing ${svc.chart} for branch ${branch} as ${repository}:${imageTag}"
+                        try {
+                            changedServices.each { svc ->
+                                def branch = env."${svc.key}_RESOLVED_BRANCH"
+                                def imageTag = env."${svc.key}_IMAGE_TAG"
+                                def repository = env."${svc.key}_IMAGE_REPOSITORY"
+                                def servicePath = svc.path
+                                def buildCommand = svc.build ?: ''
 
-                            sh """#!/usr/bin/env bash
-                                set -e
-                                BRANCH=\"${branch}\"
-                                REPO=\"${repository}\"
-                                TAG=\"${imageTag}\"
-                                SERVICE_PATH=\"${servicePath}\"
-                                BUILD_COMMAND=\"${buildCommand}\"
-                                
-                                pwd
-                                ls -la
+                                echo "Building and pushing ${svc.chart} for branch ${branch} as ${repository}:${imageTag}"
 
-                                git fetch origin \"\$BRANCH:refs/remotes/origin/\$BRANCH\" --no-tags
-                                tmpdir=\$(mktemp -d)
-                                trap 'rm -rf \"\$tmpdir\"' EXIT
-                                git archive \"refs/remotes/origin/\$BRANCH\" | tar -x -C \"\$tmpdir\"
-                                if [ -n \"\$BUILD_COMMAND\" ]; then
-                                    cd \"\$tmpdir\" 
+                                sh """#!/usr/bin/env bash
+                                    set -e
+                                    BRANCH=\"${branch}\"
+                                    REPO=\"${repository}\"
+                                    TAG=\"${imageTag}\"
+                                    SERVICE_PATH=\"${servicePath}\"
+                                    BUILD_COMMAND=\"${buildCommand}\"
+                                    
                                     pwd
                                     ls -la
-                                    eval \"\$BUILD_COMMAND\"
-                                fi
-                                docker build -t \"\$REPO:\$TAG\" \"\$tmpdir/\$SERVICE_PATH\"
-                                docker push \"\$REPO:\$TAG\"
+
+                                    git fetch origin \"\$BRANCH:refs/remotes/origin/\$BRANCH\" --no-tags
+                                    git checkout -f \"refs/remotes/origin/\$BRANCH\"
+                                    if [ -n \"\$BUILD_COMMAND\" ]; then
+                                        pwd
+                                        ls -la
+                                        eval \"\$BUILD_COMMAND\"
+                                    fi
+                                    docker build -t \"\$REPO:\$TAG\" \"\$SERVICE_PATH\"
+                                    docker push \"\$REPO:\$TAG\"
+                                """
+                            }
+                        } finally {
+                            sh """#!/usr/bin/env bash
+                                set -e
+                                git checkout -f "${originalRef}"
                             """
                         }
                     }
