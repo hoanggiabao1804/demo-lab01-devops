@@ -329,11 +329,11 @@ pipeline {
 
                                 port_count=$(kubectl get svc "$service_name" \
                                     -n "$NAMESPACE" \
-                                    -o jsonpath='{range .spec.ports[*]}x{"\n"}{end}' | wc -l | tr -d ' ')
+                                    -o jsonpath='{.spec.ports[*].port}' | wc -w | tr -d ' ')
 
                                 node_port_count=$(kubectl get svc "$service_name" \
                                     -n "$NAMESPACE" \
-                                    -o jsonpath='{range .spec.ports[*]}{.nodePort}{"\n"}{end}' | sed '/^$/d' | wc -l | tr -d ' ')
+                                    -o jsonpath='{.spec.ports[*].nodePort}' | wc -w | tr -d ' ')
 
                                 if [ "$port_count" = "$node_port_count" ] && [ "$node_port_count" != "0" ]; then
                                     return 0
@@ -352,8 +352,9 @@ pipeline {
 
                             kubectl get svc "$service_name" \
                                 -n "$NAMESPACE" \
-                                -o jsonpath='{range .spec.ports[*]}{.name}{" "}{.port}{" "}{.nodePort}{"\n"}{end}' |
-                            while read -r port_name service_port node_port; do
+                                -o jsonpath='{range .spec.ports[*]}{.name}{"|"}{.port}{"|"}{.nodePort}{";"}{end}' |
+                            tr ';' '\n' |
+                            while IFS='|' read -r port_name service_port node_port; do
                                 if [ -z "${node_port:-}" ]; then
                                     continue
                                 fi
