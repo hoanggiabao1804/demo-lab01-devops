@@ -23,6 +23,7 @@ def services = [
 ]
 
 def NAMESPACE = 'yas'
+def NODEPORT_SERVICES = services.collect { it.chart }.join(' ')
 
 def normalizeBranch = { rawBranch ->
     def branch = rawBranch == null ? '' : rawBranch.trim()
@@ -86,6 +87,7 @@ pipeline {
 
     environment {
         NAMESPACE = "${NAMESPACE}"
+        NODEPORT_SERVICES = "${NODEPORT_SERVICES}"
     }
 
     stages {
@@ -225,12 +227,8 @@ pipeline {
                             def repository = env."${svc.key}_IMAGE_REPOSITORY"
                             def imageTag = env."${svc.key}_IMAGE_TAG"
                             def imagePath = svc.imageType == 'ui' ? 'ui.image' : 'backend.image'
-                            def extraHelmArgs = ''
-                            if (svc.chart == 'storefront-ui') {
-                                extraHelmArgs = '--set ui.service.type=NodePort'
-                            } else if (svc.chart == 'storefront-bff') {
-                                extraHelmArgs = '--set backend.service.type=NodePort'
-                            }
+                            def serviceTypePath = svc.imageType == 'ui' ? 'ui.service.type' : 'backend.service.type'
+                            def extraHelmArgs = "--set ${serviceTypePath}=NodePort"
 
                             echo "Deploying ${svc.chart} with image ${repository}:${imageTag}"
 
@@ -312,6 +310,71 @@ pipeline {
                             return 1
                         }
 
+                        ensure_service_nodeport() {
+                            local service_name="$1"
+
+                            kubectl get svc "$service_name" -n "$NAMESPACE" >/dev/null
+
+                            local service_type
+                            service_type=$(kubectl get svc "$service_name" -n "$NAMESPACE" -o jsonpath='{.spec.type}')
+
+                            if [ "$service_type" != "NodePort" ] && [ "$service_type" != "LoadBalancer" ]; then
+                                echo "Service $service_name is $service_type. Patching it to NodePort..." >&2
+                                kubectl patch svc "$service_name" -n "$NAMESPACE" --type=merge -p '{"spec":{"type":"NodePort"}}' >&2
+                            fi
+
+                            for _ in $(seq 1 30); do
+                                local port_count
+                                local node_port_count
+
+                                port_count=$(kubectl get svc "$service_name" \
+                                    -n "$NAMESPACE" \
+                                    -o jsonpath='{range .spec.ports[*]}x{"\n"}{end}' | wc -l | tr -d ' ')
+
+                                node_port_count=$(kubectl get svc "$service_name" \
+                                    -n "$NAMESPACE" \
+                                    -o jsonpath='{range .spec.ports[*]}{.nodePort}{"\n"}{end}' | sed '/^$/d' | wc -l | tr -d ' ')
+
+                                if [ "$port_count" = "$node_port_count" ] && [ "$node_port_count" != "0" ]; then
+                                    return 0
+                                fi
+
+                                sleep 2
+                            done
+
+                            echo "ERROR: Cannot allocate NodePort for all ports in $service_name" >&2
+                            kubectl get svc "$service_name" -n "$NAMESPACE" -o yaml >&2
+                            return 1
+                        }
+
+                        append_service_urls() {
+                            local service_name="$1"
+
+                            kubectl get svc "$service_name" \
+                                -n "$NAMESPACE" \
+                                -o jsonpath='{range .spec.ports[*]}{.name}{" "}{.port}{" "}{.nodePort}{"\n"}{end}' |
+                            while read -r port_name service_port node_port; do
+                                if [ -z "${node_port:-}" ]; then
+                                    continue
+                                fi
+
+                                local path="/"
+                                if [ "$service_port" = "8090" ] || [ "$port_name" = "metric" ]; then
+                                    path="/actuator/health"
+                                fi
+
+                                printf "%-24s %-10s %-10s http://%s:%s%s\n" \
+                                    "$service_name" "$port_name" "$service_port" "$NODE_IP" "$node_port" "$path" \
+                                    >> "$WORKSPACE/nodeport-urls.txt"
+                            done
+                        }
+
+                        SERVICES="${NODEPORT_SERVICES:-}"
+
+                        for service_name in $SERVICES; do
+                            ensure_service_nodeport "$service_name"
+                        done
+
                         UI_NODE_PORT=$(kubectl get svc storefront-ui \
                         -n "$NAMESPACE" \
                         -o jsonpath='{.spec.ports[?(@.port==3000)].nodePort}')
@@ -361,10 +424,20 @@ $BFF_API_BASE_URL
 Storefront BFF health:
 $BFF_HEALTH_URL
 
+All NodePort service URLs:
+SERVICE                  PORT_NAME  PORT       URL
+EOF
+
+                        for service_name in $SERVICES; do
+                            append_service_urls "$service_name"
+                        done
+
+                        cat >> "$WORKSPACE/nodeport-urls.txt" <<EOF
+
 Kubernetes services:
 EOF
 
-                        kubectl get svc -n "$NAMESPACE" storefront-ui storefront-bff >> "$WORKSPACE/nodeport-urls.txt"
+                        kubectl get svc -n "$NAMESPACE" >> "$WORKSPACE/nodeport-urls.txt"
 
                         echo ""
                         cat "$WORKSPACE/nodeport-urls.txt"
