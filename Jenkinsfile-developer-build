@@ -174,7 +174,10 @@ pipeline {
                                 trap 'rm -rf \"\$tmpdir\"' EXIT
                                 git archive \"refs/remotes/origin/\$BRANCH\" | tar -x -C \"\$tmpdir\"
                                 if [ -n \"\$BUILD_COMMAND\" ]; then
-                                    (cd \"\$tmpdir\" && eval \"\$BUILD_COMMAND\")
+                                    cd \"\$tmpdir\" 
+                                    pwd
+                                    ls -la
+                                    eval \"\$BUILD_COMMAND\"
                                 fi
                                 docker build -t \"\$REPO:\$TAG\" \"\$tmpdir/\$SERVICE_PATH\"
                                 docker push \"\$REPO:\$TAG\"
