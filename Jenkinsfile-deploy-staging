@@ -43,7 +43,12 @@ pipeline{
     stages{
         stage('Checkout'){
             steps{
-                checkout scm
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: scm.userRemoteConfigs
+                ])
+                sh 'git fetch --tags --force origin "+refs/tags/*:refs/tags/*"'
             }
         }
         stage('Init') {
@@ -54,13 +59,27 @@ pipeline{
                     '''
 
                     def gitRef = env.TAG_NAME ?: env.ref ?: env.REF ?: env.GIT_BRANCH ?: env.BRANCH_NAME ?: ''
-                    if (!env.TAG_NAME && !(gitRef ==~ /^refs\/tags\/.+/)) {
-                        error 'Staging deploy must run from a Git tag.'
+                    if (env.TAG_NAME || gitRef ==~ /^refs\/tags\/.+/) {
+                        IMAGE_TAG = gitRef.replaceFirst(/^origin\//, '').replaceFirst(/^refs\/tags\//, '')
+                    } else {
+                        IMAGE_TAG = sh(
+                            script: '''
+                                git tag --merged origin/main --list 'v[0-9]*' --sort=-v:refname |
+                                head -n 1
+                            ''',
+                            returnStdout: true
+                        ).trim()
                     }
-                    IMAGE_TAG = gitRef.replaceFirst(/^origin\//, '').replaceFirst(/^refs\/tags\//, '')
+
                     if (IMAGE_TAG == '') {
-                        error 'Cannot resolve release tag. Run this job from a Git tag.'
+                        error 'Cannot resolve latest release tag. Create a tag like v1.2.3 on main first.'
                     }
+
+                    if (!(IMAGE_TAG ==~ /^v\\d+\\.\\d+\\.\\d+$/)) {
+                        error "Invalid staging release tag '${IMAGE_TAG}'. Expected format: v1.2.3"
+                    }
+
+                    sh "git checkout -f ${IMAGE_TAG}"
                     echo "Current tag name is: '$IMAGE_TAG'"
                 }
             }
@@ -158,6 +177,25 @@ pipeline{
                     }
                 }
             }
+        }
+    }
+    post {
+        always {
+            sh '''#!/usr/bin/env bash
+                set +e
+
+                if [ "$(id -u)" = "0" ] && [ -n "${WORKSPACE:-}" ]; then
+                    workspace_owner="$(stat -c '%u:%g' "$WORKSPACE" 2>/dev/null)"
+
+                    if [ -n "$workspace_owner" ] && [ "$workspace_owner" != "0:0" ]; then
+                        chown -R "$workspace_owner" "$WORKSPACE"
+
+                        if [ -d "${WORKSPACE}@tmp" ]; then
+                            chown -R "$workspace_owner" "${WORKSPACE}@tmp"
+                        fi
+                    fi
+                fi
+            '''
         }
     }
 }
