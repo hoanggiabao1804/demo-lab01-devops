@@ -69,10 +69,15 @@ pipeline{
 
                     def branchFromGit = sh(
                         script: '''
-                            git branch -r --contains HEAD |
-                            sed 's#^[ *]*origin/##' |
-                            grep -v '^HEAD$' |
-                            head -n 1
+                            if git rev-parse --verify origin/main >/dev/null 2>&1 &&
+                               [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ]; then
+                                echo main
+                            else
+                                git branch -r --contains HEAD |
+                                sed 's#^[ *]*origin/##' |
+                                grep -v '^HEAD$' |
+                                head -n 1
+                            fi
                         ''',
                         returnStdout: true
                     ).trim()
@@ -128,7 +133,7 @@ pipeline{
         stage('Dockerhub Login') {
             when {
                 expression{
-                    CURRENT_BRANCH == "dev" && !servicesToDeploy.isEmpty()
+                    CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty()
                 }
             }
             steps{
@@ -147,7 +152,7 @@ pipeline{
         stage('Build and Push Docker Images'){
             when {
                 expression{
-                    CURRENT_BRANCH == "dev" && !servicesToDeploy.isEmpty()
+                    CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty()
                 }
             }
             steps{
@@ -181,7 +186,7 @@ pipeline{
         stage('Checkout to YAS manifest repository') {
             when {
                 expression{
-                    CURRENT_BRANCH == "dev" && !servicesToDeploy.isEmpty()
+                    CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty()
                 }
             }
             steps{
@@ -200,7 +205,7 @@ pipeline{
         stage('Apply Deployments'){
             when {
                 expression{
-                    CURRENT_BRANCH == "dev" && !servicesToDeploy.isEmpty()
+                    CURRENT_BRANCH == "main" && !servicesToDeploy.isEmpty()
                 }
             }
             steps{
@@ -241,6 +246,25 @@ pipeline{
                     }
                 }
             }
+        }
+    }
+    post {
+        always {
+            sh '''#!/usr/bin/env bash
+                set +e
+
+                if [ "$(id -u)" = "0" ] && [ -n "${WORKSPACE:-}" ]; then
+                    workspace_owner="$(stat -c '%u:%g' "$WORKSPACE" 2>/dev/null)"
+
+                    if [ -n "$workspace_owner" ] && [ "$workspace_owner" != "0:0" ]; then
+                        chown -R "$workspace_owner" "$WORKSPACE"
+
+                        if [ -d "${WORKSPACE}@tmp" ]; then
+                            chown -R "$workspace_owner" "${WORKSPACE}@tmp"
+                        fi
+                    fi
+                fi
+            '''
         }
     }
 }
