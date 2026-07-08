@@ -225,6 +225,12 @@ pipeline {
                             def repository = env."${svc.key}_IMAGE_REPOSITORY"
                             def imageTag = env."${svc.key}_IMAGE_TAG"
                             def imagePath = svc.imageType == 'ui' ? 'ui.image' : 'backend.image'
+                            def extraHelmArgs = ''
+                            if (svc.chart == 'storefront-ui') {
+                                extraHelmArgs = '--set ui.service.type=NodePort'
+                            } else if (svc.chart == 'storefront-bff') {
+                                extraHelmArgs = '--set backend.service.type=NodePort'
+                            }
 
                             echo "Deploying ${svc.chart} with image ${repository}:${imageTag}"
 
@@ -237,6 +243,7 @@ pipeline {
                                     --reset-values \
                                     --set ${imagePath}.repository=${repository} \
                                     --set ${imagePath}.tag=${imageTag} \
+                                    ${extraHelmArgs} \
                                     --wait \
                                     --timeout 5m
                             """
@@ -272,6 +279,39 @@ pipeline {
                         NODE_IP=$(kubectl get nodes \
                         -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
 
+                        ensure_nodeport() {
+                            local service_name="$1"
+                            local service_port="$2"
+                            local node_port=""
+
+                            kubectl get svc "$service_name" -n "$NAMESPACE" >/dev/null
+
+                            local service_type
+                            service_type=$(kubectl get svc "$service_name" -n "$NAMESPACE" -o jsonpath='{.spec.type}')
+
+                            if [ "$service_type" != "NodePort" ] && [ "$service_type" != "LoadBalancer" ]; then
+                                echo "Service $service_name is $service_type. Patching it to NodePort..." >&2
+                                kubectl patch svc "$service_name" -n "$NAMESPACE" --type=merge -p '{"spec":{"type":"NodePort"}}' >&2
+                            fi
+
+                            for _ in $(seq 1 30); do
+                                node_port=$(kubectl get svc "$service_name" \
+                                    -n "$NAMESPACE" \
+                                    -o jsonpath="{.spec.ports[?(@.port==$service_port)].nodePort}")
+
+                                if [ -n "$node_port" ]; then
+                                    echo "$node_port"
+                                    return 0
+                                fi
+
+                                sleep 2
+                            done
+
+                            echo "ERROR: Cannot find NodePort for $service_name port $service_port" >&2
+                            kubectl get svc "$service_name" -n "$NAMESPACE" -o yaml >&2
+                            return 1
+                        }
+
                         UI_NODE_PORT=$(kubectl get svc storefront-ui \
                         -n "$NAMESPACE" \
                         -o jsonpath='{.spec.ports[?(@.port==3000)].nodePort}')
@@ -283,20 +323,17 @@ pipeline {
                         BFF_HEALTH_NODE_PORT=$(kubectl get svc storefront-bff \
                         -n "$NAMESPACE" \
                         -o jsonpath='{.spec.ports[?(@.port==8090)].nodePort}')
-                            
+
                         if [ -z "$UI_NODE_PORT" ]; then
-                            echo "ERROR: Cannot find NodePort for storefront-ui port 3000"
-                            exit 1
+                            UI_NODE_PORT=$(ensure_nodeport storefront-ui 3000)
                         fi
 
                         if [ -z "$BFF_NODE_PORT" ]; then
-                            echo "ERROR: Cannot find NodePort for storefront-bff port 80"
-                            exit 1
+                            BFF_NODE_PORT=$(ensure_nodeport storefront-bff 80)
                         fi
 
                         if [ -z "$BFF_HEALTH_NODE_PORT" ]; then
-                            echo "ERROR: Cannot find NodePort for storefront-bff actuator port 8090"
-                            exit 1
+                            BFF_HEALTH_NODE_PORT=$(ensure_nodeport storefront-bff 8090)
                         fi
 
                         UI_URL="http://$APP_HOST:$UI_NODE_PORT"
