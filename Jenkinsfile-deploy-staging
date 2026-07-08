@@ -21,6 +21,7 @@ def services = [
     [name: 'sampledata',        path: 'sampledata/',        chart: 'sampledata',        type: 'backend',    build: 'mvn clean install -pl sampledata -am -DskipTests -Djacoco.skip=true']
 ]
 
+def servicesToDeploy = []
 def IMAGE_TAG = ''
 
 pipeline{
@@ -87,7 +88,55 @@ pipeline{
                 }
             }
         }
+        stage('Detect Changes') {
+            steps {
+                script {
+                    def previousTag = sh(
+                        script: """
+                            git tag --merged origin/main --list 'v[0-9]*' --sort=-v:refname |
+                            awk '
+                                found { print; exit }
+                                \$0 == "${IMAGE_TAG}" { found = 1 }
+                            '
+                        """,
+                        returnStdout: true
+                    ).trim()
+
+                    def diffFrom = previousTag ?: "${IMAGE_TAG}^"
+                    echo "Detecting changes from '${diffFrom}' to '${IMAGE_TAG}'"
+
+                    def changedFilesOutput = sh(
+                        script: "git diff --name-only ${diffFrom} ${IMAGE_TAG}",
+                        returnStdout: true
+                    ).trim()
+
+                    def changedFiles = changedFilesOutput ? changedFilesOutput.split("\n") : []
+
+                    if (changedFiles.any { it.startsWith('common-library') }) {
+                        servicesToDeploy = services
+                    } else {
+                        services.each { svc ->
+                            if (changedFiles.any { it.startsWith(svc.path) }) {
+                                servicesToDeploy << svc
+                            }
+                        }
+                    }
+
+                    def changedServices = servicesToDeploy*.name.collect().join("\n")
+                    echo "Changed service: ${changedServices}\n"
+
+                    if (servicesToDeploy.isEmpty()) {
+                        echo "No services changed"
+                    }
+                }
+            }
+        }
         stage('Dockerhub Login') {
+            when {
+                expression {
+                    !servicesToDeploy.isEmpty()
+                }
+            }
             steps{
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub_cred',
@@ -102,6 +151,11 @@ pipeline{
             }
         }
         stage('Build and Push Docker Images'){
+            when {
+                expression {
+                    !servicesToDeploy.isEmpty()
+                }
+            }
             steps{
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub_cred',
@@ -109,7 +163,7 @@ pipeline{
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     script{
-                        services.each { svc ->
+                        servicesToDeploy.each { svc ->
                             def repository = "${env.DOCKER_USER}/yas-${svc.name}"
 
                             if (svc.type == 'backend') {
@@ -128,6 +182,11 @@ pipeline{
             }
         }
         stage('Checkout to YAS manifest repository') {
+            when {
+                expression {
+                    !servicesToDeploy.isEmpty()
+                }
+            }
             steps{
                 withCredentials([usernamePassword(
                     credentialsId: 'github_cred',
@@ -142,6 +201,11 @@ pipeline{
             }
         }
         stage('Apply Deployments'){
+            when {
+                expression {
+                    !servicesToDeploy.isEmpty()
+                }
+            }
             steps{
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub_cred',
@@ -158,7 +222,7 @@ pipeline{
 
                             echo "Updating Deployment..."
 
-                            services.each { svc ->
+                            servicesToDeploy.each { svc ->
                                 def repository = "${env.DOCKER_USER}/yas-${svc.name}"
 
                                 sh """
@@ -172,7 +236,7 @@ pipeline{
                             }
 
                             sh """
-                                git commit -m "release(${IMAGE_TAG}): Update staging manifest files of services: ${services*.name.collect().join("|")}."
+                                git commit -m "release(${IMAGE_TAG}): Update staging manifest files of services: ${servicesToDeploy*.name.collect().join("|")}."
                                 git push origin main
                             """    
                         }
