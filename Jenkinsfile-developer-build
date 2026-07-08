@@ -171,9 +171,6 @@ pipeline {
                                     TAG=\"${imageTag}\"
                                     SERVICE_PATH=\"${servicePath}\"
                                     BUILD_COMMAND=\"${buildCommand}\"
-                                    
-                                    pwd
-                                    ls -la
 
                                     git fetch origin \"\$BRANCH:refs/remotes/origin/\$BRANCH\" --no-tags
                                     git checkout -f \"refs/remotes/origin/\$BRANCH\"
