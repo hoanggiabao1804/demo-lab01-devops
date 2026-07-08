@@ -1,0 +1,6 @@
+resources:
+  - namespace-staging.yaml
+  - gateway-staging.yaml
+  - mtls-staging.yaml
+  - authorization-policies-staging.yaml
+  - envoy-podmonitor.yaml

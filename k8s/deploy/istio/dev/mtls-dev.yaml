@@ -1,0 +1,43 @@
+# Enables strict mTLS for workloads in the dev namespace.
+#
+# Important:
+# - This is correct for service-to-service traffic inside the Istio mesh.
+# - Your ingress-nginx controller is not currently injected with an Istio sidecar.
+#   After applying STRICT mTLS, browser traffic through ingress-nginx to dev
+#   workloads may fail unless ingress traffic also enters through the mesh.
+#
+# Apply:
+#   kubectl apply -f k8s/deploy/istio/dev/mtls-dev.yaml
+#
+# Roll back:
+#   kubectl delete -f k8s/deploy/istio/dev/mtls-dev.yaml
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: dev-strict-mtls
+  namespace: dev
+spec:
+  mtls:
+    mode: STRICT
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: dev-istio-mutual
+  namespace: dev
+spec:
+  host: "*.dev.svc.cluster.local"
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: dev-istio-mutual-from-gateway
+  namespace: istio-system
+spec:
+  host: "*.dev.svc.cluster.local"
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
