@@ -23,56 +23,64 @@ def services = [
     [key: 'SAMPLEDATA',        chart: 'sampledata']
 ]
 
-pipeline{
+pipeline {
     agent any
 
     options {
         skipDefaultCheckout(true)
     }
 
-    stages{
+    environment {
+        NAMESPACE = "${NAMESPACE}"
+    }
+
+    stages {
         // Bước 1: Check kho lưu trữ
-        stage('Checkout SCM'){
-            steps{
+        stage('Checkout SCM') {
+            steps {
                 checkout scm
             }
         }
         // Bước 2: Check lại CI/CD agent
-        stage('Checkout CD Agent'){
-            steps{
+        stage('Check CD Agent') {
+            steps {
                 sh '''
-                helm --version
-                kubectl get nodes
+                    set -e
+                    command -v helm
+                    command -v kubectl
+                    helm version
+                    kubectl version --client
+                    kubectl get nodes
                 '''
             }
         }
-        stage('Uninstall'){
-            steps{
+        stage('Uninstall') {
+            steps {
                 script {
                     services.each { service ->
-                        sh """helm uninstall ${service.chart} -n ${NAMESPACE} --ignore-not-found"""
+                        sh "helm uninstall ${service.chart} -n ${env.NAMESPACE} --ignore-not-found"
                     }
 
-                    sh """kubectl delete pvc --all -n ${NAMESPACE} --ignore-not-found"""
+                    sh "kubectl delete pvc --all -n ${env.NAMESPACE} --ignore-not-found"
                     sh '''
                         echo "Waiting for services to be terminated..."
                     '''
                 }
             }
         }
-        stage('Check Services Left'){
-            steps{
-                sh """
-                    kubectl get pods -n ${NAMESPACE} || true
-                    kubectl get svc -n ${NAMESPACE} || true
-                    kubectl get pvc -n ${NAMESPACE} || true
-                """
+        stage('Check Services Left') {
+            steps {
+                sh '''
+                    kubectl get pods -n "$NAMESPACE" || true
+                    kubectl get svc -n "$NAMESPACE" || true
+                    kubectl get pvc -n "$NAMESPACE" || true
+                '''
             }
         }
-        stage('Done'){
-            steps{
-                sh'''
-                echo 'Application successfully removed'
+        stage('Done') {
+            steps {
+                sh '''
+                    echo 'Application successfully removed'
                 '''
             }
         }
