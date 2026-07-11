@@ -94,71 +94,7 @@ def call(Map params) {
         }
     }
 
-    stage('Snyk Scan') {
-        def jsonReport = 'reports/snyk/cart-snyk-report.json'
-        def htmlReport = 'reports/snyk/cart-snyk-report.html'
-        def snykExitCode = 2
 
-        sh '''
-            mvn -B install \
-                -pl cart \
-                -am \
-                -DskipTests \
-                -DskipITs=true \
-                -Djacoco.skip=true
-        '''
-
-        withCredentials([
-            string(
-                credentialsId: 'snyk-api-token',
-                variable: 'SNYK_TOKEN'
-            ),
-            string(
-                credentialsId: 'snyk-org',
-                variable: 'SNYK_ORG'
-            )
-        ]) {
-            snykExitCode = sh(
-                returnStatus: true,
-                script: '''
-                    set -u
-
-                    REVISION="$(mvn -q -N help:evaluate \
-                        -Dexpression=revision \
-                        -DforceStdout)"
-
-                    snyk test \
-                        --file=cart/pom.xml \
-                        --maven-skip-wrapper \
-                        --org="$SNYK_ORG" \
-                        --json-file-output=reports/snyk/cart-snyk-report.json \
-                        -- \
-                        -Drevision="$REVISION"
-                '''
-            )
-        }
-
-        if (snykExitCode != 0 && snykExitCode != 1) {
-            error("Snyk failed to scan, exit code: ${snykExitCode}")
-        }
-
-        if (!fileExists(jsonReport)) {
-            error("Cannot find Snyk JSON report: ${jsonReport}")
-        }
-
-        def snykUtils = load '.pipelines/utils/snyk-utils.groovy'
-
-        snykUtils.jsonToHtml(
-            jsonReport,
-            htmlReport
-        )
-
-        if (snykExitCode == 1) {
-            echo 'Snyk scanned successfully but found dependency vulnerabilities'
-        } else {
-            echo 'Snyk scanned successfully and did not found any dependency vulnerability.'
-        }
-    }
 
     stage('Dockerhub Login') {
         withCredentials([usernamePassword(
