@@ -26,6 +26,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.multipart.MultipartFile;
+import org.junit.jupiter.api.AfterEach;
 
 @ExtendWith(MockitoExtension.class)
 class MediaServiceTest {
@@ -47,14 +48,32 @@ class MediaServiceTest {
         lenient().when(serviceUrlConfig.media()).thenReturn("http://api.yas.com/media");
     }
 
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
     private void mockSecurityContext() {
         Authentication authentication = mock(Authentication.class);
         SecurityContext securityContext = mock(SecurityContext.class);
         Jwt jwt = mock(Jwt.class);
 
-        lenient().when(jwt.getTokenValue()).thenReturn("mock-jwt-token");
-        lenient().when(authentication.getPrincipal()).thenReturn(jwt);
-        lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
+        lenient()
+            .when(jwt.getTokenValue())
+            .thenReturn("mock-jwt-token");
+
+        lenient()
+            .when(authentication.getPrincipal())
+            .thenReturn(jwt);
+
+        lenient()
+            .when(authentication.getName())
+            .thenReturn("test-user");
+
+        lenient()
+            .when(securityContext.getAuthentication())
+            .thenReturn(authentication);
+
         SecurityContextHolder.setContext(securityContext);
     }
 
