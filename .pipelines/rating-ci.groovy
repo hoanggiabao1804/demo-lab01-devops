@@ -95,13 +95,13 @@ def call(Map params) {
     }
 
     stage('Snyk Scan') {
-        def jsonReport = 'reports/snyk/cart-snyk-report.json'
-        def htmlReport = 'reports/snyk/cart-snyk-report.html'
+        def jsonReport = 'reports/snyk/rating-snyk-report.json'
+        def htmlReport = 'reports/snyk/rating-snyk-report.html'
         def snykExitCode = 2
 
         sh '''
             mvn -B install \
-                -pl cart \
+                -pl rating \
                 -am \
                 -DskipTests \
                 -DskipITs=true \
@@ -128,10 +128,10 @@ def call(Map params) {
                         -DforceStdout)"
 
                     snyk test \
-                        --file=cart/pom.xml \
+                        --file=rating/pom.xml \
                         --maven-skip-wrapper \
                         --org="$SNYK_ORG" \
-                        --json-file-output=reports/snyk/cart-snyk-report.json \
+                        --json-file-output=reports/snyk/rating-snyk-report.json \
                         -- \
                         -Drevision="$REVISION"
                 '''
