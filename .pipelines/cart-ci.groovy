@@ -169,6 +169,7 @@ def call(Map params) {
                         snyk test \
                             --file=cart/pom.xml \
                             --package-manager=maven \
+                            --maven-skip-wrapper \
                             --org="$SNYK_ORG" \
                             --project-name="yas-cart" \
                             --json-file-output=reports/snyk/cart-snyk-report.json \
