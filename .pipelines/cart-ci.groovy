@@ -138,11 +138,18 @@ def call(Map params) {
                     script: '''
                         set -u
 
-                        mvn -f cart/pom.xml dependency:tree
+                        REVISION="$(mvn -q -N help:evaluate \
+                            -Dexpression=revision \
+                            -DforceStdout)"
 
                         snyk test \
                             --file=cart/pom.xml \
-                            --json-file-output=reports/snyk/cart-snyk-report.json
+                            --package-manager=maven \
+                            --org="$SNYK_ORG" \
+                            --project-name="yas-cart" \
+                            --json-file-output=reports/snyk/cart-snyk-report.json \
+                            -- \
+                            -Drevision="$REVISION"
                     '''
                 )
             }
