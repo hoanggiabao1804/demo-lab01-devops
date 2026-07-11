@@ -130,54 +130,34 @@ def call(Map params) {
                 -Djacoco.skip=true
         '''
 
-        sh '''
-            echo "Debugging #1"
-
-            mvn help:evaluate \
-                -Dexpression=settings.localRepository \
-                -q \
-                -DforceStdout
-        '''
-
-        sh '''
-            echo "Debugging #2"
-
-            mvn -B \
-                -f cart/pom.xml \
-                dependency:tree \
-                -Drevision=1.0-SNAPSHOT
-        '''
-
-
-
         withCredentials([
             string(
                 credentialsId: 'snyk-api-token',
                 variable: 'SNYK_TOKEN'
+            ),
+            string(
+                credentialsId: 'snyk-org',
+                variable: 'SNYK_ORG'
             )
         ]) {
-            withEnv(['SNYK_ORG=baozakison123']) {
-                snykExitCode = sh(
-                    returnStatus: true,
-                    script: '''
-                        set -u
+            snykExitCode = sh(
+                returnStatus: true,
+                script: '''
+                    set -u
 
-                        REVISION="$(mvn -q -N help:evaluate \
-                            -Dexpression=revision \
-                            -DforceStdout)"
+                    REVISION="$(mvn -q -N help:evaluate \
+                        -Dexpression=revision \
+                        -DforceStdout)"
 
-                        snyk test \
-                            --file=cart/pom.xml \
-                            --package-manager=maven \
-                            --maven-skip-wrapper \
-                            --org="$SNYK_ORG" \
-                            --project-name="yas-cart" \
-                            --json-file-output=reports/snyk/cart-snyk-report.json \
-                            -- \
-                            -Drevision="$REVISION"
-                    '''
-                )
-            }
+                    snyk test \
+                        --file=cart/pom.xml \
+                        --maven-skip-wrapper \
+                        --org="$SNYK_ORG" \
+                        --json-file-output=reports/snyk/cart-snyk-report.json \
+                        -- \
+                        -Drevision="$REVISION"
+                '''
+            )
         }
 
         if (snykExitCode != 0 && snykExitCode != 1) {
