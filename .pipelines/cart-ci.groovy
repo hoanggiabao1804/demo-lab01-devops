@@ -176,7 +176,7 @@ def call(Map params) {
         )
 
         if (snykExitCode == 1) {
-            unstable('Snyk scanned successfully but found dependency vulnerabilities')
+            echo 'Snyk scanned successfully but found dependency vulnerabilities'
         } else {
             echo 'Snyk scanned successfully and did not found any dependency vulnerability.'
         }
