@@ -147,9 +147,9 @@ def call(Map params) {
                             --package-manager=maven \
                             --org="$SNYK_ORG" \
                             --project-name="yas-cart" \
-                            --json-file-output=reports/snyk/cart-snyk-report.json \
+                            --json-file-output=reports/snyk/cart-snyk-report.json -d 2>&1 \
                             -- \
-                            -Drevision="$REVISION"
+                            -Drevision="$REVISION" | snyk doctor --stdin
                     '''
                 )
             }
