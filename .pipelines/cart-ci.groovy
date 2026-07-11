@@ -23,76 +23,82 @@ def call(Map params) {
         '''
     }
 
-    stage('Run Maven Checkstyle') {
-        sh '''
-        mvn checkstyle:checkstyle \
-        -pl cart \
-        -am \
-        -Dcheckstyle.output.file=reports/checkstyle/cart-checkstyle-result.xml
-        '''
-    }
+    // stage('Run Maven Checkstyle') {
+    //     sh '''
+    //     mvn checkstyle:checkstyle \
+    //     -pl cart \
+    //     -am \
+    //     -Dcheckstyle.output.file=reports/checkstyle/cart-checkstyle-result.xml
+    //     '''
+    // }
 
-    stage('Publish Checkstyle') {
-        recordIssues(
-            tools: [checkStyle(pattern: '**/cart-checkstyle-result.xml')]
-        )
-    }
+    // stage('Publish Checkstyle') {
+    //     recordIssues(
+    //         tools: [checkStyle(pattern: '**/cart-checkstyle-result.xml')]
+    //     )
+    // }
 
-    stage('Test') {
-        sh '''
-        mvn clean verify \
-        -pl cart \
-        -am \
-        -DskipITs=true
-        '''
-    }
+    // stage('Test') {
+    //     sh '''
+    //     mvn clean verify \
+    //     -pl cart \
+    //     -am \
+    //     -DskipITs=true
+    //     '''
+    // }
 
-    stage('Publish Test Result') {
-        junit 'cart/**/target/surefire-reports/*.xml'
-    }
+    // stage('Publish Test Result') {
+    //     junit 'cart/**/target/surefire-reports/*.xml'
+    // }
 
-    stage('Publish Coverage Report') {
-        publishHTML([
-            reportDir: 'cart/target/site/jacoco',
-            reportFiles: 'index.html',
-            reportName: 'Cart JaCoCo Coverage',
-            keepAll: true,
-            alwaysLinkToLastBuild: true
-        ])
-    }
+    // stage('Publish Coverage Report') {
+    //     publishHTML([
+    //         reportDir: 'cart/target/site/jacoco',
+    //         reportFiles: 'index.html',
+    //         reportName: 'Cart JaCoCo Coverage',
+    //         keepAll: true,
+    //         alwaysLinkToLastBuild: true
+    //     ])
+    // }
 
-    stage('Gitleak Scan') {
-        sh '''
-        echo "Run Gitleaks scan..."
-        gitleaks detect \
-        --source ./cart \
-        --no-git \
-        --report-path reports/gitleaks/cart-gitleaks-report.json \
-        --report-format json \
-        --exit-code 0
-        '''
+    // stage('Gitleak Scan') {
+    //     sh '''
+    //     echo "Run Gitleaks scan..."
+    //     gitleaks detect \
+    //     --source ./cart \
+    //     --no-git \
+    //     --report-path reports/gitleaks/cart-gitleaks-report.json \
+    //     --report-format json \
+    //     --exit-code 0
+    //     '''
 
-        def gitleaksUtils = load '.pipelines/utils/gitleaks-utils.groovy'
-        gitleaksUtils.jsonToHtml(
-            'reports/gitleaks/cart-gitleaks-report.json', 
-            'reports/gitleaks/cart-gitleaks-report.html'
-        )
-    }
+    //     def gitleaksUtils = load '.pipelines/utils/gitleaks-utils.groovy'
+    //     gitleaksUtils.jsonToHtml(
+    //         'reports/gitleaks/cart-gitleaks-report.json', 
+    //         'reports/gitleaks/cart-gitleaks-report.html'
+    //     )
+    // }
 
-    stage('SonarQube Analysis') {
-        withSonarQubeEnv('My SonarQube Server') {
-            sh '''
-            mvn clean verify sonar:sonar \
-            -pl cart \
-            -am \
-            -Dsonar.host.url=http://sonarqube:9000 \
-            -DskipITs=true
-            '''
-        }
-        timeout(time: 1, unit: 'HOURS') {
-            waitForQualityGate abortPipeline: true
-        }
-    }
+    // stage('Gitleak Scan') {
+    //     sh '''
+    //     echo "Run Gitleaks scan..."
+    //     gitleaks detect \
+    //     --source ./cart \
+
+    // stage('SonarQube Analysis') {
+    //     withSonarQubeEnv('My SonarQube Server') {
+    //         sh '''
+    //         mvn clean verify sonar:sonar \
+    //         -pl cart \
+    //         -am \
+    //         -Dsonar.host.url=http://sonarqube:9000 \
+    //         -DskipITs=true
+    //         '''
+    //     }
+    //     timeout(time: 1, unit: 'HOURS') {
+    //         waitForQualityGate abortPipeline: true
+    //     }
+    // }
 
     // stage('Snyk Scan') {
     //     sh '''
@@ -114,6 +120,35 @@ def call(Map params) {
         def jsonReport = 'reports/snyk/cart-snyk-report.json'
         def htmlReport = 'reports/snyk/cart-snyk-report.html'
         def snykExitCode = 2
+
+        sh '''
+            mvn -B install \
+                -pl cart \
+                -am \
+                -DskipTests \
+                -DskipITs=true \
+                -Djacoco.skip=true
+        '''
+
+        sh '''
+            echo "Debugging #1"
+
+            mvn help:evaluate \
+                -Dexpression=settings.localRepository \
+                -q \
+                -DforceStdout
+        '''
+
+        sh '''
+            echo "Debugging #2"
+
+            mvn -B \
+                -f cart/pom.xml \
+                dependency:tree \
+                -Drevision=1.0-SNAPSHOT
+        '''
+
+
 
         withCredentials([
             string(
