@@ -84,6 +84,18 @@ def call(Map params) {
         echo "Run Gitleaks scan..."
         gitleaks detect \
         --source ./cart \
+        --no-git \
+        --report-path reports/gitleaks/cart-gitleaks-report.json \
+        --report-format json \
+        --exit-code 0
+        '''
+
+        def gitleaksUtils = load '.pipelines/utils/gitleaks-utils.groovy'
+        gitleaksUtils.jsonToHtml(
+            'reports/gitleaks/cart-gitleaks-report.json',
+            'reports/gitleaks/cart-gitleaks-report.html'
+        )
+    }
 
     stage('SonarQube Analysis') {
         withSonarQubeEnv('My SonarQube Server') {
