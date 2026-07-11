@@ -1,4 +1,5 @@
 resources:
+  - namespace-dev.yaml
   - gateway-dev.yaml
   - mtls-dev.yaml
   - authorization-policies-dev.yaml
