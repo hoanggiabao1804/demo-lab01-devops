@@ -117,7 +117,7 @@ def call(Map params) {
 
         withCredentials([
             string(
-                credentialsId: 'snyk-token',
+                credentialsId: 'snyk-api-token',
                 variable: 'SNYK_TOKEN'
             )
         ]) {
