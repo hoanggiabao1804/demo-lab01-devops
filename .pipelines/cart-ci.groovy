@@ -122,17 +122,6 @@ def call(Map params) {
             )
         ]) {
             withEnv(['SNYK_ORG=baozakison123']) {
-                sh '''
-                    set -eu
-
-                    mvn -B clean install \
-                        -pl cart \
-                        -am \
-                        -DskipTests \
-                        -DskipITs=true \
-                        -Djacoco.skip=true
-                '''
-
                 snykExitCode = sh(
                     returnStatus: true,
                     script: '''
@@ -147,9 +136,9 @@ def call(Map params) {
                             --package-manager=maven \
                             --org="$SNYK_ORG" \
                             --project-name="yas-cart" \
-                            --json-file-output=reports/snyk/cart-snyk-report.json -d 2>&1 \
+                            --json-file-output=reports/snyk/cart-snyk-report.json \
                             -- \
-                            -Drevision="$REVISION" | snyk doctor --stdin
+                            -Drevision="$REVISION"
                     '''
                 )
             }
