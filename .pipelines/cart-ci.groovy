@@ -94,20 +94,80 @@ def call(Map params) {
         }
     }
 
+    // stage('Snyk Scan') {
+    //     sh '''
+    //     snyk auth $SNYK_TOKEN
+
+    //     find . -name "mvnw" -exec chmod +x {} \\;
+
+    //     snyk test --file=pom.xml --package-manager=maven -d --json > reports/snyk/cart-snyk-report.json || true
+    //     '''
+
+    //     def snykUtils = load '.pipelines/utils/snyk-utils.groovy'
+    //     snykUtils.jsonToHtml(
+    //         'reports/snyk/cart-snyk-report.json', 
+    //         'reports/snyk/cart-snyk-report.html'
+    //     )
+    // }
+
     stage('Snyk Scan') {
-        sh '''
-        snyk auth $SNYK_TOKEN
+        def jsonReport = 'reports/snyk/cart-snyk-report.json'
+        def htmlReport = 'reports/snyk/cart-snyk-report.html'
+        def snykExitCode = 2
 
-        find . -name "mvnw" -exec chmod +x {} \\;
+        withCredentials([
+            string(
+                credentialsId: 'snyk-token',
+                variable: 'SNYK_TOKEN'
+            )
+        ]) {
+            withEnv(['SNYK_ORG=baozakison123']) {
+                sh '''
+                    set -eu
 
-        snyk test --file=pom.xml --package-manager=maven -d --json > reports/snyk/cart-snyk-report.json || true
-        '''
+                    mvn -B clean install \
+                        -pl cart \
+                        -am \
+                        -DskipTests \
+                        -DskipITs=true \
+                        -Djacoco.skip=true
+                '''
+
+                snykExitCode = sh(
+                    returnStatus: true,
+                    script: '''
+                        set -u
+
+                        mvn -f cart/pom.xml dependency:tree
+
+                        snyk test \
+                            --file=cart/pom.xml \
+                            --json-file-output=reports/snyk/cart-snyk-report.json
+                    '''
+                )
+            }
+        }
+
+        if (snykExitCode != 0 && snykExitCode != 1) {
+            error("Snyk failed to scan, exit code: ${snykExitCode}")
+        }
+
+        if (!fileExists(jsonReport)) {
+            error("Cannot find Snyk JSON report: ${jsonReport}")
+        }
 
         def snykUtils = load '.pipelines/utils/snyk-utils.groovy'
+
         snykUtils.jsonToHtml(
-            'reports/snyk/cart-snyk-report.json', 
-            'reports/snyk/cart-snyk-report.html'
+            jsonReport,
+            htmlReport
         )
+
+        if (snykExitCode == 1) {
+            unstable('Snyk scanned successfully but found dependency vulnerabilities')
+        } else {
+            echo 'Snyk scanned successfully and did not found any dependency vulnerability.'
+        }
     }
 
     stage('Dockerhub Login') {
