@@ -2,11 +2,12 @@
 set -euo pipefail
 set -x
 
-# Read configuration value from cluster-config.yaml file
+# Read configuration value from cluster config file.
+CONFIG_FILE="${CONFIG_FILE:-./cluster-config.yaml}"
 mapfile -t KEYCLOAK_CONFIG < <(yq -r '.domain,
   .postgresql.username, .postgresql.password,
   .keycloak.bootstrapAdmin.username, .keycloak.bootstrapAdmin.password,
-  .keycloak.backofficeRedirectUrl, .keycloak.storefrontRedirectUrl' ./cluster-config.yaml)
+  .keycloak.backofficeRedirectUrl, .keycloak.storefrontRedirectUrl' "$CONFIG_FILE")
 DOMAIN="${KEYCLOAK_CONFIG[0]}"
 POSTGRESQL_USERNAME="${KEYCLOAK_CONFIG[1]}"
 POSTGRESQL_PASSWORD="${KEYCLOAK_CONFIG[2]}"

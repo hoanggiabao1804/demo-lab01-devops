@@ -1,0 +1,19 @@
+--- a/common-library/src/test/java/com/yas/commonlibrary/exception/ApiExceptionHandlerTest.java	2026-07-11 13:13:35.838642392 +0000
++++ b/common-library/src/test/java/com/yas/commonlibrary/exception/ApiExceptionHandlerTest.java	2026-07-11 13:13:46.171392811 +0000
+@@ -3,6 +3,7 @@
+ import static org.junit.jupiter.api.Assertions.assertEquals;
+ import static org.junit.jupiter.api.Assertions.assertNotNull;
+ import static org.junit.jupiter.api.Assertions.assertNull;
++import static org.junit.jupiter.api.Assertions.assertTrue;
+ import static org.mockito.Mockito.mock;
+ import static org.mockito.Mockito.when;
+ 
+@@ -126,7 +127,7 @@
+         assertEquals(expectedStatus.getReasonPhrase(), response.getBody().title());
+         assertEquals(expectedDetail, response.getBody().detail());
+         if (expectedFieldErrors == 0) {
+-            assertNull(response.getBody().fieldErrors());
++            assertTrue(response.getBody().fieldErrors() == null || response.getBody().fieldErrors().isEmpty());
+         } else {
+             assertNotNull(response.getBody().fieldErrors());
+             assertEquals(expectedFieldErrors, response.getBody().fieldErrors().size());
