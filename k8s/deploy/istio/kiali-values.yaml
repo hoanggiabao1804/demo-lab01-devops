@@ -8,6 +8,7 @@ deployment:
 external_services:
   grafana:
     internal_url: "http://prometheus-grafana.observability:80"
+    external_url: "http://localhost:8085"
   prometheus:
     url: "http://prometheus-kube-prometheus-prometheus.observability.svc.cluster.local:9090"
 
