@@ -123,3 +123,303 @@ spec:
         perTryTimeout: 2s
         retryOn: gateway-error,connect-failure,refused-stream,5xx
       timeout: 10s
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: cart-api
+  namespace: dev
+spec:
+  hosts:
+    - api.staging.yas.local.com
+  gateways:
+    - yas-staging-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /cart/
+      route:
+        - destination:
+            host: cart.dev.svc.cluster.local
+            port:
+              number: 80
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream,5xx
+      timeout: 10s
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: customer-api
+  namespace: dev
+spec:
+  hosts:
+    - api.staging.yas.local.com
+  gateways:
+    - yas-staging-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /customer/
+      route:
+        - destination:
+            host: customer.dev.svc.cluster.local
+            port:
+              number: 80
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream,5xx
+      timeout: 10s
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: product-api
+  namespace: dev
+spec:
+  hosts:
+    - api.staging.yas.local.com
+  gateways:
+    - yas-staging-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /product/
+      route:
+        - destination:
+            host: product.dev.svc.cluster.local
+            port:
+              number: 80
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream,5xx
+      timeout: 10s
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: inventory-api
+  namespace: dev
+spec:
+  hosts:
+    - api.staging.yas.local.com
+  gateways:
+    - yas-staging-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /inventory/
+      route:
+        - destination:
+            host: inventory.dev.svc.cluster.local
+            port:
+              number: 80
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream,5xx
+      timeout: 10s
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: location-api
+  namespace: dev
+spec:
+  hosts:
+    - api.staging.yas.local.com
+  gateways:
+    - yas-staging-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /location/
+      route:
+        - destination:
+            host: location.dev.svc.cluster.local
+            port:
+              number: 80
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream,5xx
+      timeout: 10s
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: order-api
+  namespace: dev
+spec:
+  hosts:
+    - api.staging.yas.local.com
+  gateways:
+    - yas-staging-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /order/
+      route:
+        - destination:
+            host: order.dev.svc.cluster.local
+            port:
+              number: 80
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream,5xx
+      timeout: 10s
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: payment-api
+  namespace: dev
+spec:
+  hosts:
+    - api.staging.yas.local.com
+  gateways:
+    - yas-staging-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /payment/
+      route:
+        - destination:
+            host: payment.dev.svc.cluster.local
+            port:
+              number: 80
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream,5xx
+      timeout: 10s
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: promotion-api
+  namespace: dev
+spec:
+  hosts:
+    - api.staging.yas.local.com
+  gateways:
+    - yas-staging-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /promotion/
+      route:
+        - destination:
+            host: promotion.dev.svc.cluster.local
+            port:
+              number: 80
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream,5xx
+      timeout: 10s
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: rating-api
+  namespace: dev
+spec:
+  hosts:
+    - api.staging.yas.local.com
+  gateways:
+    - yas-staging-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /rating/
+      route:
+        - destination:
+            host: rating.dev.svc.cluster.local
+            port:
+              number: 80
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream,5xx
+      timeout: 10s
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: search-api
+  namespace: dev
+spec:
+  hosts:
+    - api.staging.yas.local.com
+  gateways:
+    - yas-staging-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /search/
+      route:
+        - destination:
+            host: search.dev.svc.cluster.local
+            port:
+              number: 80
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream,5xx
+      timeout: 10s
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: tax-api
+  namespace: dev
+spec:
+  hosts:
+    - api.staging.yas.local.com
+  gateways:
+    - yas-staging-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /tax/
+      route:
+        - destination:
+            host: tax.dev.svc.cluster.local
+            port:
+              number: 80
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream,5xx
+      timeout: 10s
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: recommendation-api
+  namespace: dev
+spec:
+  hosts:
+    - api.staging.yas.local.com
+  gateways:
+    - yas-staging-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /recommendation/
+      route:
+        - destination:
+            host: recommendation.dev.svc.cluster.local
+            port:
+              number: 80
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream,5xx
+      timeout: 10s
